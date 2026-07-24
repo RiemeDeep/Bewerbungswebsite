@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
+import { SiteFooter } from "../components/site-footer";
+import { SiteHeader } from "../components/site-header";
 import { siteConfig } from "../lib/site-config";
 import "./globals.css";
 
@@ -25,7 +27,14 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="de">
-      <body>{children}</body>
+      <body>
+        <a className="skip-link" href="#main-content">
+          Zum Hauptinhalt springen
+        </a>
+        <SiteHeader />
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

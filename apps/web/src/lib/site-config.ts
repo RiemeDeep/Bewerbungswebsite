@@ -1,4 +1,5 @@
 export const siteConfig = {
-  name: "Michael Flatau | Bewerbungswebsite",
-  description: "Technische Grundlage der interaktiven Bewerbungswebsite von Michael Flatau.",
+  name: "Michael Flatau | Maschinenbau, Projekte und unternehmerische Umsetzung",
+  description:
+    "Interaktives Profil von Michael Flatau: technische Erfahrung, Projekt- und Prozessaufbau, Unternehmertum sowie eine beleggestützte Analyse für konkrete Stellen.",
 } as const;

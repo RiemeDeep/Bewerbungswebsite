@@ -58,6 +58,31 @@ Status: freigegeben fuer die erste UI-Einheit durch `docs/phase-1-decisions.md`
 Detailplan fuer die erste Einheit:
 `docs/plans/phase-1.1-static-profile-foundation.md`
 
+Phase 1.1 technische Umsetzung: abgeschlossen am 2026-07-24. Enthalten sind
+`ProfileContent`-Contract, validierte lokale Fixture, globales Layout mit Header/Footer/Skip-Link,
+Startseite, `/profil`, `/impressum`, `/datenschutz` sowie Unit-, Komponenten-, E2E- und
+Accessibility-Smoke-Tests. Noch nicht enthalten sind Werdegangs-, Projekt- und Kontaktrouten sowie
+produktive Evidence-Daten.
+
+Phase 1.2 technische Umsetzung: abgeschlossen am 2026-07-24. Enthalten sind vorsichtige statische
+Routen fuer `/werdegang` und `/projekte`, Navigationserweiterung, Contract-Felder fuer
+Freigabezustand und Seiteneinleitungen sowie erweiterte Unit-, Komponenten-, E2E- und
+Accessibility-Smoke-Tests. Weiterhin nicht enthalten sind Chronologie, Arbeitgeber, Rollen,
+Kennzahlen, externe Links und produktive Evidence-Daten.
+
+Phase 1.3 technische Umsetzung: abgeschlossen am 2026-07-24. Enthalten ist `/kontakt` als statische
+Kontakt-Freigabeseite ohne Kontaktdaten, ohne Formular, ohne Lebenslauf-Download und ohne
+Kontaktversand. Navigation, Contract, Fixture, Unit-/Komponenten- und E2E-/Accessibility-Smoke-Tests
+wurden entsprechend erweitert.
+
+Phase 1.4 UX-Neuausrichtung: abgeschlossen am 2026-07-24. Die Startseite ist jetzt als mobile-first
+One-Page-Erfahrung mit dem Profilassistenten als zentralem Einstieg aufgebaut. Die klassische
+Hauptnavigation wurde auf `Frage stellen` und `Passung pruefen` reduziert; Profil, Werdegang,
+Projekte, Kontakt und Rechtliches bleiben als Vertiefungen im Footer erreichbar. Die lokale
+Frageinteraktion zeigt transparent nur die spaetere Antwortstruktur und fuehrt keinen KI-Aufruf aus.
+Evidenzklassen, Profilperspektiven, Match-Ablauf, Erfahrungsraeume und Kontaktabschluss sind in der
+zentralen Seite zusammengefuehrt.
+
 Umsetzungseinheiten:
 
 1. Inhaltsvertrag und typisierte lokale Fixture mit vorsichtigen Spezifikationskernen.
