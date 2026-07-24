@@ -41,4 +41,3 @@ TODO_NEXT_STEP
 - Gespeichert: TODO_YES_NO
 - Session-ID: TODO_SESSION_ID
 - Tags: TODO_TAGS
-

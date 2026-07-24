@@ -4,12 +4,12 @@
     "supabase": {
       "type": "remote",
       "url": "https://mcp.supabase.com/mcp?project_ref=epvodbkxcpeehjpfocvr",
-      "enabled": true
+      "enabled": true,
     },
     "notion": {
       "type": "remote",
       "url": "https://mcp.notion.com/mcp",
-      "enabled": true
+      "enabled": true,
     },
     "n8n-doc-mcp": {
       "type": "local",
@@ -21,29 +21,24 @@
         "LOG_LEVEL": "error",
         "DISABLE_CONSOLE_OUTPUT": "true",
         "N8N_API_URL": "{env:N8N_API_URL}",
-        "N8N_API_KEY": "{env:N8N_API_KEY}"
-      }
+        "N8N_API_KEY": "{env:N8N_API_KEY}",
+      },
     },
     "motai-rag": {
       "type": "remote",
       "url": "https://n8n.motai.life/mcp/opencode-rag",
       "enabled": true,
       "oauth": false,
-      "timeout": 15000
+      "timeout": 15000,
     },
     "n8n-mcp": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "mcp-remote",
-        "https://n8n.motai.life/mcp-server/http"
-      ],
+      "command": ["npx", "-y", "mcp-remote", "https://n8n.motai.life/mcp-server/http"],
       "enabled": true,
       "timeout": 60000,
       "environment": {
-        "N8N_API_KEY": "{env:N8N_MCP_API_KEY}"
-      }
-    }
-  }
+        "N8N_API_KEY": "{env:N8N_MCP_API_KEY}",
+      },
+    },
+  },
 }

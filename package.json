@@ -1,0 +1,29 @@
+{
+  "name": "bewerbungswebsite",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.16.0",
+  "engines": {
+    "node": ">=22.17.1 <23",
+    "pnpm": ">=11.16 <12"
+  },
+  "scripts": {
+    "dev": "pnpm run build:contracts && pnpm --parallel --filter @bewerbungswebsite/web --filter @bewerbungswebsite/orchestrator dev",
+    "build": "pnpm run build:contracts && pnpm --filter @bewerbungswebsite/orchestrator build && pnpm --filter @bewerbungswebsite/web build",
+    "build:contracts": "pnpm --filter @bewerbungswebsite/contracts build",
+    "clean": "pnpm -r --if-present clean",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "pnpm run build:contracts && pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.2.11",
+    "globals": "17.7.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3"
+  }
+}
