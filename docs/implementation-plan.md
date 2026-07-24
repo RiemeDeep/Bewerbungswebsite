@@ -55,6 +55,9 @@ Nicht enthalten:
 
 Status: freigegeben fuer die erste UI-Einheit durch `docs/phase-1-decisions.md`
 
+Detailplan fuer die erste Einheit:
+`docs/plans/phase-1.1-static-profile-foundation.md`
+
 Umsetzungseinheiten:
 
 1. Inhaltsvertrag und typisierte lokale Fixture mit vorsichtigen Spezifikationskernen.
