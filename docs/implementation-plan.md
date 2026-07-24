@@ -104,9 +104,21 @@ Abnahme:
 
 ## Phase 2: Strukturierte Wissensbasis
 
-Status: offen
+Status: Phase 2.0.1 Dokumentationsgrundlage abgeschlossen; Profil-Workshop und Migration offen
 
-Umsetzungseinheiten:
+Detailplan fuer Wissensarchitektur und Profil-Workshop:
+`docs/plans/phase-2.0-knowledge-architecture.md`
+
+Vor der ersten Migration:
+
+1. Wissensklassen, Claim-/Evidence-Modell und Invarianten dokumentieren. Abgeschlossen am
+   2026-07-24.
+2. Profil-Workshop mit gesicherten Fakten, Evidence Stories, Grenzen und Praeferenzen durchfuehren.
+3. Quellen nur als Metadaten inventarisieren; keine privaten Dokumente in Git ablegen.
+4. Workshop-Ergebnisse in kleine Claims normalisieren und Freigaben festlegen.
+5. RLS-, Storage- und Nutzungskontext-Entscheidungen fuer Phase 2.1 klaeren.
+
+Umsetzungseinheiten ab Phase 2.1:
 
 1. Datenmodell als Supabase-Migration mit Enums, Constraints und Indizes.
 2. Restriktive RLS-Policies und anonyme Negativtests.
