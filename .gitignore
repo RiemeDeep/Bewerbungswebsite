@@ -12,3 +12,6 @@ test-results/
 *.tsbuildinfo
 *.log
 .DS_Store
+
+# Private profile source documents used during the workshop
+docs/docs_michael/

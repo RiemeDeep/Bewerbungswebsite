@@ -18,4 +18,6 @@ beleggestuetzte Wissensbasis der Bewerbungswebsite.
 - `profile-workshop.md`: Ablauf fuer die strukturierte Profilaufnahme.
 - `evidence-story-template.md`: Vorlage fuer konkrete Erfahrungsgeschichten.
 - `source-inventory-template.md`: Metadateninventar fuer vorhandene Quellen.
+- `source-inventory.md`: aktueller, in Git zulaessiger Inventarstand ohne private Inhalte.
+- `workshop-progress.md`: operativer Workshop-Stand ohne Rohnotizen oder private Profilangaben.
 - `visibility-publication-matrix.md`: Sichtbarkeit, Nutzungskontext und Freigabe.

@@ -1,17 +1,25 @@
 # Offene Entscheidungen fuer Phase 2
 
-Stand: 2026-07-24  
-Status: Sammlung fuer Phase 2.0, keine stillschweigenden Annahmen
+Stand: 2026-07-25
+Status: Workshop-Leitplanken entschieden, weitere Phase-2-Entscheidungen offen
 
 ## Vor dem Profil-Workshop
 
-| Entscheidung                                                        | Status | Vorlaeufige Richtung                               |
-| ------------------------------------------------------------------- | ------ | -------------------------------------------------- |
-| Welche Dokumente stehen fuer das Quelleninventar zur Verfuegung?    | Offen  | nur Metadaten erfassen, keine Dateien in Git       |
-| Welche Angaben duerfen im Workshop als oeffentlich markiert werden? | Offen  | standardmaessig `private` oder `internal`          |
-| Duerfen Workshop-Rohnotizen dauerhaft gespeichert werden?           | Offen  | minimieren und nach Normalisierung loeschen        |
-| Sollen Audio- oder Videoaufzeichnungen entstehen?                   | Offen  | standardmaessig nein                               |
-| Welche Challenge-Michael-Fragen sind fuer den MVP unverzichtbar?    | Offen  | initiale zehn Fragen aus Workshop-Dokument pruefen |
+| Entscheidung                                                        | Status      | Vorlaeufige Richtung                                                         |
+| ------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------- |
+| Welche Dokumente stehen fuer das Quelleninventar zur Verfuegung?    | Entschieden | Lebenslauf, Zeugnisse, Zertifikate sowie Unternehmens- und Projektunterlagen |
+| Welche Angaben duerfen im Workshop als oeffentlich markiert werden? | Entschieden | neue Angaben standardmaessig `private`                                       |
+| Duerfen Workshop-Rohnotizen dauerhaft gespeichert werden?           | Entschieden | nach redaktioneller Normalisierung loeschen                                  |
+| Sollen Audio- oder Videoaufzeichnungen entstehen?                   | Entschieden | keine Aufzeichnung                                                           |
+| Welche Challenge-Michael-Fragen sind fuer den MVP unverzichtbar?    | Entschieden | priorisierte Auswahl unterhalb dieser Tabelle                                |
+
+Priorisierte Challenge-Fragen fuer den ersten Workshop-Durchlauf:
+
+1. Warum sollten wir Michael nicht einstellen?
+2. Welche technische Erfahrung ist wirklich belegt?
+3. Wo koennte Michael bei uns scheitern?
+4. Wie belastbar ist seine Fuehrungserfahrung?
+5. Was sollte in einem ersten Gespraech unbedingt geklaert werden?
 
 ## Vor der ersten Migration
 
@@ -66,3 +74,10 @@ Vor Beginn des ersten Profil-Workshops muessen nur diese Punkte geklaert sein:
 3. Sind Aufzeichnungen ausgeschlossen oder ausdruecklich gewuenscht?
 4. Welche Angaben bleiben standardmaessig privat?
 5. Welche Challenge-Fragen sollen zuerst beantwortbar werden?
+
+Freigabestatus: erteilt am 2026-07-25. Die Antworten sind oben dokumentiert. Private
+Quelldokumente und Workshop-Rohnotizen bleiben ausserhalb des Repositorys.
+
+Ergaenzung am 2026-07-25: Vorhandene Unternehmens- und Projektunterlagen wurden als weitere
+Quellengruppe aufgenommen. Dadurch aendern sich weder die Datenschutzleitplanken noch der
+Freigabestatus einzelner Inhalte.

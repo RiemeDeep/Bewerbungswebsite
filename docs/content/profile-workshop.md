@@ -1,7 +1,7 @@
 # Profil-Workshop
 
-Stand: 2026-07-24  
-Status: vorbereitet, noch nicht durchgefuehrt
+Stand: 2026-07-25
+Status: gestartet, Block 1 in Review
 
 ## Ziel
 
@@ -34,6 +34,16 @@ Nur als lokale oder private Arbeitsunterlagen bereithalten:
 - eigene Notizen zu Projekten und Arbeitsweise.
 
 Die Unterlagen werden in Phase 2.0 noch nicht hochgeladen.
+
+## Festgelegte Leitplanken
+
+- Verfuegbare Quellengruppen: Lebenslauf, Arbeitszeugnisse, Zertifikate/Lizenzen sowie
+  Unternehmens- und Projektunterlagen.
+- Keine Audio- oder Videoaufzeichnung.
+- Rohnotizen werden nach redaktioneller Normalisierung geloescht.
+- Rohnotizen und private Angaben werden nicht in Git gespeichert.
+- Neue Angaben starten mit Sichtbarkeit `private`, Nutzungskontext `admin_review` und Status `draft`.
+- Der operative Stand wird ohne private Profilinhalte in `workshop-progress.md` dokumentiert.
 
 ## Block 1: Fakten und Chronologie
 

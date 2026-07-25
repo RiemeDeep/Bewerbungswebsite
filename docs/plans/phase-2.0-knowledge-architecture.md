@@ -1,7 +1,7 @@
 # Umsetzungsplan Phase 2.0: Wissensarchitektur und Profil-Workshop
 
-Stand: 2026-07-24  
-Status: Phase 2.0.1 abgeschlossen, Profil-Workshop noch offen
+Stand: 2026-07-25
+Status: Phase 2.0.1 abgeschlossen, Phase 2.0.2 aktiv
 
 ## Ziel
 
@@ -41,7 +41,7 @@ Status: abgeschlossen
 
 ### 2.0.2 Profil-Workshop
 
-Status: offen
+Status: gestartet am 2026-07-25; Leitplanken entschieden, Block 1 in Review
 
 - gesicherte Chronologie mit Michael aufnehmen;
 - relevante Projekte einzeln durchgehen;
@@ -50,6 +50,20 @@ Status: offen
 - Grenzen und fehlende Erfahrungen explizit dokumentieren;
 - Ziele und Arbeitspraeferenzen mit Sichtbarkeit erfassen;
 - vorhandene Quellen als Metadaten inventarisieren.
+
+Arbeitsstand:
+
+- Lebenslauf, Arbeitszeugnisse, Zertifikate/Lizenzen, Unternehmens-/Projektunterlagen und eine
+  oeffentliche Webquelle als vorhandene Quellengruppen bestaetigt;
+- keine Audio- oder Videoaufzeichnung;
+- Rohnotizen werden nach Normalisierung geloescht und nicht in Git gespeichert;
+- neue Workshop-Angaben starten mit Sichtbarkeit `private` und Status `draft`;
+- fuenf Challenge-Fragen fuer den ersten Durchlauf priorisiert;
+- Quelleninventar und Fortschrittsprotokoll fuer Block 1 angelegt;
+- 37 logische Quellen aus Lebenslauf, Zeugnissen, Qualifikations-, Unternehmens-, Projekt- und
+  Webquellen inventarisiert;
+- Unternehmensbelege in die private Chronologie eingearbeitet und verbleibende Datumsabweichungen
+  fuer Michaels Review isoliert.
 
 ### 2.0.3 Redaktionelle Normalisierung
 
@@ -79,6 +93,8 @@ Status: offen
 - `docs/content/profile-workshop.md`
 - `docs/content/evidence-story-template.md`
 - `docs/content/source-inventory-template.md`
+- `docs/content/source-inventory.md`
+- `docs/content/workshop-progress.md`
 - `docs/content/visibility-publication-matrix.md`
 - `docs/phase-2-decisions.md`
 
