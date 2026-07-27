@@ -1,7 +1,7 @@
 # Profil-Workshop
 
-Stand: 2026-07-25
-Status: gestartet, Block 1 in Review
+Stand: 2026-07-27
+Status: nach Block 1 und erstem Pilotfall fuer technischen Machbarkeitsnachweis pausiert
 
 ## Ziel
 
@@ -44,6 +44,18 @@ Die Unterlagen werden in Phase 2.0 noch nicht hochgeladen.
 - Rohnotizen und private Angaben werden nicht in Git gespeichert.
 - Neue Angaben starten mit Sichtbarkeit `private`, Nutzungskontext `admin_review` und Status `draft`.
 - Der operative Stand wird ohne private Profilinhalte in `workshop-progress.md` dokumentiert.
+
+## Temporaere Pause ab 2026-07-27
+
+Nach dem abgeschlossenen Chronologieblock und einer privaten Pilot-Evidence-Story wird der Workshop
+pausiert. Vor weiteren detaillierten Interviews prueft ein gestufter technischer
+Machbarkeitsnachweis mit ausschliesslich synthetischen Daten die geplante Kernarchitektur.
+
+Detailplan: `docs/plans/technical-feasibility-gate.md`.
+
+Die Pause aendert keine Freigabe: Alle vorhandenen Workshop-Ergebnisse bleiben `private`,
+`admin_review` und `draft`. Nach bestandenem Gate oder einer bewussten Plananpassung wird Block 2
+chronologisch fortgesetzt; Block 3 und Block 4 bleiben bis dahin offen.
 
 ## Block 1: Fakten und Chronologie
 

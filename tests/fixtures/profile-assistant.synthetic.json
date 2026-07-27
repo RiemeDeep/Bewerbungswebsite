@@ -1,0 +1,173 @@
+{
+  "fixtureType": "synthetic_profile_assistant",
+  "subject": {
+    "displayName": "Alex Beispiel",
+    "synthetic": true
+  },
+  "claims": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "statement": "Die fiktive Person dokumentierte und verbesserte einen technischen Wartungsprozess.",
+      "keywords": ["technisch", "wartungsprozess", "prozessverbesserung", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "statement": "Dieser synthetische Entwurf darf nicht in Antworten gelangen.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "draft",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"]
+    },
+    {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "statement": "Dieser synthetische Claim ist nur fuer eine Stellenanalyse vorgesehen.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["job_analysis"],
+      "evidenceIds": ["cccccccc-cccc-4ccc-8ccc-cccccccccccc"]
+    },
+    {
+      "id": "44444444-4444-4444-8444-444444444444",
+      "statement": "Dieser synthetische Claim besitzt nur einen privaten Beleg.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["dddddddd-dddd-4ddd-8ddd-dddddddddddd"]
+    },
+    {
+      "id": "55555555-5555-4555-8555-555555555555",
+      "statement": "Dieser synthetische Claim wurde zurueckgezogen.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "withdrawn",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"]
+    },
+    {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "statement": "Dieser synthetische Claim ist privat.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "private",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["ffffffff-ffff-4fff-8fff-fffffffffff1"]
+    },
+    {
+      "id": "77777777-7777-4777-8777-777777777777",
+      "statement": "Dieser synthetische Claim hat nur einen Evidence-Entwurf.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["ffffffff-ffff-4fff-8fff-fffffffffff2"]
+    },
+    {
+      "id": "88888888-8888-4888-8888-888888888888",
+      "statement": "Dieser synthetische Claim hat Evidence fuer einen anderen Nutzungskontext.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["ffffffff-ffff-4fff-8fff-fffffffffff3"]
+    },
+    {
+      "id": "99999999-9999-4999-8999-999999999998",
+      "statement": "Dieser synthetische Claim hat nur interne Evidence.",
+      "keywords": ["technisch", "prozessverbesserungen"],
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"],
+      "evidenceIds": ["ffffffff-ffff-4fff-8fff-fffffffffff4"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "claimId": "11111111-1111-4111-8111-111111111111",
+      "label": "Synthetischer Arbeitsnachweis",
+      "relevance": "Belegt die dokumentierte Verbesserung des fiktiven Wartungsprozesses.",
+      "visibility": "public_excerpt",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"]
+    },
+    {
+      "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "claimId": "22222222-2222-4222-8222-222222222222",
+      "label": "Nicht freigegebener Entwurf",
+      "relevance": "Darf wegen des Claim-Status nicht verwendet werden.",
+      "visibility": "public_excerpt",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"]
+    },
+    {
+      "id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "claimId": "33333333-3333-4333-8333-333333333333",
+      "label": "Evidence fuer anderen Kontext",
+      "relevance": "Darf nur in einer synthetischen Stellenanalyse verwendet werden.",
+      "visibility": "public_excerpt",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"]
+    },
+    {
+      "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "claimId": "44444444-4444-4444-8444-444444444444",
+      "label": "Privater synthetischer Beleg",
+      "relevance": "Darf nicht ausgegeben werden.",
+      "visibility": "private",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"]
+    },
+    {
+      "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "claimId": "55555555-5555-4555-8555-555555555555",
+      "label": "Beleg zu zurueckgezogenem Claim",
+      "relevance": "Darf wegen des Claim-Status nicht verwendet werden.",
+      "visibility": "public_excerpt",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"]
+    },
+    {
+      "id": "ffffffff-ffff-4fff-8fff-fffffffffff1",
+      "claimId": "66666666-6666-4666-8666-666666666666",
+      "label": "Beleg zu privatem Claim",
+      "relevance": "Darf wegen der Claim-Sichtbarkeit nicht verwendet werden.",
+      "visibility": "public_excerpt",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"]
+    },
+    {
+      "id": "ffffffff-ffff-4fff-8fff-fffffffffff2",
+      "claimId": "77777777-7777-4777-8777-777777777777",
+      "label": "Nicht veroeffentlichter synthetischer Beleg",
+      "relevance": "Darf wegen des Evidence-Status nicht verwendet werden.",
+      "visibility": "public_excerpt",
+      "publicationStatus": "draft",
+      "allowedContexts": ["profile_assistant"]
+    },
+    {
+      "id": "ffffffff-ffff-4fff-8fff-fffffffffff3",
+      "claimId": "88888888-8888-4888-8888-888888888888",
+      "label": "Evidence fuer anderen Nutzungskontext",
+      "relevance": "Darf im Profilassistenten nicht verwendet werden.",
+      "visibility": "public_excerpt",
+      "publicationStatus": "published",
+      "allowedContexts": ["job_analysis"]
+    },
+    {
+      "id": "ffffffff-ffff-4fff-8fff-fffffffffff4",
+      "claimId": "99999999-9999-4999-8999-999999999998",
+      "label": "Interner synthetischer Beleg",
+      "relevance": "Darf nicht als oeffentlicher Quellenhinweis ausgegeben werden.",
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["profile_assistant"]
+    }
+  ]
+}

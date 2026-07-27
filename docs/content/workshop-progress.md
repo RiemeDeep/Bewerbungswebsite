@@ -1,7 +1,7 @@
 # Profil-Workshop: Arbeitsstand
 
-Stand: 2026-07-25
-Status: Session 1 aktiv, Chronologieabweichungen eingeordnet und Detail-Review offen
+Stand: 2026-07-27
+Status: nach Block 1 und erstem privaten Pilotfall fuer technischen Machbarkeitsnachweis pausiert
 
 ## Session 1
 
@@ -26,30 +26,56 @@ Festgelegter Rahmen:
 
 ## Block 1: Fakten und Chronologie
 
-| Arbeitsschritt                                      | Status        |
-| --------------------------------------------------- | ------------- |
-| Workshop-Leitplanken festlegen                      | abgeschlossen |
-| Quellengruppen bestaetigen                          | abgeschlossen |
-| private Quelldateien gegen Git-Tracking absichern   | abgeschlossen |
-| Ausbildung und formale Qualifikationen aufnehmen    | in Review     |
-| berufliche Stationen in Reihenfolge aufnehmen       | in Review     |
-| offizielle Rollenbezeichnungen erfassen             | in Review     |
-| dokumentierte und erinnerte Zeitraeume trennen      | abgeschlossen |
-| Zertifikate und Lizenzen erfassen                   | in Review     |
-| Quellen-IDs zuordnen                                | abgeschlossen |
-| Unternehmens- und Projektunterlagen inventarisieren | abgeschlossen |
-| Angaben atomisieren und zur Freigabe vorlegen       | offen         |
+| Arbeitsschritt                                      | Status                            |
+| --------------------------------------------------- | --------------------------------- |
+| Workshop-Leitplanken festlegen                      | abgeschlossen                     |
+| Quellengruppen bestaetigen                          | abgeschlossen                     |
+| private Quelldateien gegen Git-Tracking absichern   | abgeschlossen                     |
+| Ausbildung und formale Qualifikationen aufnehmen    | abgeschlossen                     |
+| berufliche Stationen in Reihenfolge aufnehmen       | abgeschlossen                     |
+| offizielle Rollenbezeichnungen erfassen             | abgeschlossen mit offener Evidenz |
+| dokumentierte und erinnerte Zeitraeume trennen      | abgeschlossen                     |
+| Zertifikate und Lizenzen erfassen                   | abgeschlossen                     |
+| Quellen-IDs zuordnen                                | abgeschlossen                     |
+| Unternehmens- und Projektunterlagen inventarisieren | abgeschlossen                     |
+| Angaben atomisieren und privat reviewen             | abgeschlossen                     |
+| oeffentliche Einzelfreigaben vorbereiten            | offen                             |
 
-## Naechster Intake
+## Verbleibende Punkte aus Block 1
 
-Als Naechstes werden ausschliesslich folgende Punkte mit Michael geklaert:
+1. Abschlussdatum einer beendeten rechtlichen Liquidationsphase bei Bedarf belegen;
+2. fuer einen privaten Chronologieeintrag Rollenbezeichnung und Evidenz offen halten;
+3. oeffentliche Formulierungen fuer zusaetzlich erfasste Chronologieangaben einzeln reviewen;
+4. Drittinformationen und notwendige Schwaerzungen je Einzelquelle pruefen.
 
-1. Art und Umfang des Legga-Food-Nachlaufs;
-2. Abschlussdatum der Tiny-State-Games-Liquidation, sofern auffindbar;
-3. Gueltigkeit oder heutige Einordnung aelterer Fachzertifikate;
-4. Freigabe der normalisierten Metadaten und Quellen-IDs;
-5. Auswahl der ersten Projekte fuer Evidence Stories in Block 2.
+Der konkrete Chronologieentwurf, die Konfliktliste und 42 atomisierte private Claim-Kandidaten bleiben
+im ignorierten privaten Arbeitsbereich. Kein Eintrag ist damit oeffentlich freigegeben, veroeffentlicht
+oder fuer Retrieval zulaessig.
 
-Der konkrete Chronologieentwurf und die Konfliktliste bleiben im ignorierten privaten Arbeitsbereich.
-Erst nach dem Review werden kleine Fakten-Claims zur Freigabe vorgeschlagen. Kein Eintrag gilt ohne
-Review als verifiziert oder veroeffentlicht.
+## Block 2: Projekte und Evidence Stories
+
+| Arbeitsschritt                                                 | Status        |
+| -------------------------------------------------------------- | ------------- |
+| ersten dokumentarisch vorbereiteten Pilotfall auswaehlen       | abgeschlossen |
+| vorhandene Quellen und Beleggrenzen pruefen                    | abgeschlossen |
+| Rolle, Eigenanteil, Teamleistung und Ergebnis reviewen         | abgeschlossen |
+| private Pilot-Evidence-Story normalisieren                     | abgeschlossen |
+| kleine Claim-Kandidaten aus dem Pilotfall ableiten             | abgeschlossen |
+| oeffentliche Einzelformulierungen und Evidence Items freigeben | offen         |
+| weitere Projektfaelle chronologisch bearbeiten                 | offen         |
+
+Der Pilotfall bleibt vollstaendig im ignorierten privaten Arbeitsbereich. Dokumentierte Planung,
+tatsaechliche Umsetzung und Selbstaussagen wurden getrennt; nicht vorhandene Quellen wurden nicht
+rekonstruiert. Die spaetere transparente Darstellung eines gescheiterten Vorhabens ist grundsaetzlich
+erlaubt, benoetigt aber weiterhin eine Claim- und Evidence-Einzelfreigabe.
+
+## Geplante Fortsetzung
+
+Die weitere detaillierte Profilaufnahme ist bewusst pausiert, bis der gestufte technische
+Machbarkeitsnachweis aus `docs/plans/technical-feasibility-gate.md` abgeschlossen oder der Plan nach
+einem Stop/Go-Gate angepasst wurde.
+
+Bei Fortsetzung werden die weiteren Projektfaelle wie vereinbart chronologisch bearbeitet. Vor jedem
+Fall wird geprueft, ob eine konkrete Situation ausreichend abgrenzbar ist und welche Quellen nur
+Planung, tatsaechliche Umsetzung oder Ergebnis belegen. Die vorhandenen privaten Entwuerfe bleiben
+bis dahin unveraendert `draft` und nur fuer `admin_review` zulaessig.

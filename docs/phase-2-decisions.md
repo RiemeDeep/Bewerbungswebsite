@@ -1,7 +1,38 @@
 # Offene Entscheidungen fuer Phase 2
 
-Stand: 2026-07-25
-Status: Workshop-Leitplanken entschieden, weitere Phase-2-Entscheidungen offen
+Stand: 2026-07-28
+Status: Workshop-Leitplanken und technisches Machbarkeits-Gate entschieden, weitere Phase-2-Entscheidungen offen
+
+## Arbeitsreihenfolge ab 2026-07-27
+
+| Entscheidung                                                              | Status      | Festgelegte Richtung                                                         |
+| ------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------- |
+| Werden weitere Stellen und Projekte sofort detailliert aufgenommen?       | Entschieden | nach Block 1 und erstem Pilotfall pausieren                                  |
+| Wie wird die technische Machbarkeit vor weiterer Inhaltsarbeit geprueft?  | Entschieden | vier gestufte Stop/Go-Stufen bis zum nicht produktiven End-to-End-Durchstich |
+| Welche Daten duerfen im Machbarkeitsnachweis verwendet werden?            | Entschieden | ausschliesslich klar synthetische Fixtures; keine privaten Workshop-Inhalte  |
+| Darf Stufe 1 bereits Datenbankfelder oder Remote-Infrastruktur festlegen? | Entschieden | nein; In-Memory und Mockprovider bis zum Migration Readiness Review          |
+| Aendert der Spike den Status von Phase 3?                                 | Entschieden | nein; kein produktiver Assistent und keine oeffentliche Aktivierung          |
+| Wann wird der Profil-Workshop fortgesetzt?                                | Entschieden | nach bestandenem Gesamt-Gate oder bewusster Plananpassung                    |
+
+Detailplan: `docs/plans/technical-feasibility-gate.md`.
+
+Die Entscheidung aendert die Arbeitsreihenfolge, aber keine fachliche Invariante. Ein ADR wird erst
+notwendig, wenn der Spike von den bestehenden Komponenten- oder Sicherheitsgrenzen abweicht.
+
+### Stop/Go Stufe 1
+
+Entscheidung am 2026-07-28: `GO`.
+
+Die lokale Kernpipeline hat Contracts, Freigabefilter, Mockprovider, HTTP-Orchestrierung und eine
+gegen Provider-Mutation gesicherte Evidence-Allowlist mit synthetischen Daten nachgewiesen. Der
+normale Server aktiviert den Spike-Endpunkt nicht. Positive Antworten werden ausschliesslich aus den
+erlaubten Claim-Statements gerendert; freie Providertexte werden nicht an den Client durchgereicht.
+52 Tests, Typpruefung, Linting und Builds waren
+erfolgreich.
+
+Nicht nachgewiesen sind weiterhin Supabase-Persistenz, RLS, Vektorsuche, ein realer Modellprovider
+und der Browser-Durchstich. Vor Stufe 2 wird deshalb das Migration Readiness Review abgeschlossen;
+die unten aufgefuehrten Migrationsentscheidungen bleiben bis dahin offen.
 
 ## Vor dem Profil-Workshop
 

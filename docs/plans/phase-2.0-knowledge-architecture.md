@@ -1,7 +1,7 @@
 # Umsetzungsplan Phase 2.0: Wissensarchitektur und Profil-Workshop
 
-Stand: 2026-07-25
-Status: Phase 2.0.1 abgeschlossen, Phase 2.0.2 aktiv
+Stand: 2026-07-27
+Status: Phase 2.0.1 abgeschlossen, Phase 2.0.2 nach erstem Pilotfall pausiert
 
 ## Ziel
 
@@ -41,7 +41,7 @@ Status: abgeschlossen
 
 ### 2.0.2 Profil-Workshop
 
-Status: gestartet am 2026-07-25; Leitplanken entschieden, Block 1 in Review
+Status: gestartet am 2026-07-25; nach Block 1 und erstem Pilotfall am 2026-07-27 pausiert
 
 - gesicherte Chronologie mit Michael aufnehmen;
 - relevante Projekte einzeln durchgehen;
@@ -60,14 +60,24 @@ Arbeitsstand:
 - neue Workshop-Angaben starten mit Sichtbarkeit `private` und Status `draft`;
 - fuenf Challenge-Fragen fuer den ersten Durchlauf priorisiert;
 - Quelleninventar und Fortschrittsprotokoll fuer Block 1 angelegt;
-- 37 logische Quellen aus Lebenslauf, Zeugnissen, Qualifikations-, Unternehmens-, Projekt- und
+- 38 logische Quellen aus Lebenslauf, Zeugnissen, Qualifikations-, Unternehmens-, Projekt- und
   Webquellen inventarisiert;
-- Unternehmensbelege in die private Chronologie eingearbeitet und verbleibende Datumsabweichungen
-  fuer Michaels Review isoliert.
+- zusaetzliche Chronologieangaben ausschliesslich im privaten Arbeitsbereich erfasst und nach
+  Belegstatus getrennt;
+- 42 kleine private Claim-Kandidaten aus Block 1 normalisiert;
+- Metadaten und Quellen-IDs fuer die private redaktionelle Weiterarbeit freigegeben;
+- ersten Projektfall als private Pilot-Evidence-Story mit zwoelf kleinen Claim-Kandidaten
+  normalisiert und dokumentierte Planung von Umsetzung und Selbstaussagen getrennt;
+- oeffentliche Einzelfreigaben, Evidence Items und Retrieval bleiben offen.
+
+Die weiteren Projektfaelle, Arbeitsweise, Grenzen, Ziele und Praeferenzen werden erst nach dem
+gestuften technischen Machbarkeitsnachweis aus
+`docs/plans/technical-feasibility-gate.md` weiterbearbeitet. Die spaetere Reihenfolge bleibt
+chronologisch.
 
 ### 2.0.3 Redaktionelle Normalisierung
 
-Status: offen
+Status: nach ersten Claim- und Pilotentwuerfen pausiert am 2026-07-27
 
 - Workshop-Ergebnisse in kleine Claims zerlegen;
 - Claims Entitaeten und Evidence Stories zuordnen;
@@ -121,6 +131,12 @@ Phase 2.1 darf erst starten, wenn:
 - offene Sicherheits- und Speicherentscheidungen beantwortet sind;
 - der initiale Seed-Umfang feststeht;
 - keine Migration ungepruefte Profilinhalte voraussetzt.
+
+Die lokale Supabase-Stufe des technischen Machbarkeitsnachweises beginnt ebenfalls erst nach diesem
+Migration Readiness Review. Stufe 1 verwendet deshalb ausschliesslich In-Memory-Daten und friert
+keine offenen Datenbankentscheidungen ein. Fuer das Review sind keine weiteren biografischen
+Interviews erforderlich: Der lokale Spike verwendet nur einen synthetischen Seed; der produktive
+Seed-Umfang bleibt separat offen.
 
 ## Ziel fuer den ersten Profilassistenten
 

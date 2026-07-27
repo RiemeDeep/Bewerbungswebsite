@@ -1,6 +1,6 @@
 # Implementierungsplan
 
-Stand: 2026-07-25. Die fachliche Source of Truth bleibt
+Stand: 2026-07-28. Die fachliche Source of Truth bleibt
 `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`.
 
 ## Arbeitsregeln
@@ -104,7 +104,7 @@ Abnahme:
 
 ## Phase 2: Strukturierte Wissensbasis
 
-Status: Phase 2.0.1 abgeschlossen; Phase 2.0.2 Profil-Workshop gestartet; Migration offen
+Status: Phase 2.0.1 abgeschlossen; Inhaltsworkshop nach Pilotfall pausiert; Migration offen
 
 Detailplan fuer Wissensarchitektur und Profil-Workshop:
 `docs/plans/phase-2.0-knowledge-architecture.md`
@@ -114,8 +114,11 @@ Vor der ersten Migration:
 1. Wissensklassen, Claim-/Evidence-Modell und Invarianten dokumentieren. Abgeschlossen am
    2026-07-24.
 2. Profil-Workshop mit gesicherten Fakten, Evidence Stories, Grenzen und Praeferenzen durchfuehren.
-   Gestartet am 2026-07-25; Leitplanken entschieden, 37 logische Quellen inventarisiert und Block 1
-   im Chronologie-Review.
+   Gestartet am 2026-07-25; Leitplanken entschieden, 38 logische Quellen inventarisiert, Block 1
+   privat reviewt und 42 kleine private Claim-Kandidaten normalisiert. Der erste Projektfall wurde
+   als private Pilot-Evidence-Story mit zwoelf weiteren Claim-Kandidaten erfasst; oeffentliche
+   Einzelfreigaben bleiben offen. Weitere Detail-Workshops sind bis zum technischen
+   Machbarkeits-Gate pausiert.
 3. Quellen nur als Metadaten inventarisieren; keine privaten Dokumente in Git ablegen. Lebenslauf,
    Arbeitszeugnisse, Zertifikate/Lizenzen sowie Unternehmens- und Projektunterlagen sind als erste
    Quellengruppen bestaetigt.
@@ -137,9 +140,47 @@ Abnahme:
 - Rueckzug entfernt Inhalte deterministisch;
 - jede Schemaaenderung liegt als Migration vor.
 
+## Technischer Machbarkeitsnachweis
+
+Status: Stufe 1 am 2026-07-28 bestanden; Stop/Go `GO`; Stufe 2 wartet auf Migration Readiness Review
+
+Detailplan:
+`docs/plans/technical-feasibility-gate.md`
+
+Der Machbarkeitsnachweis ist ein nicht produktiver, phasenuebergreifender Technikstrang mit
+ausschliesslich synthetischen Daten. Er prueft die risikoreichen Architekturgrenzen, bevor weitere
+Zeit in die detaillierte Profilaufnahme investiert wird. Er aendert nicht die fachlichen
+Voraussetzungen fuer Phase 2 oder Phase 3.
+
+Stufen:
+
+1. lokale Kernpipeline aus Contracts, In-Memory-Retrieval, Mockprovider, Evidence-Allowlist und
+   Orchestrator-Endpunkt;
+2. lokale Supabase-Migration, synthetischer Seed, RLS- und Retrieval-Tests nach Migration Readiness
+   Review;
+3. reale Modellintegration ausschliesslich mit synthetischen Daten;
+4. minimaler Browser-zu-Datenbank-Durchstich in einem nicht produktiven Testmodus.
+
+Nach jeder Stufe erfolgt eine Stop/Go-Entscheidung. Der Inhaltsworkshop wird erst nach bestandenem
+Gesamt-Gate oder einer bewussten Plananpassung fortgesetzt.
+
+Ergebnis Stufe 1:
+
+- strikte Assistant- und Fehler-Contracts;
+- synthetische Claim-/Evidence-Fixture;
+- deterministisches In-Memory-Retrieval und Mockprovider;
+- gesicherte Evidence-Allowlist, serverseitig aus erlaubten Claims gerenderte positive Antworten und
+  kanonische Antwort ohne Evidenz;
+- injizierbarer HTTP-Durchstich, der in der normalen Serverkomposition nicht registriert ist;
+- 52 erfolgreiche Tests, erfolgreiche Typpruefung, Linting und Builds.
+
 ## Phase 3: Profilassistent
 
 Status: offen, abhaengig von Phase 2
+
+Hinweis: Der technische Machbarkeitsnachweis darf einzelne Contracts, Ports und Testadapter
+vorbereiten, aktiviert aber keinen produktiven Profilassistenten und aendert diesen Phasenstatus
+nicht.
 
 Umsetzungseinheiten:
 
@@ -218,18 +259,20 @@ Abnahme:
 - Impressum und Datenschutz sind final und global erreichbar;
 - Kernflows sind im Produktionssystem getestet.
 
-## Erste kleine, vollstaendig testbare Umsetzungseinheit
+## Aktuelle kleine Umsetzungseinheit
 
-Nach Freigabe der Phase-1-Entscheidungen:
+Migration Readiness Review fuer Stufe 2:
 
-1. `ProfileContent`-Zod-Schema in `packages/contracts` anlegen.
-2. Eine lokale Fixture mit ausschliesslich freigegebenen, belegbaren Texten erstellen.
-3. Design-Tokens, globales Layout, Header und Footer umsetzen.
-4. Startseiten-Hero, zwei Einstiege und drei Profilperspektiven rendern.
-5. `/profil`, `/impressum` und `/datenschutz` mit klaren Platzhaltern erreichbar machen.
-6. Unit-Test fuer Inhaltsvertrag, Komponenten-Smoke-Test, Playwright-Navigation und Axe-Test.
+1. die in Stufe 1 benoetigten Felder gegen das fachliche Wissensmodell pruefen;
+2. `allowed_contexts`, Claim-Typen und Konfidenzwerte fuer die erste Migration reduzieren;
+3. Schemaexposition, Rollen und restriktive RLS-Matrix festlegen;
+4. Lebenszyklus von Claim, Evidence, Rueckzug und Re-Indexierung als Invarianten festlegen;
+5. Umfang des ausschliesslich synthetischen lokalen Seeds bestimmen;
+6. ADR-Bedarf fuer Schemaexposition oder neue Lebenszyklen pruefen;
+7. erst danach die lokale Supabase-Migration fuer Stufe 2 freigeben.
 
-Explizit nicht enthalten: Datenbank, Chat, LLM, Crawling, Match-Analyse und Kontaktversand.
+Explizit nicht enthalten: weitere biografische Interviews, echte Profilimporte, Remote-Migration,
+reales LLM, Web-UI, Crawling, Match-Analyse, n8n und Kontaktversand.
 
 ## Phasenuebergreifende Gates
 
