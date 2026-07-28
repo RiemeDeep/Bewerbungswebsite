@@ -4,6 +4,7 @@ import { jobContextSchema } from "./job-context.js";
 import { matchAnalysisSchema } from "./match-analysis.js";
 
 const accessToken = z.string().regex(/^[A-Za-z0-9_-]{43,128}$/u);
+const sha256Hex = z.string().regex(/^[a-f0-9]{64}$/u);
 
 export const matchAnalysisAccessPolicySchema = z
   .object({
@@ -33,12 +34,45 @@ export const matchAnalysisAccessMetadataSchema = z
     "expiresAt must be after createdAt.",
   );
 
+export const storedMatchAnalysisAccessSchema = z
+  .object({
+    analysisId: z.string().uuid(),
+    accessTokenHash: sha256Hex,
+    createdAt: z.string().datetime({ offset: true }),
+    expiresAt: z.string().datetime({ offset: true }),
+    status: z.enum(["active", "expired", "deleted"]),
+    robotsDirective: z.literal("noindex,nofollow"),
+  })
+  .strict()
+  .refine(
+    (metadata) => new Date(metadata.expiresAt).getTime() > new Date(metadata.createdAt).getTime(),
+    "expiresAt must be after createdAt.",
+  );
+
 export const matchAnalysisStorageRecordSchema = z
   .object({
-    access: matchAnalysisAccessMetadataSchema,
+    access: storedMatchAnalysisAccessSchema,
     jobContext: jobContextSchema,
     matchAnalysis: matchAnalysisSchema,
     consentScope: z.literal("single_match_result"),
+  })
+  .strict();
+
+export const accessibleMatchAnalysisSchema = z
+  .object({
+    analysisId: z.string().uuid(),
+    jobContext: jobContextSchema,
+    matchAnalysis: matchAnalysisSchema,
+    createdAt: z.string().datetime({ offset: true }),
+    expiresAt: z.string().datetime({ offset: true }),
+    robotsDirective: z.literal("noindex,nofollow"),
+  })
+  .strict();
+
+export const matchAnalysisCreationResponseSchema = z
+  .object({
+    access: matchAnalysisAccessMetadataSchema,
+    matchAnalysis: matchAnalysisSchema,
   })
   .strict();
 
@@ -70,4 +104,7 @@ export function isMatchAnalysisAccessExpired(
 
 export type MatchAnalysisAccessPolicy = z.infer<typeof matchAnalysisAccessPolicySchema>;
 export type MatchAnalysisAccessMetadata = z.infer<typeof matchAnalysisAccessMetadataSchema>;
+export type StoredMatchAnalysisAccess = z.infer<typeof storedMatchAnalysisAccessSchema>;
 export type MatchAnalysisStorageRecord = z.infer<typeof matchAnalysisStorageRecordSchema>;
+export type AccessibleMatchAnalysis = z.infer<typeof accessibleMatchAnalysisSchema>;
+export type MatchAnalysisCreationResponse = z.infer<typeof matchAnalysisCreationResponseSchema>;

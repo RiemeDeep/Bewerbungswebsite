@@ -275,6 +275,9 @@ Access-/TTL-Prototyp vorbereitet; produktive Analyse offen
 Contract-Plan:
 `docs/plans/phase-5.0-match-analysis-contract.md`
 
+Persistenz-Plan:
+`docs/plans/phase-5.1-match-analysis-persistence.md`
+
 Umsetzungseinheiten:
 
 1. `MatchAnalysis`-Contract und deterministische Invarianten. Gestartet mit
@@ -300,13 +303,18 @@ Umsetzungseinheiten:
 5. Assistent im bestaetigten Stellenkontext.
    Gestartet mit `matchAssistantMessageRequestSchema`, `matchAssistantResponseSchema`, strikter
    Requirement-/Evidence-Referenzvalidierung, deterministischem Mock-Service,
-   Orchestrator-Testroute, Web-BFF und nicht verlinkter `/test/match`-Frage UI.
+   Orchestrator-Testroute, Web-BFF und nicht verlinkter `/test/match`-Frage UI. Der Request enthaelt
+   inzwischen nur Zugriffstoken plus Frage; JobContext und MatchAnalysis werden serverseitig aus dem
+   Store geladen.
 6. zufaelliger Zugriffsschutz, TTL sowie `noindex, nofollow`.
    Gestartet mit `matchAnalysisAccessPolicySchema`, `matchAnalysisAccessMetadataSchema`,
    `matchAnalysisStorageRecordSchema`, deterministischen Expiry-Helpers und einem
-   Orchestrator-Helper fuer 256-bit Random-Token. Keine Persistenz und keine oeffentliche Route.
-   Vor echter Persistenz muss diese Grenze auf Token-Hash statt Klartexttoken im Storage-Record
-   umgestellt werden.
+   Orchestrator-Helper fuer 256-bit Random-Token. Die Storage-Grenze wurde auf Token-Hash statt
+   Klartexttoken korrigiert. Eine lokale Supabase-Migration, SQL-Negativtests und ein
+   Postgres-`MatchAnalysisStore` weisen Create/Get/Expire/Delete mit synthetischen Daten nach. Keine
+   Remote-Persistenz und keine oeffentliche Detailroute. Der Store ist hinter einem separaten
+   synthetischen Runtime-Flag verdrahtet; Creation, Get und Match-Assistent wurden lokal gegen
+   Supabase end-to-end nachgewiesen.
 
 Abnahme:
 
@@ -354,9 +362,13 @@ Phase-5.0 Match-Analyse:
 8. Zugriffsschutz, TTL und `noindex, nofollow` fuer spaetere teilbare Analysen vorbereitet;
 9. neue Ausrichtung dokumentiert: technische Vollstaendigkeit vor Bewerbung, produktionsnaher
    Supabase-Nachweis, Token-Hash und serverseitiges Laden von Analysen;
-10. naechster Schritt: lokale Supabase-Persistenz fuer kurzlebige Match-Analysen mit Token-Hash,
-    RLS-Negativtests und Store-Port vorbereiten;
-11. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
+10. lokale Supabase-Persistenz fuer kurzlebige Match-Analysen mit Token-Hash, RLS-Negativtests und
+    Store-Port umgesetzt und lokal verifiziert;
+11. Store im synthetischen Runtime-Modus verdrahtet und Match-Assistent auf Zugriffstoken plus
+    serverseitig geladenen Kontext umgestellt;
+12. naechster Schritt: nicht verlinkte Detailansicht und kontrollierten Expiry-/Cleanup-Ablauf
+    nachweisen;
+13. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
 
 Explizit nicht enthalten: echte Profilimporte, Remote-Migration, produktives reales LLM,
 produktives Crawling, produktive Match-Analyse, n8n und Kontaktversand.

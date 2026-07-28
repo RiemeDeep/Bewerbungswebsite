@@ -36,6 +36,7 @@ export const assistantErrorCodeSchema = z.enum([
   "ASSISTANT_PROVIDER_INVALID_RESPONSE",
   "ASSISTANT_EVIDENCE_VIOLATION",
   "ASSISTANT_INTERNAL_ERROR",
+  "MATCH_ANALYSIS_NOT_FOUND",
 ]);
 
 export const apiErrorResponseSchema = z

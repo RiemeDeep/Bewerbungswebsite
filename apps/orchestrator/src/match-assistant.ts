@@ -5,6 +5,8 @@ import {
   type MatchAssistantResponse,
 } from "@bewerbungswebsite/contracts";
 
+import type { MatchAnalysisStore } from "./match-analysis-store.js";
+
 export interface MatchAssistantService {
   answer(request: MatchAssistantMessageRequest): Promise<MatchAssistantResponse>;
 }
@@ -15,6 +17,17 @@ export class MatchAssistantError extends Error {
     this.name = "MatchAssistantError";
   }
 }
+
+export class MatchAssistantAccessError extends Error {
+  constructor() {
+    super("The match analysis is unavailable.");
+    this.name = "MatchAssistantAccessError";
+  }
+}
+
+export type DeterministicMockMatchAssistantServiceOptions = {
+  store: MatchAnalysisStore;
+};
 
 function tokenize(value: string): Set<string> {
   const normalized = value.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("de-DE");
@@ -47,11 +60,19 @@ function createUnavailableResponse(): MatchAssistantResponse {
   });
 }
 
-export function createDeterministicMockMatchAssistantService(): MatchAssistantService {
+export function createDeterministicMockMatchAssistantService(
+  options: DeterministicMockMatchAssistantServiceOptions,
+): MatchAssistantService {
   return {
     async answer(request) {
+      const storedAnalysis = await options.store.getByAccessToken(request.accessToken);
+      if (!storedAnalysis) {
+        throw new MatchAssistantAccessError();
+      }
+
+      const matchAnalysis = storedAnalysis.matchAnalysis;
       const questionTokens = tokenize(request.message);
-      const rankedRequirements = request.matchAnalysis.requirements
+      const rankedRequirements = matchAnalysis.requirements
         .map((requirement) => ({
           requirement,
           score: countMatches(
@@ -67,9 +88,7 @@ export function createDeterministicMockMatchAssistantService(): MatchAssistantSe
         );
       const selectedRequirement =
         rankedRequirements[0]?.requirement ??
-        request.matchAnalysis.requirements.find(
-          (requirement) => requirement.evidenceIds.length > 0,
-        ) ??
+        matchAnalysis.requirements.find((requirement) => requirement.evidenceIds.length > 0) ??
         null;
 
       if (!selectedRequirement) {
@@ -77,12 +96,8 @@ export function createDeterministicMockMatchAssistantService(): MatchAssistantSe
       }
 
       const evidence = selectedRequirement.evidenceIds
-        .map((evidenceId) =>
-          request.matchAnalysis.evidence.find((item) => item.evidenceId === evidenceId),
-        )
-        .filter(
-          (item): item is (typeof request.matchAnalysis.evidence)[number] => item !== undefined,
-        )
+        .map((evidenceId) => matchAnalysis.evidence.find((item) => item.evidenceId === evidenceId))
+        .filter((item): item is (typeof matchAnalysis.evidence)[number] => item !== undefined)
         .slice(0, 4)
         .map((item) => ({
           evidenceId: item.evidenceId,
@@ -109,12 +124,12 @@ export function createDeterministicMockMatchAssistantService(): MatchAssistantSe
         confidence: selectedRequirement.status === "supported" ? "medium" : "low",
         referencedRequirements: [selectedRequirement.requirementId],
         evidence,
-        openQuestions: request.matchAnalysis.gaps.slice(0, 2).map((gap) => gap.question),
+        openQuestions: matchAnalysis.gaps.slice(0, 2).map((gap) => gap.question),
         safetyFlags: ["Synthetischer Testmodus: keine produktiven Profilbelege."],
       });
 
       try {
-        return validateMatchAssistantResponseReferences(response, request);
+        return validateMatchAssistantResponseReferences(response, matchAnalysis);
       } catch (error) {
         throw new MatchAssistantError(error instanceof Error ? error.message : "Invalid response.");
       }

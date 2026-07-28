@@ -16,6 +16,10 @@ Regeln:
 - `seed/stage-2-profile-knowledge.synthetic.sql` enthaelt ausschliesslich synthetische Testdaten.
 - `tests/stage_2_profile_knowledge.sql` enthaelt SQL-Negativtests fuer RLS, Direktzugriff und
   Retrieval-Filter.
+- `migrations/20260728225000_match_analysis_storage.sql` enthaelt die lokale kurzlebige
+  MatchAnalysis-Persistenz mit Token-Hash, TTL, Status und restriktiver RLS.
+- `tests/match_analysis_storage.sql` prueft direkte Rollenrechte, RLS, fehlende Klartexttoken-Spalten,
+  Hashformat und Expiry-Constraints.
 
 Lokale Ausfuehrung:
 
@@ -23,7 +27,10 @@ Lokale Ausfuehrung:
 pnpm dlx supabase start
 pnpm dlx supabase db reset
 $env:PGPASSWORD='postgres'; psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f "supabase/tests/stage_2_profile_knowledge.sql"
+$env:PGPASSWORD='postgres'; psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f "supabase/tests/match_analysis_storage.sql"
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- supabase-profile-repository.test.ts
+$env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- match-analysis-store.test.ts
+$env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- match-storage-runtime.test.ts
 ```
 
 Diese Artefakte sind nicht fuer Remote-Migrationen freigegeben. Vor einer produktiven Nutzung muessen
@@ -37,3 +44,10 @@ liegen in `packages/contracts/src/job-context.ts` und im Plan
 `docs/plans/phase-4.2-job-context-retention.md`: kurzer TTL, Hash-only-Rohtextmodell,
 validierter `normalized_context` und explizite Cleanup-Auswahl. Eine spaetere Migration muss diese
 Regeln vor produktiver Speicherung abbilden.
+
+## MatchAnalysis-Retention
+
+Die lokale Migration speichert normalisierten JobContext und validierte MatchAnalysis gemeinsam als
+kurzlebigen Record. Der oeffentliche Bearer-Token wird nie persistiert; gespeichert wird nur sein
+SHA-256-Hash. Direkte anonyme Tabellenabfragen sind gesperrt. Eine Remote-Migration bleibt bis zur
+Projekt-, Regions-, Betriebs- und Datenschutzentscheidung untersagt.

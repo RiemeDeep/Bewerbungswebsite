@@ -79,13 +79,22 @@ describe("POST /api/test/match-analysis", () => {
       );
 
       expect(response.status).toBe(200);
+      expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
+      expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+      expect(response.headers.get("x-robots-tag")).toBe("noindex,nofollow");
       await expect(readJson(response)).resolves.toMatchObject({
-        schemaVersion: "1.0",
-        summary: { headline: "Synthetische Match-Ergebnisvorschau" },
-        warnings: [
-          "Diese Match-Analyse ist synthetisch und verwendet keine produktiven Profilbelege.",
-          "Es wird bewusst keine Match-Prozentzahl erzeugt.",
-        ],
+        access: {
+          accessToken: expect.any(String),
+          robotsDirective: "noindex,nofollow",
+        },
+        matchAnalysis: {
+          schemaVersion: "1.0",
+          summary: { headline: "Synthetische Match-Ergebnisvorschau" },
+          warnings: [
+            "Diese Match-Analyse ist synthetisch und verwendet keine produktiven Profilbelege.",
+            "Es wird bewusst keine Match-Prozentzahl erzeugt.",
+          ],
+        },
       });
     } finally {
       restoreEnvValue("ENABLE_MATCH_PREVIEW_TEST", previousFlag);

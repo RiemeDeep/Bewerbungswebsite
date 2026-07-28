@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { jobContextSchema } from "./job-context.js";
 import { matchAnalysisSchema } from "./match-analysis.js";
 
 const nonEmptyText = (maximumLength: number) => z.string().trim().min(1).max(maximumLength);
@@ -12,8 +11,7 @@ export const matchAssistantMessageRequestSchema = z
   .object({
     sessionId: z.string().uuid(),
     message: nonEmptyText(3_000),
-    jobContext: jobContextSchema,
-    matchAnalysis: matchAnalysisSchema,
+    accessToken: z.string().regex(/^[A-Za-z0-9_-]{43,128}$/u),
   })
   .strict();
 
@@ -58,15 +56,15 @@ export const matchAssistantResponseSchema = z
 
 export function validateMatchAssistantResponseReferences(
   responseInput: z.infer<typeof matchAssistantResponseSchema>,
-  requestInput: z.infer<typeof matchAssistantMessageRequestSchema>,
+  matchAnalysisInput: z.infer<typeof matchAnalysisSchema>,
 ) {
   const response = matchAssistantResponseSchema.parse(responseInput);
-  const request = matchAssistantMessageRequestSchema.parse(requestInput);
+  const matchAnalysis = matchAnalysisSchema.parse(matchAnalysisInput);
   const requirementIds = new Set(
-    request.matchAnalysis.requirements.map((requirement) => requirement.requirementId),
+    matchAnalysis.requirements.map((requirement) => requirement.requirementId),
   );
   const evidenceById = new Map(
-    request.matchAnalysis.evidence.map((evidence) => [evidence.evidenceId, evidence]),
+    matchAnalysis.evidence.map((evidence) => [evidence.evidenceId, evidence]),
   );
   const referencedEvidenceIds = new Set<string>();
 

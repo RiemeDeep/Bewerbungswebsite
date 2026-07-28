@@ -44,3 +44,30 @@ describe("stage 2 Supabase artifacts", () => {
     expect(sqlTest).toContain("published claims without reviewed_at must be rejected");
   });
 });
+
+describe("match analysis Supabase artifacts", () => {
+  it("stores only token hashes and blocks direct public-role access", () => {
+    const migration = readWorkspaceFile(
+      "supabase/migrations/20260728225000_match_analysis_storage.sql",
+    );
+
+    expect(migration).toContain("access_token_hash text not null unique");
+    expect(migration).not.toMatch(/\baccess_token\s+text\b/iu);
+    expect(migration).not.toMatch(/\baccess_path\b/iu);
+    expect(migration).toContain("alter table public.match_analyses enable row level security");
+    expect(migration).toContain(
+      "revoke all on table public.match_analyses from anon, authenticated",
+    );
+    expect(migration).toContain("match_analyses_cleanup_idx");
+    expect(migration).not.toMatch(/create\s+policy/iu);
+  });
+
+  it("documents executable negative checks for token storage, RLS and expiry", () => {
+    const sqlTest = readWorkspaceFile("supabase/tests/match_analysis_storage.sql");
+
+    expect(sqlTest).toContain("has_table_privilege('anon', 'public.match_analyses', 'select')");
+    expect(sqlTest).toContain("column_name in ('access_token', 'access_path')");
+    expect(sqlTest).toContain("invalid token hashes must be rejected");
+    expect(sqlTest).toContain("expires_at before created_at must be rejected");
+  });
+});

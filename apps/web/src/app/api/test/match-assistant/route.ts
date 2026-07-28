@@ -4,7 +4,6 @@ import {
   apiErrorResponseSchema,
   matchAssistantMessageRequestSchema,
   matchAssistantResponseSchema,
-  validateMatchAssistantResponseReferences,
   type ApiErrorResponse,
   type MatchAssistantMessageRequest,
   type MatchAssistantResponse,
@@ -24,11 +23,7 @@ function createErrorResponse(status: number, input: ApiErrorResponse) {
 }
 
 function createMockResponse(request: MatchAssistantMessageRequest): MatchAssistantResponse {
-  const firstSupportedRequirement = request.matchAnalysis.requirements.find(
-    (requirement) => requirement.evidenceIds.length > 0 && requirement.status !== "not_supported",
-  );
-
-  if (!firstSupportedRequirement) {
+  if (request.message.toLocaleLowerCase("de-DE").includes("unbelegt")) {
     return matchAssistantResponseSchema.parse({
       answer:
         "Dazu enthaelt die bestaetigte synthetische Match-Analyse keine belastbare Information.",
@@ -41,31 +36,22 @@ function createMockResponse(request: MatchAssistantMessageRequest): MatchAssista
     });
   }
 
-  const firstEvidence = request.matchAnalysis.evidence.find(
-    (evidence) => evidence.evidenceId === firstSupportedRequirement.evidenceIds[0],
-  );
-
-  if (!firstEvidence) {
-    throw new Error("Synthetic match assistant evidence missing.");
-  }
-
-  const response = matchAssistantResponseSchema.parse({
-    answer: `Zur Anforderung "${firstSupportedRequirement.label}" sagt die bestaetigte synthetische Match-Analyse: ${firstSupportedRequirement.explanation}`,
-    classification: firstSupportedRequirement.status === "transferable" ? "transferable" : "direct",
+  return matchAssistantResponseSchema.parse({
+    answer:
+      "Die serverseitig hinterlegte synthetische Match-Analyse stuetzt exemplarisch die technische Anforderung.",
+    classification: "direct",
     confidence: "medium",
-    referencedRequirements: [firstSupportedRequirement.requirementId],
+    referencedRequirements: ["req-technische-anforderungen-11111111"],
     evidence: [
       {
-        evidenceId: firstEvidence.evidenceId,
-        publicLabel: firstEvidence.publicLabel,
-        relevance: "Stuetzzusammenhang aus der bestaetigten synthetischen Match-Analyse.",
+        evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        publicLabel: "Synthetischer Profilbeleg",
+        relevance: "Stuetzzusammenhang aus einer serverseitig hinterlegten Testanalyse.",
       },
     ],
-    openQuestions: request.matchAnalysis.gaps.slice(0, 2).map((gap) => gap.question),
+    openQuestions: ["Welche Anforderungen sind fuer den Einstieg zwingend?"],
     safetyFlags: ["Synthetischer Testmodus: keine produktiven Profilbelege."],
   });
-
-  return validateMatchAssistantResponseReferences(response, request);
 }
 
 async function readOrchestratorError(
@@ -166,7 +152,14 @@ export async function POST(request: Request) {
       ? await fetchOrchestratorResponse(parsedRequest.data, requestId)
       : createMockResponse(parsedRequest.data);
 
-    return NextResponse.json(response, { status: 200 });
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        "cache-control": "private, no-store, max-age=0",
+        "referrer-policy": "no-referrer",
+        "x-robots-tag": "noindex,nofollow",
+      },
+    });
   } catch (error) {
     if (error instanceof OrchestratorMatchAssistantError) {
       return createErrorResponse(error.status, error.payload);

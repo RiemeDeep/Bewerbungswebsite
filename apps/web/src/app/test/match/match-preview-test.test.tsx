@@ -77,6 +77,19 @@ const validMatchAnalysis = {
   warnings: ["Es wird bewusst keine Match-Prozentzahl erzeugt."],
 };
 
+const validMatchCreation = {
+  access: {
+    analysisId: "99999999-9999-4999-8999-999999999999",
+    accessToken: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123",
+    accessPath: "/match/preview/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123",
+    createdAt: "2026-07-28T12:00:00.000Z",
+    expiresAt: "2026-07-31T12:00:00.000Z",
+    status: "active",
+    robotsDirective: "noindex,nofollow",
+  },
+  matchAnalysis: validMatchAnalysis,
+};
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -183,7 +196,7 @@ describe("MatchPreviewTest", () => {
           { status: 200 },
         ),
       )
-      .mockResolvedValueOnce(new Response(JSON.stringify(validMatchAnalysis), { status: 200 }));
+      .mockResolvedValueOnce(new Response(JSON.stringify(validMatchCreation), { status: 200 }));
 
     render(<MatchPreviewTest />);
     fireEvent.click(screen.getByRole("button", { name: "Vorschau pruefen" }));
@@ -253,7 +266,7 @@ describe("MatchPreviewTest", () => {
           { status: 200 },
         ),
       )
-      .mockResolvedValueOnce(new Response(JSON.stringify(validMatchAnalysis), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(validMatchCreation), { status: 200 }))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -292,6 +305,18 @@ describe("MatchPreviewTest", () => {
     );
     expect(screen.getByText(/Zur Anforderung/u)).toBeTruthy();
     expect(screen.getByText(/Synthetischer Profilbeleg/u)).toBeTruthy();
+
+    const assistantRequest = vi.mocked(globalThis.fetch).mock.calls[2];
+    const assistantBody = JSON.parse(
+      String((assistantRequest?.[1] as RequestInit | undefined)?.body),
+    ) as {
+      accessToken?: string;
+      jobContext?: unknown;
+      matchAnalysis?: unknown;
+    };
+    expect(assistantBody.accessToken).toBe(validMatchCreation.access.accessToken);
+    expect(assistantBody).not.toHaveProperty("jobContext");
+    expect(assistantBody).not.toHaveProperty("matchAnalysis");
   });
 
   it("shows validation feedback for invalid edited previews", async () => {

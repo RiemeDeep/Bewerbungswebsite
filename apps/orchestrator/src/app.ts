@@ -7,6 +7,7 @@ import {
   healthResponseSchema,
   jobContextInputSchema,
   jobContextSchema,
+  matchAnalysisCreationResponseSchema,
   matchAnalysisSchema,
   matchAssistantMessageRequestSchema,
   matchAssistantResponseSchema,
@@ -16,8 +17,13 @@ import {
 import express, { type ErrorRequestHandler, type Express } from "express";
 
 import type { JobContextPreviewService } from "./job-context-preview.js";
+import type { MatchAnalysisStore } from "./match-analysis-store.js";
 import { MatchAnalysisError, type MatchAnalyzer } from "./match-analyzer.js";
-import { MatchAssistantError, type MatchAssistantService } from "./match-assistant.js";
+import {
+  MatchAssistantAccessError,
+  MatchAssistantError,
+  type MatchAssistantService,
+} from "./match-assistant.js";
 import { ProfileAssistantError, type ProfileAssistantService } from "./profile-assistant.js";
 import { UrlSecurityError } from "./url-security.js";
 
@@ -25,6 +31,7 @@ export type AppDependencies = {
   profileAssistant?: ProfileAssistantService;
   jobContextPreview?: JobContextPreviewService;
   matchAnalyzer?: MatchAnalyzer;
+  matchAnalysisStore?: MatchAnalysisStore;
   matchAssistant?: MatchAssistantService;
 };
 
@@ -192,6 +199,97 @@ export function createApp(dependencies: AppDependencies = {}): Express {
     });
   }
 
+  const matchAnalysisStore = dependencies.matchAnalysisStore;
+  if (matchAnalyzer && matchAnalysisStore) {
+    app.post("/api/v1/match/analyses", async (request, response) => {
+      const requestId = randomUUID();
+      const parsedRequest = jobContextSchema.safeParse(request.body);
+
+      if (!parsedRequest.success) {
+        response.status(400).json(
+          createErrorResponse({
+            code: "INVALID_REQUEST",
+            message: "Die Anfrage ist ungueltig.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      try {
+        const matchAnalysis = await matchAnalyzer.analyze({ jobContext: parsedRequest.data });
+        const access = await matchAnalysisStore.create({
+          jobContext: parsedRequest.data,
+          matchAnalysis,
+        });
+
+        response
+          .set("cache-control", "private, no-store, max-age=0")
+          .set("referrer-policy", "no-referrer")
+          .set("x-robots-tag", "noindex,nofollow")
+          .status(201)
+          .json(
+            matchAnalysisCreationResponseSchema.parse({
+              access,
+              matchAnalysis,
+            }),
+          );
+      } catch (error) {
+        response.status(error instanceof MatchAnalysisError ? 400 : 500).json(
+          createErrorResponse({
+            code:
+              error instanceof MatchAnalysisError ? "INVALID_REQUEST" : "ASSISTANT_INTERNAL_ERROR",
+            message:
+              error instanceof MatchAnalysisError
+                ? "Der bestaetigte Stellenkontext enthaelt keine auswertbaren Anforderungen."
+                : "Die synthetische Match-Analyse konnte nicht gespeichert werden.",
+            requestId,
+            retryable: !(error instanceof MatchAnalysisError),
+          }),
+        );
+      }
+    });
+  }
+
+  if (matchAnalysisStore) {
+    app.get("/api/v1/match/analyses/:accessToken", async (request, response) => {
+      const requestId = randomUUID();
+      const accessToken = String(request.params.accessToken ?? "");
+
+      try {
+        const storedAnalysis = await matchAnalysisStore.getByAccessToken(accessToken);
+        if (!storedAnalysis) {
+          response.status(404).json(
+            createErrorResponse({
+              code: "MATCH_ANALYSIS_NOT_FOUND",
+              message: "Die Match-Analyse ist nicht vorhanden oder abgelaufen.",
+              requestId,
+              retryable: false,
+            }),
+          );
+          return;
+        }
+
+        response
+          .set("cache-control", "private, no-store, max-age=0")
+          .set("x-robots-tag", storedAnalysis.robotsDirective)
+          .set("referrer-policy", "no-referrer")
+          .status(200)
+          .json(storedAnalysis);
+      } catch {
+        response.status(404).json(
+          createErrorResponse({
+            code: "MATCH_ANALYSIS_NOT_FOUND",
+            message: "Die Match-Analyse ist nicht vorhanden oder abgelaufen.",
+            requestId,
+            retryable: false,
+          }),
+        );
+      }
+    });
+  }
+
   const matchAssistant = dependencies.matchAssistant;
   if (matchAssistant) {
     app.post("/api/v1/match/assistant/messages", async (request, response) => {
@@ -212,11 +310,26 @@ export function createApp(dependencies: AppDependencies = {}): Express {
 
       try {
         response
+          .set("cache-control", "private, no-store, max-age=0")
+          .set("referrer-policy", "no-referrer")
+          .set("x-robots-tag", "noindex,nofollow")
           .status(200)
           .json(
             matchAssistantResponseSchema.parse(await matchAssistant.answer(parsedRequest.data)),
           );
       } catch (error) {
+        if (error instanceof MatchAssistantAccessError) {
+          response.status(404).json(
+            createErrorResponse({
+              code: "MATCH_ANALYSIS_NOT_FOUND",
+              message: "Die Match-Analyse ist nicht vorhanden oder abgelaufen.",
+              requestId,
+              retryable: false,
+            }),
+          );
+          return;
+        }
+
         response.status(error instanceof MatchAssistantError ? 502 : 500).json(
           createErrorResponse({
             code:

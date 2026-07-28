@@ -1,13 +1,15 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 
 import {
   apiErrorResponseSchema,
   jobContextSchema,
+  matchAnalysisCreationResponseSchema,
   matchAnalysisSchema,
   normalizeJobContextRequirements,
   type ApiErrorResponse,
   type JobContext,
   type MatchAnalysis,
+  type MatchAnalysisCreationResponse,
 } from "@bewerbungswebsite/contracts";
 import { NextResponse } from "next/server";
 
@@ -144,13 +146,13 @@ async function readOrchestratorError(
 async function fetchOrchestratorMatchAnalysis(
   jobContext: JobContext,
   requestId: string,
-): Promise<MatchAnalysis> {
+): Promise<MatchAnalysisCreationResponse> {
   const baseUrl = process.env.ORCHESTRATOR_BASE_URL;
   if (!baseUrl) {
     throw new Error("Missing ORCHESTRATOR_BASE_URL for match analysis orchestrator mode.");
   }
 
-  const response = await fetch(new URL("/api/v1/match/analyze", baseUrl).toString(), {
+  const response = await fetch(new URL("/api/v1/match/analyses", baseUrl).toString(), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(jobContext),
@@ -163,7 +165,25 @@ async function fetchOrchestratorMatchAnalysis(
     );
   }
 
-  return matchAnalysisSchema.parse(await response.json());
+  return matchAnalysisCreationResponseSchema.parse(await response.json());
+}
+
+function createMockCreationResponse(jobContext: JobContext): MatchAnalysisCreationResponse {
+  const accessToken = randomBytes(32).toString("base64url");
+  const createdAt = new Date().toISOString();
+
+  return matchAnalysisCreationResponseSchema.parse({
+    access: {
+      analysisId: randomUUID(),
+      accessToken,
+      accessPath: `/match/preview/${accessToken}`,
+      createdAt,
+      expiresAt: new Date(new Date(createdAt).getTime() + 72 * 60 * 60 * 1_000).toISOString(),
+      status: "active",
+      robotsDirective: "noindex,nofollow",
+    },
+    matchAnalysis: createMockMatchAnalysis(jobContext),
+  });
 }
 
 export async function POST(request: Request) {
@@ -207,11 +227,18 @@ export async function POST(request: Request) {
   }
 
   try {
-    const analysis = isOrchestratorModeEnabled()
+    const creation = isOrchestratorModeEnabled()
       ? await fetchOrchestratorMatchAnalysis(parsedRequest.data, requestId)
-      : createMockMatchAnalysis(parsedRequest.data);
+      : createMockCreationResponse(parsedRequest.data);
 
-    return NextResponse.json(analysis, { status: 200 });
+    return NextResponse.json(creation, {
+      status: 200,
+      headers: {
+        "cache-control": "private, no-store, max-age=0",
+        "referrer-policy": "no-referrer",
+        "x-robots-tag": "noindex,nofollow",
+      },
+    });
   } catch (error) {
     if (error instanceof OrchestratorMatchError) {
       return createErrorResponse(error.status, error.payload);

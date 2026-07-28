@@ -91,19 +91,20 @@ synthetische Match-Analyse aus:
 
 Der naechste technische Baustein wurde ebenfalls nur fuer den Testmodus vorbereitet:
 
-- `matchAssistantMessageRequestSchema` verlangt `sessionId`, Frage, bestaetigten `JobContext` und
-  eine vorhandene `MatchAnalysis`;
+- `matchAssistantMessageRequestSchema` verlangt nur `sessionId`, Frage und einen unguessable
+  Zugriffstoken;
 - `matchAssistantResponseSchema` erzwingt strukturierte Antworten mit referenzierten Requirements,
   Evidence, Open Questions und Safety Flags;
 - positive Antworten brauchen Evidence, `not_available` darf keine Evidence tragen;
 - `validateMatchAssistantResponseReferences` erlaubt nur Requirement- und Evidence-IDs aus der
-  uebergebenen `MatchAnalysis`;
+  serverseitig geladenen `MatchAnalysis`;
 - Orchestrator-Route: `POST /api/v1/match/assistant/messages`, nur bei injiziertem Service;
 - Web-BFF: `POST /api/test/match-assistant`, nur mit `ENABLE_MATCH_PREVIEW_TEST=1`;
 - `/test/match` zeigt nach bestaetigter synthetischer Match-Analyse ein Fragefeld fuer den
   Match-Assistenten.
 
-Dieser Assistent ruft noch kein LLM auf und nutzt keine produktiven Profilbelege.
+Dieser Assistent ruft noch kein LLM auf, nutzt keine produktiven Profilbelege und akzeptiert weder
+JobContext noch MatchAnalysis aus dem Browser als Autoritaet.
 
 ## Zugriffsschutz Und Ablauf
 
@@ -131,7 +132,8 @@ Wichtige Korrektur vor Persistenz:
   Hash;
 - `noindex,nofollow` ist nur eine Indexierungsanweisung und ersetzt keinen Zugriffsschutz;
 - der Match-Assistent darf spaeter nicht `JobContext` und `MatchAnalysis` aus dem Browser als
-  vertrauenswuerdige Quelle akzeptieren, sondern muss beide serverseitig per Token aus dem Store laden.
+  vertrauenswuerdige Quelle akzeptieren. Diese Umstellung ist im synthetischen Runtime-Modus
+  umgesetzt: Der Service laedt beide serverseitig per Token aus dem Store.
 
 ## Gesperrte Profil-Evidence-Anbindung
 
@@ -167,7 +169,7 @@ Anbindung bleibt redaktionell gesperrt, bis echte Claims und Evidence Items frei
 
 ## Naechste Implementierungseinheit
 
-- lokale Supabase-Persistenz fuer kurzlebige Match-Analysen mit Token-Hash vorbereiten;
-- `MatchAnalysisStore`-Port fuer `create`, `getByAccessToken` und `expire/delete` definieren;
-- RLS-/Negativtests sicherstellen: keine anonyme Listenfunktion, keine Ausgabe abgelaufener Records,
-  keine Klartexttoken in der Datenbank.
+- Persistenzdetails und lokalen Nachweis in
+  `docs/plans/phase-5.1-match-analysis-persistence.md` fortfuehren;
+- nicht verlinkte Detailansicht fuer gespeicherte Analysen vorbereiten;
+- Cleanup-Ausfuehrung und Ablaufverhalten ueber einen kontrollierten Job nachweisen.

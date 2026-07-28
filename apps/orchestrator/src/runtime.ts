@@ -5,6 +5,7 @@ import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
 import { createFirecrawlCrawlProvider } from "./firecrawl-crawl-provider.js";
 import { createDeterministicMockJobContextExtractor } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
+import { createPostgresPoolMatchAnalysisStore } from "./match-analysis-store.js";
 import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
 import { createDeterministicMockMatchAssistantService } from "./match-assistant.js";
 import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
@@ -19,7 +20,13 @@ const runtimeEnvironmentSchema = z.object({
   ENABLE_SYNTHETIC_ASSISTANT_TEST: z.literal("1").optional(),
   ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
   ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
+  ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: z.literal("1").optional(),
   SYNTHETIC_PROFILE_DATABASE_URL: z
+    .string()
+    .trim()
+    .min(1)
+    .default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
+  SYNTHETIC_MATCH_DATABASE_URL: z
     .string()
     .trim()
     .min(1)
@@ -87,7 +94,19 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     dependencies.matchAnalyzer = createDeterministicMockMatchAnalyzer({
       evidenceRepository: createSyntheticMatchEvidenceRepository(),
     });
-    dependencies.matchAssistant = createDeterministicMockMatchAssistantService();
+  }
+
+  if (environment.ENABLE_SYNTHETIC_MATCH_STORAGE_TEST === "1") {
+    if (!dependencies.matchAnalyzer) {
+      throw new Error(
+        "ENABLE_SYNTHETIC_MATCH_STORAGE_TEST requires ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST.",
+      );
+    }
+
+    const store = createPostgresPoolMatchAnalysisStore(environment.SYNTHETIC_MATCH_DATABASE_URL);
+    dependencies.matchAnalysisStore = store;
+    dependencies.matchAssistant = createDeterministicMockMatchAssistantService({ store });
+    closeHandlers.push(() => store.close());
   }
 
   return {

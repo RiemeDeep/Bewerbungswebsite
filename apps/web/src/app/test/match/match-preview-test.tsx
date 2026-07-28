@@ -2,7 +2,7 @@
 
 import {
   jobContextSchema,
-  matchAnalysisSchema,
+  matchAnalysisCreationResponseSchema,
   matchAssistantResponseSchema,
   type ApiErrorResponse,
   type JobContext,
@@ -23,7 +23,7 @@ type ConfirmationState =
 type MatchAnalysisState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "success"; analysis: MatchAnalysis }
+  | { status: "success"; analysis: MatchAnalysis; accessToken: string }
   | { status: "error"; message: string; retryable: boolean };
 
 type MatchAssistantState =
@@ -175,7 +175,12 @@ export function MatchPreviewTest() {
         return;
       }
 
-      setMatchAnalysisState({ status: "success", analysis: matchAnalysisSchema.parse(payload) });
+      const creation = matchAnalysisCreationResponseSchema.parse(payload);
+      setMatchAnalysisState({
+        status: "success",
+        analysis: creation.matchAnalysis,
+        accessToken: creation.access.accessToken,
+      });
     } catch {
       setMatchAnalysisState({
         status: "error",
@@ -206,8 +211,7 @@ export function MatchPreviewTest() {
         body: JSON.stringify({
           sessionId: crypto.randomUUID(),
           message: matchAssistantQuestion,
-          jobContext: confirmationState.preview,
-          matchAnalysis: matchAnalysisState.analysis,
+          accessToken: matchAnalysisState.accessToken,
         }),
       });
       const payload = (await response.json()) as unknown;

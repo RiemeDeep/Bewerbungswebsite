@@ -38,8 +38,30 @@ describe("orchestrator runtime dependencies", () => {
     });
 
     expect(runtime.dependencies.matchAnalyzer).toBeDefined();
+    expect(runtime.dependencies.matchAnalysisStore).toBeUndefined();
+    expect(runtime.dependencies.matchAssistant).toBeUndefined();
+    await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
+  it("enables synthetic match storage and assistant only behind the separate storage flag", async () => {
+    const runtime = createRuntimeApp({
+      ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: "1",
+      ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: "1",
+      SYNTHETIC_MATCH_DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+    });
+
+    expect(runtime.dependencies.matchAnalyzer).toBeDefined();
+    expect(runtime.dependencies.matchAnalysisStore).toBeDefined();
     expect(runtime.dependencies.matchAssistant).toBeDefined();
     await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
+  it("rejects match storage without the synthetic match analyzer", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: "1",
+      }),
+    ).toThrow("requires ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST");
   });
 
   it("enables the job context preview with the deterministic mock extractor by default", async () => {

@@ -33,16 +33,22 @@ export type {
 export { matchAnalysisSchema } from "./match-analysis.js";
 export type { MatchAnalysis } from "./match-analysis.js";
 export {
+  accessibleMatchAnalysisSchema,
   createMatchAnalysisExpiresAt,
   isMatchAnalysisAccessExpired,
   matchAnalysisAccessMetadataSchema,
   matchAnalysisAccessPolicySchema,
+  matchAnalysisCreationResponseSchema,
   matchAnalysisStorageRecordSchema,
+  storedMatchAnalysisAccessSchema,
 } from "./match-access.js";
 export type {
+  AccessibleMatchAnalysis,
   MatchAnalysisAccessMetadata,
   MatchAnalysisAccessPolicy,
+  MatchAnalysisCreationResponse,
   MatchAnalysisStorageRecord,
+  StoredMatchAnalysisAccess,
 } from "./match-access.js";
 export {
   matchAssistantMessageRequestSchema,

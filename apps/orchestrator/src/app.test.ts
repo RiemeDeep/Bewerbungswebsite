@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
+import type { AccessibleMatchAnalysis } from "@bewerbungswebsite/contracts";
+
 import { createApp } from "./app.js";
 import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
 import {
@@ -10,6 +12,7 @@ import {
   JobContextExtractionError,
 } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
+import type { MatchAnalysisStore } from "./match-analysis-store.js";
 import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
 import { createDeterministicMockMatchAssistantService } from "./match-assistant.js";
 import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
@@ -28,11 +31,49 @@ const validAssistantRequest = {
 };
 
 const publicResolver: DnsResolver = async () => [{ address: "93.184.216.34", family: 4 }];
+const matchAccessToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123";
 
 function createSyntheticMatchAnalyzer() {
   return createDeterministicMockMatchAnalyzer({
     evidenceRepository: createSyntheticMatchEvidenceRepository(),
   });
+}
+
+function createTestMatchAnalysisStore(): MatchAnalysisStore {
+  let storedAnalysis: AccessibleMatchAnalysis | null = null;
+
+  return {
+    async create(input) {
+      storedAnalysis = {
+        analysisId: "99999999-9999-4999-8999-999999999999",
+        jobContext: input.jobContext,
+        matchAnalysis: input.matchAnalysis,
+        createdAt: "2026-07-28T12:00:00.000Z",
+        expiresAt: "2026-07-31T12:00:00.000Z",
+        robotsDirective: "noindex,nofollow",
+      };
+      return {
+        analysisId: storedAnalysis.analysisId,
+        accessToken: matchAccessToken,
+        accessPath: `/match/preview/${matchAccessToken}`,
+        createdAt: storedAnalysis.createdAt,
+        expiresAt: storedAnalysis.expiresAt,
+        status: "active",
+        robotsDirective: storedAnalysis.robotsDirective,
+      };
+    },
+    async getByAccessToken(accessToken) {
+      return accessToken === matchAccessToken ? storedAnalysis : null;
+    },
+    async expireDue() {
+      storedAnalysis = null;
+      return 1;
+    },
+    async deleteByAnalysisId() {
+      storedAnalysis = null;
+      return true;
+    },
+  };
 }
 
 const validJobContext = {
@@ -396,18 +437,21 @@ describe("POST /api/v1/match/assistant/messages", () => {
   });
 
   it("answers a question against a confirmed synthetic match analysis", async () => {
+    const store = createTestMatchAnalysisStore();
     const matchAnalysis = await createSyntheticMatchAnalyzer().analyze({
       jobContext: validJobContext,
     });
+    const access = await store.create({ jobContext: validJobContext, matchAnalysis });
     const response = await request(
-      createApp({ matchAssistant: createDeterministicMockMatchAssistantService() }),
+      createApp({
+        matchAssistant: createDeterministicMockMatchAssistantService({ store }),
+      }),
     )
       .post("/api/v1/match/assistant/messages")
       .send({
         sessionId: "99999999-9999-4999-8999-999999999999",
         message: "Wie passt technische Anforderungen klaeren?",
-        jobContext: validJobContext,
-        matchAnalysis,
+        accessToken: access.accessToken,
       })
       .expect(200);
 
@@ -417,17 +461,100 @@ describe("POST /api/v1/match/assistant/messages", () => {
     });
   });
 
-  it("rejects requests without confirmed context and analysis", async () => {
+  it("rejects requests without an access token", async () => {
+    const store = createTestMatchAnalysisStore();
     const response = await request(
-      createApp({ matchAssistant: createDeterministicMockMatchAssistantService() }),
+      createApp({
+        matchAssistant: createDeterministicMockMatchAssistantService({ store }),
+      }),
     )
       .post("/api/v1/match/assistant/messages")
       .send({
         sessionId: "99999999-9999-4999-8999-999999999999",
-        message: "Frage ohne Analyse",
+        message: "Frage ohne Token",
       })
       .expect(400);
 
     expect(response.body).toMatchObject({ error: { code: "INVALID_REQUEST" } });
+  });
+
+  it("returns the same not-found response for unavailable tokens", async () => {
+    const store = createTestMatchAnalysisStore();
+    const response = await request(
+      createApp({
+        matchAssistant: createDeterministicMockMatchAssistantService({ store }),
+      }),
+    )
+      .post("/api/v1/match/assistant/messages")
+      .send({
+        sessionId: "99999999-9999-4999-8999-999999999999",
+        message: "Frage mit unbekanntem Token",
+        accessToken: "zyxwvutsrqponmlkjihgfedcbaABCDEFGHIJKLMNO_123",
+      })
+      .expect(404);
+
+    expect(response.body).toMatchObject({
+      error: { code: "MATCH_ANALYSIS_NOT_FOUND", retryable: false },
+    });
+  });
+});
+
+describe("stored match analysis routes", () => {
+  it("are not registered without a match analysis store", async () => {
+    await request(createApp({ matchAnalyzer: createSyntheticMatchAnalyzer() }))
+      .post("/api/v1/match/analyses")
+      .send(validJobContext)
+      .expect(404);
+    await request(createApp()).get(`/api/v1/match/analyses/${matchAccessToken}`).expect(404);
+  });
+
+  it("creates and retrieves a stored analysis with restrictive response headers", async () => {
+    const store = createTestMatchAnalysisStore();
+    const app = createApp({
+      matchAnalyzer: createSyntheticMatchAnalyzer(),
+      matchAnalysisStore: store,
+    });
+
+    const creationResponse = await request(app)
+      .post("/api/v1/match/analyses")
+      .send(validJobContext)
+      .expect(201);
+
+    expect(creationResponse.body).toMatchObject({
+      access: {
+        accessToken: matchAccessToken,
+        robotsDirective: "noindex,nofollow",
+      },
+      matchAnalysis: { schemaVersion: "1.0" },
+    });
+    expect(creationResponse.headers["cache-control"]).toBe("private, no-store, max-age=0");
+    expect(creationResponse.headers["referrer-policy"]).toBe("no-referrer");
+    expect(creationResponse.headers["x-robots-tag"]).toBe("noindex,nofollow");
+
+    const getResponse = await request(app)
+      .get(`/api/v1/match/analyses/${matchAccessToken}`)
+      .expect(200);
+
+    expect(getResponse.headers["x-robots-tag"]).toBe("noindex,nofollow");
+    expect(getResponse.headers["referrer-policy"]).toBe("no-referrer");
+    expect(getResponse.headers["cache-control"]).toBe("private, no-store, max-age=0");
+    expect(getResponse.body).toMatchObject({
+      analysisId: "99999999-9999-4999-8999-999999999999",
+      jobContext: validJobContext,
+      matchAnalysis: { schemaVersion: "1.0" },
+    });
+    expect(getResponse.body).not.toHaveProperty("accessToken");
+    expect(getResponse.body).not.toHaveProperty("accessTokenHash");
+  });
+
+  it("returns a generic not-found response for malformed or unavailable tokens", async () => {
+    const app = createApp({ matchAnalysisStore: createTestMatchAnalysisStore() });
+
+    for (const token of ["short", "zyxwvutsrqponmlkjihgfedcbaABCDEFGHIJKLMNO_123"]) {
+      const response = await request(app).get(`/api/v1/match/analyses/${token}`).expect(404);
+      expect(response.body).toMatchObject({
+        error: { code: "MATCH_ANALYSIS_NOT_FOUND", retryable: false },
+      });
+    }
   });
 });

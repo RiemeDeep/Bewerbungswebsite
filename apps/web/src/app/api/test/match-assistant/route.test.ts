@@ -17,84 +17,7 @@ async function readJson(response: Response): Promise<unknown> {
 const validRequest = {
   sessionId: "99999999-9999-4999-8999-999999999999",
   message: "Wie passt die technische Anforderung?",
-  jobContext: {
-    company: {
-      name: "Beispiel GmbH",
-      description: null,
-      industrySignals: [],
-      sizeSignals: [],
-      valuesSignals: [],
-    },
-    job: {
-      title: "Technische Projektkoordination",
-      location: null,
-      workModel: null,
-      employmentType: "Vollzeit",
-      responsibilities: [],
-      mustRequirements: ["Technische Anforderungen klaeren"],
-      shouldRequirements: [],
-      benefits: [],
-    },
-    ambiguities: [],
-    sourceSections: [],
-    sources: [
-      { url: "https://example.com/jobs", retrievedAt: "2026-07-28T12:00:00.000Z", title: "Stelle" },
-    ],
-  },
-  matchAnalysis: {
-    schemaVersion: "1.0",
-    subject: {
-      companyName: "Beispiel GmbH",
-      jobTitle: "Technische Projektkoordination",
-      sourceUrl: "https://example.com/jobs",
-      retrievedAt: "2026-07-28T12:00:00.000Z",
-    },
-    summary: { headline: "Synthetisch", rationale: "Synthetische Analyse.", confidence: "medium" },
-    contributionAreas: [],
-    requirements: [
-      {
-        requirementId: "req-technische-anforderungen-11111111",
-        label: "Technische Anforderungen klaeren",
-        importance: "must",
-        status: "supported",
-        explanation: "Synthetisch gestuetzt.",
-        evidenceIds: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
-      },
-    ],
-    gaps: [
-      {
-        label: "Datenbasis",
-        explanation: "Synthetisch.",
-        severity: "clarify",
-        question: "Welche Belege?",
-      },
-    ],
-    first90Days: [
-      {
-        phase: "days_1_30",
-        hypothesis: "Klaeren.",
-        evidenceIds: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
-        assumptions: [],
-      },
-      {
-        phase: "days_31_60",
-        hypothesis: "Uebertragen.",
-        evidenceIds: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
-        assumptions: [],
-      },
-      { phase: "days_61_90", hypothesis: "Pruefen.", evidenceIds: [], assumptions: [] },
-    ],
-    interviewQuestions: [],
-    evidence: [
-      {
-        evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-        publicLabel: "Synthetischer Profilbeleg",
-        publicExcerpt: "Beispielhafter Beleg.",
-        sourceType: "synthetic_profile_claim",
-      },
-    ],
-    warnings: ["Synthetisch."],
-  },
+  accessToken: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123",
 };
 
 describe("POST /api/test/match-assistant", () => {
@@ -128,6 +51,9 @@ describe("POST /api/test/match-assistant", () => {
       );
 
       expect(response.status).toBe(200);
+      expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
+      expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+      expect(response.headers.get("x-robots-tag")).toBe("noindex,nofollow");
       await expect(readJson(response)).resolves.toMatchObject({
         classification: "direct",
         evidence: [{ evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }],
@@ -137,7 +63,7 @@ describe("POST /api/test/match-assistant", () => {
     }
   });
 
-  it("rejects requests without confirmed match analysis", async () => {
+  it("rejects requests without an access token", async () => {
     const previousFlag = process.env.ENABLE_MATCH_PREVIEW_TEST;
     process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
 
