@@ -218,6 +218,82 @@ describe("MatchPreviewTest", () => {
     );
   });
 
+  it("asks the synthetic match assistant after a confirmed match analysis", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            company: {
+              name: "Beispiel GmbH",
+              description: "Synthetischer Kontext.",
+              industrySignals: [],
+              sizeSignals: [],
+              valuesSignals: [],
+            },
+            job: {
+              title: "Projektkoordination",
+              location: null,
+              workModel: null,
+              employmentType: "Vollzeit",
+              responsibilities: [],
+              mustRequirements: ["Anforderung eins"],
+              shouldRequirements: [],
+              benefits: [],
+            },
+            ambiguities: [],
+            sourceSections: [],
+            sources: [
+              {
+                url: "https://example.com/jobs/technische-projektrolle",
+                retrievedAt: "2026-07-28T12:00:00.000Z",
+                title: "Stelle",
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify(validMatchAnalysis), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            answer:
+              'Zur Anforderung "Anforderung eins" sagt die bestaetigte synthetische Match-Analyse: Diese Anforderung wird synthetisch gestuetzt.',
+            classification: "direct",
+            confidence: "medium",
+            referencedRequirements: ["req-anforderung-eins-12345678"],
+            evidence: [
+              {
+                evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                publicLabel: "Synthetischer Profilbeleg",
+                relevance: "Stuetzzusammenhang aus der bestaetigten synthetischen Match-Analyse.",
+              },
+            ],
+            openQuestions: [],
+            safetyFlags: ["Synthetischer Testmodus: keine produktiven Profilbelege."],
+          }),
+          { status: 200 },
+        ),
+      );
+
+    render(<MatchPreviewTest />);
+    fireEvent.click(screen.getByRole("button", { name: "Vorschau pruefen" }));
+
+    await waitFor(() => expect(screen.getByLabelText("Stellenbezeichnung")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Stellenkontext bestaetigen" }));
+    await waitFor(() => expect(screen.getByText("Synthetisches Match-Ergebnis")).toBeTruthy());
+    fireEvent.change(screen.getByLabelText("Frage zur bestaetigten Match-Analyse"), {
+      target: { value: "Wie passt Anforderung eins?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Match-Assistent fragen" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Antwort im bestaetigten Stellenkontext")).toBeTruthy(),
+    );
+    expect(screen.getByText(/Zur Anforderung/u)).toBeTruthy();
+    expect(screen.getByText(/Synthetischer Profilbeleg/u)).toBeTruthy();
+  });
+
   it("shows validation feedback for invalid edited previews", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(

@@ -7,12 +7,19 @@ Stand: 2026-07-28. Die fachliche Source of Truth bleibt
 
 - Keine Profilinhalte, Zeitraeume, Kennzahlen oder Qualifikationen erfinden.
 - Unsichere redaktionelle Inhalte mit `TODO_CONTENT` markieren, aber nicht ungeprueft rendern.
+- Projektziel ist technische Vollstaendigkeit vor oeffentlicher Bewerbung. Eine online erreichbare
+  Umgebung darf vorab nur Staging/Abnahme sein und wird nicht aktiv beworben.
 - Pro Umsetzungseinheit einen kleinen Umfang, betroffene Dateien, Risiken und Pruefungen nennen.
 - Nach jeder Einheit Formatierung, Linting, Typpruefung, relevante Tests und Build ausfuehren.
 - Externe Eingaben als `unknown` behandeln und serverseitig validieren.
 - Datenbankaenderungen ausschliesslich als versionierte Migrationen.
 - Keine Secrets, privaten Dokumente oder vollstaendigen Prompts in Client, Git oder Logs.
+- Oeffentliche Analyse-Zugriffstoken duerfen vor Persistenz nur gehasht gespeichert werden; der
+  Klartexttoken wird nur einmal an den Browser ausgegeben.
 - Accessibility, Sicherheit, Datenschutz und mobile Nutzung sind Teil jeder Abnahme.
+
+Grundsatzentscheidung:
+`docs/decisions/2026-07-28-technical-completeness-before-public-promotion.md`.
 
 ## Phase 0: Repository und technische Grundlage
 
@@ -262,8 +269,8 @@ Abnahme:
 
 ## Phase 5: Match-Analyse
 
-Status: gestartet; Contract, erste Invarianten und synthetische Repository-Grenze integriert,
-produktive Analyse offen
+Status: gestartet; Contract, erste Invarianten, synthetische Repository-Grenze, Match-Assistent und
+Access-/TTL-Prototyp vorbereitet; produktive Analyse offen
 
 Contract-Plan:
 `docs/plans/phase-5.0-match-analysis-contract.md`
@@ -291,7 +298,15 @@ Umsetzungseinheiten:
    Ableitung aus gestuetzten Anforderungen und offenen Muss-Luecken; offene Muss-Luecken bleiben
    ohne Evidence-Referenz.
 5. Assistent im bestaetigten Stellenkontext.
+   Gestartet mit `matchAssistantMessageRequestSchema`, `matchAssistantResponseSchema`, strikter
+   Requirement-/Evidence-Referenzvalidierung, deterministischem Mock-Service,
+   Orchestrator-Testroute, Web-BFF und nicht verlinkter `/test/match`-Frage UI.
 6. zufaelliger Zugriffsschutz, TTL sowie `noindex, nofollow`.
+   Gestartet mit `matchAnalysisAccessPolicySchema`, `matchAnalysisAccessMetadataSchema`,
+   `matchAnalysisStorageRecordSchema`, deterministischen Expiry-Helpers und einem
+   Orchestrator-Helper fuer 256-bit Random-Token. Keine Persistenz und keine oeffentliche Route.
+   Vor echter Persistenz muss diese Grenze auf Token-Hash statt Klartexttoken im Storage-Record
+   umgestellt werden.
 
 Abnahme:
 
@@ -334,8 +349,14 @@ Phase-5.0 Match-Analyse:
 5. `createInMemoryMatchEvidenceRepository` mit rein synthetischem Fixture vorbereitet und in den
    Mock-Match-Analyzer integriert;
 6. 90-Tage-Hypothesen aus gestuetzten Anforderungen und Material-Gaps abgeleitet;
-7. naechster Schritt: Assistent im bestaetigten Stellenkontext konzipieren;
-8. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
+7. Assistent im bestaetigten Stellenkontext als synthetischer, flag-geschuetzter Durchstich
+   umgesetzt;
+8. Zugriffsschutz, TTL und `noindex, nofollow` fuer spaetere teilbare Analysen vorbereitet;
+9. neue Ausrichtung dokumentiert: technische Vollstaendigkeit vor Bewerbung, produktionsnaher
+   Supabase-Nachweis, Token-Hash und serverseitiges Laden von Analysen;
+10. naechster Schritt: lokale Supabase-Persistenz fuer kurzlebige Match-Analysen mit Token-Hash,
+    RLS-Negativtests und Store-Port vorbereiten;
+11. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
 
 Explizit nicht enthalten: echte Profilimporte, Remote-Migration, produktives reales LLM,
 produktives Crawling, produktive Match-Analyse, n8n und Kontaktversand.
@@ -347,4 +368,6 @@ produktives Crawling, produktive Match-Analyse, n8n und Kontaktversand.
 - Vor produktiven Profilinhalten: Claim und Evidence redaktionell freigeben.
 - Vor Supabase-Aenderungen: Tabellen und vorhandene Migrationen erneut analysieren.
 - Vor n8n-Aenderungen: Workflow-Technik und Fehlerbehandlung festlegen.
+- Vor jeder teilbaren Analyse: Token-Hash, TTL, `noindex,nofollow`, keine anonyme Listenfunktion und
+  serverseitiges Laden der Analyse nachweisen.
 - Vor Go-live: vollstaendige Sicherheits-, Datenschutz-, Accessibility- und Rechtspruefung.

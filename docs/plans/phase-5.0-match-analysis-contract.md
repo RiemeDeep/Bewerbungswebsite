@@ -1,7 +1,8 @@
 # Phase 5.0: MatchAnalysis Contract und Invarianten
 
 Stand: 2026-07-28
-Status: Contract und synthetische Repository-Grenze integriert, keine produktive Match-Analyse aktiviert
+Status: Contract, synthetische Repository-Grenze, Match-Assistent und Access-Prototyp vorbereitet,
+keine produktive Match-Analyse aktiviert
 
 ## Ziel
 
@@ -86,6 +87,52 @@ synthetische Match-Analyse aus:
 - die UI zeigt Summary, bewertete Anforderungen, Luecken/Klaerungspunkte und Warnungen;
 - alle Daten bleiben synthetisch beziehungsweise vom Besucher bestaetigter Stellenkontext.
 
+## Assistent Im Bestaetigten Stellenkontext
+
+Der naechste technische Baustein wurde ebenfalls nur fuer den Testmodus vorbereitet:
+
+- `matchAssistantMessageRequestSchema` verlangt `sessionId`, Frage, bestaetigten `JobContext` und
+  eine vorhandene `MatchAnalysis`;
+- `matchAssistantResponseSchema` erzwingt strukturierte Antworten mit referenzierten Requirements,
+  Evidence, Open Questions und Safety Flags;
+- positive Antworten brauchen Evidence, `not_available` darf keine Evidence tragen;
+- `validateMatchAssistantResponseReferences` erlaubt nur Requirement- und Evidence-IDs aus der
+  uebergebenen `MatchAnalysis`;
+- Orchestrator-Route: `POST /api/v1/match/assistant/messages`, nur bei injiziertem Service;
+- Web-BFF: `POST /api/test/match-assistant`, nur mit `ENABLE_MATCH_PREVIEW_TEST=1`;
+- `/test/match` zeigt nach bestaetigter synthetischer Match-Analyse ein Fragefeld fuer den
+  Match-Assistenten.
+
+Dieser Assistent ruft noch kein LLM auf und nutzt keine produktiven Profilbelege.
+
+## Zugriffsschutz Und Ablauf
+
+Fuer spaetere teilbare Analysen wurde nur die technische Grenze vorbereitet, noch ohne Persistenz und
+ohne oeffentliche Detailroute:
+
+- `matchAnalysisAccessPolicySchema` definiert Default-TTL `72h`, Max-TTL `168h`,
+  `tokenMode=unguessable_random` und `robotsDirective=noindex,nofollow`;
+- `matchAnalysisAccessMetadataSchema` verlangt zufaellige Token mit 256-bit-tauglicher Laenge,
+  tokenisierte Pfade unter `/match/preview/<token>`, Status und Expiry;
+- `matchAnalysisStorageRecordSchema` kombiniert Access-Metadaten, bestaetigten `JobContext`,
+  `MatchAnalysis` und `consentScope=single_match_result`;
+- `createMatchAnalysisExpiresAt` und `isMatchAnalysisAccessExpired` bilden die deterministischen
+  Ablaufregeln ab;
+- `createMatchAnalysisAccessMetadata` erzeugt im Orchestrator validierte Metadaten mit
+  `randomBytes(32).toString("base64url")`;
+- abgelaufene, geloeschte oder explizit expired Records duerfen spaeter nicht ausgeliefert werden.
+
+Wichtige Korrektur vor Persistenz:
+
+- Zugriffstoken sind Geheimnisse und duerfen in Supabase nicht im Klartext gespeichert werden;
+- der Browser erhaelt den Klartexttoken nur einmal;
+- gespeichert wird nur ein SHA-256-Hash des Tokens;
+- spaetere Abrufe hashen den uebergebenen Token und vergleichen serverseitig gegen den gespeicherten
+  Hash;
+- `noindex,nofollow` ist nur eine Indexierungsanweisung und ersetzt keinen Zugriffsschutz;
+- der Match-Assistent darf spaeter nicht `JobContext` und `MatchAnalysis` aus dem Browser als
+  vertrauenswuerdige Quelle akzeptieren, sondern muss beide serverseitig per Token aus dem Store laden.
+
 ## Gesperrte Profil-Evidence-Anbindung
 
 Die echte Profil-Evidence-Anbindung ist noch nicht aktiviert. Als Sicherheitsgrenze wurden Contract
@@ -116,9 +163,11 @@ Anbindung bleibt redaktionell gesperrt, bis echte Claims und Evidence Items frei
 - LLM-Provider fuer Match-Analyse;
 - Persistenz von `MatchAnalysis`;
 - produktive oder oeffentlich verlinkte Ergebnisroute;
-- Chat im bestaetigten Stellenkontext.
+- produktiver Chat im bestaetigten Stellenkontext.
 
 ## Naechste Implementierungseinheit
 
-- Assistent im bestaetigten Stellenkontext konzipieren;
-- danach Zugriffsschutz, TTL und `noindex, nofollow` fuer spaetere teilbare Analysen vorbereiten.
+- lokale Supabase-Persistenz fuer kurzlebige Match-Analysen mit Token-Hash vorbereiten;
+- `MatchAnalysisStore`-Port fuer `create`, `getByAccessToken` und `expire/delete` definieren;
+- RLS-/Negativtests sicherstellen: keine anonyme Listenfunktion, keine Ausgabe abgelaufener Records,
+  keine Klartexttoken in der Datenbank.

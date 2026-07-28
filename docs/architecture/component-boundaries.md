@@ -6,11 +6,18 @@
 eine schlanke Backend-for-Frontend-Schicht. Private Quellen, Service-Role-Schluessel und freie
 Toolauswahl gehoeren nicht in diese Anwendung.
 
+Der Browser ist keine Autoritaet fuer gespeicherte Analysen. Fuer spaetere Match-Assistentenfragen
+darf er nur Frage und Zugriffstoken senden; bestaetigter JobContext, MatchAnalysis und erlaubte
+Evidence werden serverseitig geladen und erneut validiert.
+
 ## Orchestrator
 
 `apps/orchestrator` ist die serverseitige Entscheidungs- und Routing-Schicht. Dort werden
 spaeter interne Requests authentisiert, Retrieval-Entscheidungen getroffen, Modellprovider
 gekapselt und strukturierte Modellantworten gegen Contracts und erlaubte Evidence-IDs geprueft.
+
+Der Orchestrator prueft Analyse-Zugriffstoken serverseitig gegen gespeicherte Token-Hashes, erzwingt
+TTL/Status-Regeln und gibt abgelaufene oder geloeschte Analyseobjekte nicht aus.
 
 Der Orchestrator ist nicht fuer langlaufende Integrationsketten gedacht.
 
@@ -24,6 +31,10 @@ Ausgaben. Externe Daten gelten bis zur erfolgreichen Validierung als `unknown`.
 Supabase wird die Source of Truth fuer Profilentitaeten, Claims, Belege, Dokumentmetadaten,
 Retrieval-Chunks und kurzlebige Analyseobjekte. Schemaaenderungen erfolgen ausschliesslich als
 versionierte Migrationen mit restriktiven RLS-Policies.
+
+Kurzlebige Analyseobjekte speichern keine Klartext-Zugriffstoken. Persistiert werden nur Hashes,
+Status, Expiry, consent scope, normalisierte Kontexte und validierte Analyseobjekte. Anonyme direkte
+Listen- oder Detailabfragen sind nicht erlaubt.
 
 ## n8n
 

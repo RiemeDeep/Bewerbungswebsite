@@ -3,9 +3,11 @@
 import {
   jobContextSchema,
   matchAnalysisSchema,
+  matchAssistantResponseSchema,
   type ApiErrorResponse,
   type JobContext,
   type MatchAnalysis,
+  type MatchAssistantResponse,
 } from "@bewerbungswebsite/contracts";
 import { type FormEvent, useState } from "react";
 
@@ -22,6 +24,12 @@ type MatchAnalysisState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "success"; analysis: MatchAnalysis }
+  | { status: "error"; message: string; retryable: boolean };
+
+type MatchAssistantState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; response: MatchAssistantResponse }
   | { status: "error"; message: string; retryable: boolean };
 
 function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
@@ -66,6 +74,12 @@ export function MatchPreviewTest() {
   const [matchAnalysisState, setMatchAnalysisState] = useState<MatchAnalysisState>({
     status: "idle",
   });
+  const [matchAssistantQuestion, setMatchAssistantQuestion] = useState(
+    "Wie passt die technische Anforderung?",
+  );
+  const [matchAssistantState, setMatchAssistantState] = useState<MatchAssistantState>({
+    status: "idle",
+  });
 
   async function submitPreview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,6 +87,7 @@ export function MatchPreviewTest() {
     setEditablePreview(null);
     setConfirmationState({ status: "editing", message: null });
     setMatchAnalysisState({ status: "idle" });
+    setMatchAssistantState({ status: "idle" });
 
     try {
       const response = await fetch("/api/test/job-context-preview", {
@@ -118,6 +133,7 @@ export function MatchPreviewTest() {
     );
     setConfirmationState({ status: "editing", message: null });
     setMatchAnalysisState({ status: "idle" });
+    setMatchAssistantState({ status: "idle" });
   }
 
   async function confirmEditedPreview() {
@@ -138,6 +154,7 @@ export function MatchPreviewTest() {
     setEditablePreview(parsedPreview.data);
     setConfirmationState({ status: "confirmed", preview: parsedPreview.data });
     setMatchAnalysisState({ status: "loading" });
+    setMatchAssistantState({ status: "idle" });
 
     try {
       const response = await fetch("/api/test/match-analysis", {
@@ -163,6 +180,57 @@ export function MatchPreviewTest() {
       setMatchAnalysisState({
         status: "error",
         message: "Die synthetische Match-Analyse konnte nicht gesendet werden.",
+        retryable: true,
+      });
+    }
+  }
+
+  async function submitMatchAssistantQuestion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (confirmationState.status !== "confirmed" || matchAnalysisState.status !== "success") {
+      setMatchAssistantState({
+        status: "error",
+        message: "Bitte bestaetigen Sie zuerst den Stellenkontext und die Match-Analyse.",
+        retryable: false,
+      });
+      return;
+    }
+
+    setMatchAssistantState({ status: "loading" });
+
+    try {
+      const response = await fetch("/api/test/match-assistant", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId: crypto.randomUUID(),
+          message: matchAssistantQuestion,
+          jobContext: confirmationState.preview,
+          matchAnalysis: matchAnalysisState.analysis,
+        }),
+      });
+      const payload = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        setMatchAssistantState({
+          status: "error",
+          message: isApiErrorResponse(payload)
+            ? payload.error.message
+            : "Der synthetische Match-Assistent ist fehlgeschlagen.",
+          retryable: isApiErrorResponse(payload) ? payload.error.retryable : true,
+        });
+        return;
+      }
+
+      setMatchAssistantState({
+        status: "success",
+        response: matchAssistantResponseSchema.parse(payload),
+      });
+    } catch {
+      setMatchAssistantState({
+        status: "error",
+        message: "Die synthetische Match-Assistentenfrage konnte nicht gesendet werden.",
         retryable: true,
       });
     }
@@ -444,6 +512,45 @@ export function MatchPreviewTest() {
                       <li key={warning}>{warning}</li>
                     ))}
                   </ul>
+                  <form className="assistant-form" onSubmit={submitMatchAssistantQuestion}>
+                    <label htmlFor="match-assistant-question">
+                      Frage zur bestaetigten Match-Analyse
+                    </label>
+                    <textarea
+                      id="match-assistant-question"
+                      onChange={(event) => setMatchAssistantQuestion(event.target.value)}
+                      rows={3}
+                      value={matchAssistantQuestion}
+                    />
+                    <button disabled={matchAssistantState.status === "loading"} type="submit">
+                      {matchAssistantState.status === "loading"
+                        ? "Antwortet synthetisch ..."
+                        : "Match-Assistent fragen"}
+                    </button>
+                  </form>
+                  {matchAssistantState.status === "error" ? (
+                    <div role="alert">
+                      <strong>Fehler im synthetischen Match-Assistenten</strong>
+                      <p>{matchAssistantState.message}</p>
+                      {matchAssistantState.retryable ? (
+                        <p>Sie koennen die Frage erneut senden.</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {matchAssistantState.status === "success" ? (
+                    <article aria-label="Synthetische Match-Assistentenantwort">
+                      <h3>Antwort im bestaetigten Stellenkontext</h3>
+                      <p>{matchAssistantState.response.answer}</p>
+                      <p>Confidence: {matchAssistantState.response.confidence}</p>
+                      <ul aria-label="Referenzierte Match-Belege">
+                        {matchAssistantState.response.evidence.map((evidence) => (
+                          <li key={evidence.evidenceId}>
+                            <strong>{evidence.publicLabel}</strong>: {evidence.relevance}
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ) : null}
                 </section>
               ) : null}
 

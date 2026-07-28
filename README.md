@@ -98,6 +98,10 @@ tests/fixtures/         Nicht produktive, rechtlich zulaessige Test-Fixtures
   Analyseobjekte.
 - n8n ist nur fuer deterministische, wiederholbare oder asynchrone Nebenprozesse vorgesehen.
 - Externe Inhalte gelten immer als nicht vertrauenswuerdige Daten.
+- Die Website wird erst aktiv beworben, wenn der vollstaendige technische Funktionsnachweis vorliegt.
+  Vorherige Online-Umgebungen gelten nur als Staging/Abnahme.
+- Teilbare Analysezugaenge speichern spaeter nur Token-Hashes; der Browser ist keine Autoritaet fuer
+  persistierte MatchAnalysis- oder Evidence-Daten.
 
 Details stehen in `docs/architecture/component-boundaries.md` und
 `docs/implementation-plan.md`.

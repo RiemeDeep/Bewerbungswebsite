@@ -11,6 +11,7 @@ import {
 } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
 import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
+import { createDeterministicMockMatchAssistantService } from "./match-assistant.js";
 import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
 import {
   createDeterministicMockProvider,
@@ -386,5 +387,47 @@ describe("POST /api/v1/match/analyze", () => {
     expect(response.body).toMatchObject({
       error: { code: "INVALID_REQUEST", retryable: false },
     });
+  });
+});
+
+describe("POST /api/v1/match/assistant/messages", () => {
+  it("is not registered by the default server composition", async () => {
+    await request(createApp()).post("/api/v1/match/assistant/messages").send({}).expect(404);
+  });
+
+  it("answers a question against a confirmed synthetic match analysis", async () => {
+    const matchAnalysis = await createSyntheticMatchAnalyzer().analyze({
+      jobContext: validJobContext,
+    });
+    const response = await request(
+      createApp({ matchAssistant: createDeterministicMockMatchAssistantService() }),
+    )
+      .post("/api/v1/match/assistant/messages")
+      .send({
+        sessionId: "99999999-9999-4999-8999-999999999999",
+        message: "Wie passt technische Anforderungen klaeren?",
+        jobContext: validJobContext,
+        matchAnalysis,
+      })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      classification: "direct",
+      evidence: [{ evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }],
+    });
+  });
+
+  it("rejects requests without confirmed context and analysis", async () => {
+    const response = await request(
+      createApp({ matchAssistant: createDeterministicMockMatchAssistantService() }),
+    )
+      .post("/api/v1/match/assistant/messages")
+      .send({
+        sessionId: "99999999-9999-4999-8999-999999999999",
+        message: "Frage ohne Analyse",
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({ error: { code: "INVALID_REQUEST" } });
   });
 });

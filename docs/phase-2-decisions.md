@@ -14,11 +14,17 @@ lokale Stufe 2 entschieden; produktive Phase-2-Entscheidungen teilweise offen
 | Darf Stufe 1 bereits Datenbankfelder oder Remote-Infrastruktur festlegen? | Entschieden | nein; In-Memory und Mockprovider bis zum Migration Readiness Review          |
 | Aendert der Spike den Status von Phase 3?                                 | Entschieden | nein; kein produktiver Assistent und keine oeffentliche Aktivierung          |
 | Wann wird der Profil-Workshop fortgesetzt?                                | Entschieden | nach bestandenem Gesamt-Gate oder bewusster Plananpassung                    |
+| Wird vor Bewerbung auf technische Vollstaendigkeit optimiert?             | Entschieden | ja; Staging/Abnahme ist erlaubt, aktive Bewerbung erst nach vollem Nachweis  |
 
 Detailplan: `docs/plans/technical-feasibility-gate.md`.
 
 Die Entscheidung aendert die Arbeitsreihenfolge, aber keine fachliche Invariante. Ein ADR wird erst
 notwendig, wenn der Spike von den bestehenden Komponenten- oder Sicherheitsgrenzen abweicht.
+
+Ergaenzung am 2026-07-28: Die Ausrichtung wurde verbindlich geschaerft in
+`docs/decisions/2026-07-28-technical-completeness-before-public-promotion.md`. Naechste Nachweise
+werden produktionsnah gegen lokale Supabase-Persistenz gefuehrt; neue kurzlebige Analyseobjekte
+speichern Zugriffstoken nur als Hash.
 
 ### Stop/Go Stufe 1
 
@@ -102,6 +108,7 @@ Eine ADR ist erforderlich, wenn:
 - ein externer Dokument- oder Embedding-Dienst gewaehlt wird;
 - die Datenbank-Schemaexposition oder Rollenarchitektur festgelegt wird;
 - private Inhalte in einem neuen Verarbeitungssystem gespeichert werden.
+- kurzlebige Analyseobjekte oder Zugriffstoken produktionsnah persistiert werden.
 
 ## Freigabe fuer Phase 2.0.2
 

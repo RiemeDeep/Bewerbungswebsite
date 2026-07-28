@@ -45,6 +45,10 @@ Wenn ein persistenter Flow eingefuehrt wird, muss die Migration mindestens diese
 - Cleanup-Job, der `active` abgelaufene Records markiert oder entfernt und `deleted` Records nicht
   erneut ausliefert.
 
+Ergaenzung zur neuen Ausrichtung: Match-Analysen und Analyse-Zugriffe werden nicht als dauerhafter
+Browserzustand behandelt. Spaetere Fragen laden JobContext und MatchAnalysis serverseitig aus dem
+Store; Zugriffstoken werden in der Datenbank nur gehasht gespeichert.
+
 ## Abnahme
 
 - Contract-Tests verhindern versehentliche Rohtext-Speicherung im geplanten Storage-Record;

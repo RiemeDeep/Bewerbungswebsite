@@ -8,6 +8,8 @@ import {
   jobContextInputSchema,
   jobContextSchema,
   matchAnalysisSchema,
+  matchAssistantMessageRequestSchema,
+  matchAssistantResponseSchema,
   type ApiErrorResponse,
   type AssistantErrorCode,
 } from "@bewerbungswebsite/contracts";
@@ -15,6 +17,7 @@ import express, { type ErrorRequestHandler, type Express } from "express";
 
 import type { JobContextPreviewService } from "./job-context-preview.js";
 import { MatchAnalysisError, type MatchAnalyzer } from "./match-analyzer.js";
+import { MatchAssistantError, type MatchAssistantService } from "./match-assistant.js";
 import { ProfileAssistantError, type ProfileAssistantService } from "./profile-assistant.js";
 import { UrlSecurityError } from "./url-security.js";
 
@@ -22,6 +25,7 @@ export type AppDependencies = {
   profileAssistant?: ProfileAssistantService;
   jobContextPreview?: JobContextPreviewService;
   matchAnalyzer?: MatchAnalyzer;
+  matchAssistant?: MatchAssistantService;
 };
 
 function createErrorResponse(input: {
@@ -182,6 +186,46 @@ export function createApp(dependencies: AppDependencies = {}): Express {
                 : "Die synthetische Match-Analyse konnte nicht verarbeitet werden.",
             requestId,
             retryable: !(error instanceof MatchAnalysisError),
+          }),
+        );
+      }
+    });
+  }
+
+  const matchAssistant = dependencies.matchAssistant;
+  if (matchAssistant) {
+    app.post("/api/v1/match/assistant/messages", async (request, response) => {
+      const requestId = randomUUID();
+      const parsedRequest = matchAssistantMessageRequestSchema.safeParse(request.body);
+
+      if (!parsedRequest.success) {
+        response.status(400).json(
+          createErrorResponse({
+            code: "INVALID_REQUEST",
+            message: "Die Anfrage ist ungueltig.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      try {
+        response
+          .status(200)
+          .json(
+            matchAssistantResponseSchema.parse(await matchAssistant.answer(parsedRequest.data)),
+          );
+      } catch (error) {
+        response.status(error instanceof MatchAssistantError ? 502 : 500).json(
+          createErrorResponse({
+            code:
+              error instanceof MatchAssistantError
+                ? "ASSISTANT_EVIDENCE_VIOLATION"
+                : "ASSISTANT_INTERNAL_ERROR",
+            message: "Die synthetische Match-Assistentenantwort konnte nicht verarbeitet werden.",
+            requestId,
+            retryable: !(error instanceof MatchAssistantError),
           }),
         );
       }

@@ -6,6 +6,7 @@ import { createFirecrawlCrawlProvider } from "./firecrawl-crawl-provider.js";
 import { createDeterministicMockJobContextExtractor } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
 import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
+import { createDeterministicMockMatchAssistantService } from "./match-assistant.js";
 import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
 import { createOpenAiJobContextExtractor } from "./openai-job-context-extractor.js";
 import {
@@ -86,6 +87,7 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     dependencies.matchAnalyzer = createDeterministicMockMatchAnalyzer({
       evidenceRepository: createSyntheticMatchEvidenceRepository(),
     });
+    dependencies.matchAssistant = createDeterministicMockMatchAssistantService();
   }
 
   return {

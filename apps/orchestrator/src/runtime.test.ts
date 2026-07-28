@@ -38,6 +38,7 @@ describe("orchestrator runtime dependencies", () => {
     });
 
     expect(runtime.dependencies.matchAnalyzer).toBeDefined();
+    expect(runtime.dependencies.matchAssistant).toBeDefined();
     await expect(runtime.close()).resolves.toBeUndefined();
   });
 
