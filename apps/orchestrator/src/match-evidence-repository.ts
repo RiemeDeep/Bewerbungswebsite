@@ -60,6 +60,115 @@ const matchEvidenceFixtureSchema = z
   })
   .strict();
 
+export const syntheticMatchEvidenceFixture = {
+  fixtureType: "synthetic_match_evidence",
+  subject: {
+    displayName: "Alex Beispiel",
+    synthetic: true,
+  },
+  claims: [
+    {
+      id: "11111111-1111-4111-8111-111111111111",
+      statement:
+        "Die fiktive Person strukturierte technische Anforderungen und dokumentierte Projektstaende.",
+      keywords: ["technisch", "anforderungen", "projektstatus", "dokumentation"],
+      visibility: "internal",
+      publicationStatus: "published",
+      allowedContexts: ["job_analysis"],
+      evidenceIds: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+    },
+    {
+      id: "22222222-2222-4222-8222-222222222222",
+      statement: "Die fiktive Person stimmte technische Sachverhalte mit Stakeholdern ab.",
+      keywords: ["kommunikation", "stakeholder", "abstimmung", "zusammenarbeit"],
+      visibility: "internal",
+      publicationStatus: "published",
+      allowedContexts: ["job_analysis"],
+      evidenceIds: ["bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"],
+    },
+    {
+      id: "33333333-3333-4333-8333-333333333333",
+      statement: "Dieser synthetische Entwurf darf nicht in Match-Analysen gelangen.",
+      keywords: ["technisch", "anforderungen"],
+      visibility: "internal",
+      publicationStatus: "draft",
+      allowedContexts: ["job_analysis"],
+      evidenceIds: ["cccccccc-cccc-4ccc-8ccc-cccccccccccc"],
+    },
+    {
+      id: "44444444-4444-4444-8444-444444444444",
+      statement: "Dieser synthetische Claim ist nur fuer den Profilassistenten vorgesehen.",
+      keywords: ["technisch", "anforderungen"],
+      visibility: "internal",
+      publicationStatus: "published",
+      allowedContexts: ["profile_assistant"],
+      evidenceIds: ["dddddddd-dddd-4ddd-8ddd-dddddddddddd"],
+    },
+    {
+      id: "55555555-5555-4555-8555-555555555555",
+      statement: "Dieser synthetische Claim besitzt nur interne Evidence.",
+      keywords: ["technisch", "anforderungen"],
+      visibility: "internal",
+      publicationStatus: "published",
+      allowedContexts: ["job_analysis"],
+      evidenceIds: ["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"],
+    },
+  ],
+  evidence: [
+    {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      claimId: "11111111-1111-4111-8111-111111111111",
+      publicLabel: "Synthetischer Beleg: technische Projektarbeit",
+      publicExcerpt:
+        "Belegt exemplarisch strukturierte technische Anforderungen und Dokumentation.",
+      sourceType: "synthetic_profile_claim",
+      visibility: "public_excerpt",
+      publicationStatus: "published",
+      allowedContexts: ["job_analysis"],
+    },
+    {
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      claimId: "22222222-2222-4222-8222-222222222222",
+      publicLabel: "Synthetischer Beleg: Stakeholder-Kommunikation",
+      publicExcerpt: "Belegt exemplarisch technische Abstimmung mit Stakeholdern.",
+      sourceType: "synthetic_profile_claim",
+      visibility: "public_excerpt",
+      publicationStatus: "published",
+      allowedContexts: ["job_analysis"],
+    },
+    {
+      id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      claimId: "33333333-3333-4333-8333-333333333333",
+      publicLabel: "Nicht freigegebener Entwurf",
+      publicExcerpt: "Darf wegen Claim-Status nicht verwendet werden.",
+      sourceType: "synthetic_profile_claim",
+      visibility: "public_excerpt",
+      publicationStatus: "published",
+      allowedContexts: ["job_analysis"],
+    },
+    {
+      id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      claimId: "44444444-4444-4444-8444-444444444444",
+      publicLabel: "Evidence fuer anderen Kontext",
+      publicExcerpt: "Darf in Match-Analysen nicht verwendet werden.",
+      sourceType: "synthetic_profile_claim",
+      visibility: "public_excerpt",
+      publicationStatus: "published",
+      allowedContexts: ["profile_assistant"],
+    },
+    {
+      id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      claimId: "55555555-5555-4555-8555-555555555555",
+      publicLabel: "Interner synthetischer Beleg",
+      publicExcerpt: "Darf wegen Sichtbarkeit nicht verwendet werden.",
+      sourceType: "synthetic_profile_claim",
+      visibility: "internal",
+      publicationStatus: "published",
+      allowedContexts: ["job_analysis"],
+    },
+  ],
+} as const;
+
 export interface MatchEvidenceRepository {
   retrieveForRequirements(
     requirements: ReadonlyArray<NormalizedJobRequirement>,
@@ -170,4 +279,8 @@ export function createInMemoryMatchEvidenceRepository(
       return matchEvidenceSetSchema.parse({ schemaVersion: "1.0", evidence: candidates });
     },
   };
+}
+
+export function createSyntheticMatchEvidenceRepository(): MatchEvidenceRepository {
+  return createInMemoryMatchEvidenceRepository(syntheticMatchEvidenceFixture);
 }

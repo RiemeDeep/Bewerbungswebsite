@@ -1,10 +1,14 @@
 import {
+  createMatchEvidenceAllowlist,
   matchAnalysisSchema,
   normalizeJobContextRequirements,
   type JobContext,
   type MatchAnalysis,
+  type MatchEvidenceSet,
   type NormalizedJobRequirement,
 } from "@bewerbungswebsite/contracts";
+
+import type { MatchEvidenceRepository } from "./match-evidence-repository.js";
 
 export type MatchAnalyzerInput = {
   jobContext: JobContext;
@@ -21,46 +25,50 @@ export class MatchAnalysisError extends Error {
   }
 }
 
-const syntheticEvidence = [
-  {
-    evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-    publicLabel: "Synthetischer Beleg: technische Projektarbeit",
-    publicExcerpt:
-      "Die fiktive Person strukturierte technische Anforderungen und dokumentierte Abstimmungen.",
-    sourceType: "synthetic_profile_claim",
-    keywords: ["technisch", "anforderung", "projekt", "koordination", "dokument"],
-  },
-  {
-    evidenceId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-    publicLabel: "Synthetischer Beleg: Stakeholder-Kommunikation",
-    publicExcerpt:
-      "Die fiktive Person stimmte technische Sachverhalte mit internen und externen Beteiligten ab.",
-    sourceType: "synthetic_profile_claim",
-    keywords: ["kommunikation", "stakeholder", "kunde", "zusammenarbeit", "abstimmung"],
-  },
-] as const;
+export type DeterministicMockMatchAnalyzerOptions = {
+  evidenceRepository: MatchEvidenceRepository;
+  evidenceLimit?: number;
+};
 
-const publicSyntheticEvidence = syntheticEvidence.map((evidence) => ({
-  evidenceId: evidence.evidenceId,
-  publicLabel: evidence.publicLabel,
-  publicExcerpt: evidence.publicExcerpt,
-  sourceType: evidence.sourceType,
-}));
+function tokenize(value: string): Set<string> {
+  const normalized = value.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("de-DE");
+  return new Set((normalized.match(/[\p{L}\p{N}]+/gu) ?? []).filter((token) => token.length >= 4));
+}
 
-function findEvidenceIds(requirement: NormalizedJobRequirement) {
-  const normalizedLabel = requirement.label.toLocaleLowerCase("de-DE");
+function findEvidenceIds(requirement: NormalizedJobRequirement, evidenceSet: MatchEvidenceSet) {
+  const requirementTokens = tokenize(requirement.label);
+  if (requirementTokens.size === 0) {
+    return [];
+  }
 
-  return syntheticEvidence
-    .filter((evidence) =>
-      evidence.keywords.some((keyword) =>
-        normalizedLabel.includes(keyword.toLocaleLowerCase("de-DE")),
-      ),
-    )
+  const minimumMatches = Math.min(2, requirementTokens.size);
+
+  return evidenceSet.evidence
+    .filter((evidence) => {
+      const evidenceTokens = tokenize(
+        `${evidence.statement} ${evidence.publicLabel} ${evidence.publicExcerpt ?? ""}`,
+      );
+      let matches = 0;
+
+      for (const token of requirementTokens) {
+        if (evidenceTokens.has(token)) {
+          matches += 1;
+        }
+      }
+
+      return matches >= minimumMatches;
+    })
     .map((evidence) => evidence.evidenceId);
 }
 
-function createRequirementAssessment(requirement: NormalizedJobRequirement) {
-  const evidenceIds = findEvidenceIds(requirement);
+function createRequirementAssessment(
+  requirement: NormalizedJobRequirement,
+  evidenceSet: MatchEvidenceSet,
+) {
+  const allowedEvidenceIds = createMatchEvidenceAllowlist(evidenceSet);
+  const evidenceIds = findEvidenceIds(requirement, evidenceSet).filter((evidenceId) =>
+    allowedEvidenceIds.has(evidenceId),
+  );
 
   if (evidenceIds.length === 0) {
     return {
@@ -87,7 +95,57 @@ function createRequirementAssessment(requirement: NormalizedJobRequirement) {
   } as const;
 }
 
-export function createDeterministicMockMatchAnalyzer(): MatchAnalyzer {
+type RequirementAssessment = ReturnType<typeof createRequirementAssessment>;
+
+function createFirst90DaysHypotheses(
+  supportedAssessments: RequirementAssessment[],
+  materialGaps: RequirementAssessment[],
+) {
+  const firstSupported = supportedAssessments[0] ?? null;
+  const secondSupported = supportedAssessments[1] ?? firstSupported;
+  const firstMaterialGap = materialGaps[0] ?? null;
+
+  return [
+    {
+      phase: "days_1_30",
+      hypothesis: firstSupported
+        ? `Bestaetigte Anforderung "${firstSupported.label}" mit Stakeholdern konkretisieren und erste Arbeitsproben daran ausrichten.`
+        : "Anforderungen, Stakeholder und fehlende Nachweise strukturiert klaeren, bevor eine belastbare Passung abgeleitet wird.",
+      evidenceIds: firstSupported?.evidenceIds ?? [],
+      assumptions: [
+        "Der Stellenkontext wurde vom Besucher bestaetigt.",
+        "Die verwendeten Belege sind synthetische Testdaten und ersetzen keine echte Profilfreigabe.",
+      ],
+    },
+    {
+      phase: "days_31_60",
+      hypothesis: secondSupported
+        ? `Belegte Arbeitsweise aus "${secondSupported.label}" auf ein priorisiertes Aufgabenpaket uebertragen.`
+        : "Nach erster Klaerung gezielt pruefen, welche Anforderungen durch freigegebene Profilbelege belegbar sind.",
+      evidenceIds: secondSupported?.evidenceIds ?? [],
+      assumptions: [
+        "Fachliche Ansprechpartner stehen fuer Rueckfragen bereit.",
+        "Prioritaeten koennen nach echter Rollenaufnahme angepasst werden.",
+      ],
+    },
+    {
+      phase: "days_61_90",
+      hypothesis: firstMaterialGap
+        ? `Offene Muss-Anforderung "${firstMaterialGap.label}" priorisieren und klaeren, ob Aufbau, Kompensation oder Ausschluss sinnvoll ist.`
+        : "Offene Annahmen ueberpruefen, belastbare Belege nachziehen und naechste Entwicklungsschritte ableiten.",
+      evidenceIds: firstMaterialGap ? [] : (firstSupported?.evidenceIds ?? []),
+      assumptions: [
+        firstMaterialGap
+          ? "Nicht belegte Muss-Anforderungen werden nicht durch synthetische Evidence gestuetzt."
+          : "Auch bei guter synthetischer Passung bleiben echte Belege und Gespraechskontext erforderlich.",
+      ],
+    },
+  ] as const;
+}
+
+export function createDeterministicMockMatchAnalyzer(
+  options: DeterministicMockMatchAnalyzerOptions,
+): MatchAnalyzer {
   return {
     async analyze(input) {
       const requirements = normalizeJobContextRequirements(input.jobContext);
@@ -95,7 +153,19 @@ export function createDeterministicMockMatchAnalyzer(): MatchAnalyzer {
         throw new MatchAnalysisError("At least one normalized requirement is required.");
       }
 
-      const assessments = requirements.map(createRequirementAssessment);
+      const evidenceSet = await options.evidenceRepository.retrieveForRequirements(
+        requirements,
+        options.evidenceLimit ?? 30,
+      );
+      const publicEvidence = evidenceSet.evidence.map((evidence) => ({
+        evidenceId: evidence.evidenceId,
+        publicLabel: evidence.publicLabel,
+        publicExcerpt: evidence.publicExcerpt,
+        sourceType: evidence.sourceType,
+      }));
+      const assessments = requirements.map((requirement) =>
+        createRequirementAssessment(requirement, evidenceSet),
+      );
       const supportedAssessments = assessments.filter(
         (assessment) => assessment.evidenceIds.length > 0 && assessment.status !== "not_supported",
       );
@@ -104,6 +174,7 @@ export function createDeterministicMockMatchAnalyzer(): MatchAnalyzer {
         (assessment) => assessment.importance === "must" && assessment.status === "not_supported",
       );
       const firstSource = input.jobContext.sources[0] ?? null;
+      const first90Days = createFirst90DaysHypotheses(supportedAssessments, materialGaps);
 
       return matchAnalysisSchema.parse({
         schemaVersion: "1.0",
@@ -152,31 +223,12 @@ export function createDeterministicMockMatchAnalyzer(): MatchAnalyzer {
                     "Welche echten freigegebenen Belege sollen spaeter fuer diese Rolle gelten?",
                 },
               ],
-        first90Days: [
-          {
-            phase: "days_1_30",
-            hypothesis: "Anforderungen, Stakeholder und offene Nachweise strukturiert klaeren.",
-            evidenceIds: firstSupported?.evidenceIds ?? [],
-            assumptions: ["Der Stellenkontext wurde vom Besucher bestaetigt."],
-          },
-          {
-            phase: "days_31_60",
-            hypothesis: "Belegte Arbeitsweisen auf erste Aufgabenpakete uebertragen.",
-            evidenceIds: firstSupported?.evidenceIds ?? [],
-            assumptions: ["Fachliche Ansprechpartner stehen fuer Rueckfragen bereit."],
-          },
-          {
-            phase: "days_61_90",
-            hypothesis: "Offene Luecken priorisieren und naechste Entwicklungsschritte ableiten.",
-            evidenceIds: [],
-            assumptions: ["Unbelegte Anforderungen werden im Gespraech konkretisiert."],
-          },
-        ],
+        first90Days,
         interviewQuestions: [
           "Welche Anforderungen sind fuer den Einstieg zwingend und welche koennen aufgebaut werden?",
           "Welche Nachweise waeren fuer die offenen Punkte besonders hilfreich?",
         ],
-        evidence: publicSyntheticEvidence,
+        evidence: publicEvidence,
         warnings: [
           "Diese Match-Analyse ist synthetisch und verwendet keine produktiven Profilbelege.",
           "Es wird bewusst keine Match-Prozentzahl erzeugt.",

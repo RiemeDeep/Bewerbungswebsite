@@ -11,6 +11,7 @@ import {
 } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
 import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
+import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
 import {
   createDeterministicMockProvider,
   createInMemoryProfileRepository,
@@ -26,6 +27,12 @@ const validAssistantRequest = {
 };
 
 const publicResolver: DnsResolver = async () => [{ address: "93.184.216.34", family: 4 }];
+
+function createSyntheticMatchAnalyzer() {
+  return createDeterministicMockMatchAnalyzer({
+    evidenceRepository: createSyntheticMatchEvidenceRepository(),
+  });
+}
 
 const validJobContext = {
   company: {
@@ -354,9 +361,7 @@ describe("POST /api/v1/match/analyze", () => {
   });
 
   it("returns a validated synthetic match analysis", async () => {
-    const response = await request(
-      createApp({ matchAnalyzer: createDeterministicMockMatchAnalyzer() }),
-    )
+    const response = await request(createApp({ matchAnalyzer: createSyntheticMatchAnalyzer() }))
       .post("/api/v1/match/analyze")
       .send(validJobContext)
       .expect(200);
@@ -373,9 +378,7 @@ describe("POST /api/v1/match/analyze", () => {
   });
 
   it("rejects invalid match analysis input", async () => {
-    const response = await request(
-      createApp({ matchAnalyzer: createDeterministicMockMatchAnalyzer() }),
-    )
+    const response = await request(createApp({ matchAnalyzer: createSyntheticMatchAnalyzer() }))
       .post("/api/v1/match/analyze")
       .send({ ...validJobContext, job: { ...validJobContext.job, mustRequirements: [""] } })
       .expect(400);

@@ -1,7 +1,7 @@
 # Phase 5.0: MatchAnalysis Contract und Invarianten
 
 Stand: 2026-07-28
-Status: Contract und synthetische Repository-Grenze umgesetzt, keine produktive Match-Analyse aktiviert
+Status: Contract und synthetische Repository-Grenze integriert, keine produktive Match-Analyse aktiviert
 
 ## Ziel
 
@@ -57,11 +57,15 @@ Ergaenzend zum Analysevertrag wurde `normalizeJobContextRequirements` umgesetzt:
 Im Orchestrator wurde `createDeterministicMockMatchAnalyzer` eingefuehrt:
 
 - nutzt ausschliesslich synthetische, fest definierte Evidence;
+- bezieht diese Evidence ueber den `MatchEvidenceRepository`-Port;
 - nimmt einen bestaetigten `JobContext` als Eingabe;
 - normalisiert Anforderungen mit `normalizeJobContextRequirements`;
 - bewertet Anforderungen deterministisch anhand einfacher Keyword-Signale;
 - erzeugt eine schema-valide `MatchAnalysis`;
 - macht nicht gestuetzte Muss-Anforderungen als `material` Gap sichtbar;
+- leitet 90-Tage-Hypothesen aus gestuetzten Anforderungen und offenen Muss-Luecken ab;
+- referenziert in 90-Tage-Hypothesen nur Evidence fuer gestuetzte Anforderungen und laesst offene
+  Muss-Luecken bewusst unbelegt;
 - erzeugt bewusst keine Match-Prozentzahl;
 - wirft `MatchAnalysisError`, wenn keine normalisierbaren Anforderungen vorhanden sind.
 
@@ -99,6 +103,7 @@ und ein rein synthetisches Repository vorbereitet:
 - das Repository filtert vor der Contract-Validierung auf veroeffentlichte Claims,
   `job_analysis`-Kontext und oeffentliche Evidence-Sichtbarkeit;
 - Ranking erfolgt deterministisch ueber Keyword-Treffer gegen normalisierte Stellenanforderungen;
+- die Runtime verdrahtet den Mock-Match-Analyzer im Flag-Modus mit diesem synthetischen Repository;
 - Tests sichern, dass Draft-Claims, falsche Nutzungskontexte, interne Evidence und doppelte
   Evidence-IDs nicht in ein `MatchEvidenceSet` gelangen.
 
@@ -115,5 +120,5 @@ Anbindung bleibt redaktionell gesperrt, bis echte Claims und Evidence Items frei
 
 ## Naechste Implementierungseinheit
 
-- synthetisches `MatchEvidenceRepository` bei Bedarf in den Mock-Match-Analyzer integrieren;
-- danach Assistent im bestaetigten Stellenkontext konzipieren.
+- Assistent im bestaetigten Stellenkontext konzipieren;
+- danach Zugriffsschutz, TTL und `noindex, nofollow` fuer spaetere teilbare Analysen vorbereiten.

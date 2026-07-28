@@ -6,6 +6,7 @@ import { createFirecrawlCrawlProvider } from "./firecrawl-crawl-provider.js";
 import { createDeterministicMockJobContextExtractor } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
 import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
+import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
 import { createOpenAiJobContextExtractor } from "./openai-job-context-extractor.js";
 import {
   createDeterministicMockProvider,
@@ -82,7 +83,9 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
   }
 
   if (environment.ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST === "1") {
-    dependencies.matchAnalyzer = createDeterministicMockMatchAnalyzer();
+    dependencies.matchAnalyzer = createDeterministicMockMatchAnalyzer({
+      evidenceRepository: createSyntheticMatchEvidenceRepository(),
+    });
   }
 
   return {

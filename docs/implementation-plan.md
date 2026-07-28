@@ -262,7 +262,7 @@ Abnahme:
 
 ## Phase 5: Match-Analyse
 
-Status: gestartet; Contract, erste Invarianten und synthetische Repository-Grenze umgesetzt,
+Status: gestartet; Contract, erste Invarianten und synthetische Repository-Grenze integriert,
 produktive Analyse offen
 
 Contract-Plan:
@@ -286,7 +286,10 @@ Umsetzungseinheiten:
    `published`, `job_analysis` und oeffentliche Sichtbarkeit.
    Zusaetzlich existiert `createInMemoryMatchEvidenceRepository` mit rein synthetischem Fixture, das
    Draft-Claims, falsche Nutzungskontexte, interne Evidence und doppelte Evidence-IDs ausschliesst.
-4. vorsichtige 90-Tage-Hypothesen mit Evidenz und Annahmen.
+   Der Mock-Match-Analyzer bezieht seine Evidence inzwischen ueber diesen Repository-Port.
+4. vorsichtige 90-Tage-Hypothesen mit Evidenz und Annahmen. Gestartet mit deterministischer
+   Ableitung aus gestuetzten Anforderungen und offenen Muss-Luecken; offene Muss-Luecken bleiben
+   ohne Evidence-Referenz.
 5. Assistent im bestaetigten Stellenkontext.
 6. zufaelliger Zugriffsschutz, TTL sowie `noindex, nofollow`.
 
@@ -328,8 +331,11 @@ Phase-5.0 Match-Analyse:
    umgesetzt;
 4. `matchEvidenceSetSchema` und `createMatchEvidenceAllowlist` als gesperrte Profil-Evidence-Grenze
    umgesetzt;
-5. `createInMemoryMatchEvidenceRepository` mit rein synthetischem Fixture vorbereitet;
-6. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
+5. `createInMemoryMatchEvidenceRepository` mit rein synthetischem Fixture vorbereitet und in den
+   Mock-Match-Analyzer integriert;
+6. 90-Tage-Hypothesen aus gestuetzten Anforderungen und Material-Gaps abgeleitet;
+7. naechster Schritt: Assistent im bestaetigten Stellenkontext konzipieren;
+8. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
 
 Explizit nicht enthalten: echte Profilimporte, Remote-Migration, produktives reales LLM,
 produktives Crawling, produktive Match-Analyse, n8n und Kontaktversand.
