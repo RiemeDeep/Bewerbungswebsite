@@ -34,7 +34,7 @@
     "n8n-mcp": {
       "type": "local",
       "command": ["npx", "-y", "mcp-remote", "https://n8n.motai.life/mcp-server/http"],
-      "enabled": true,
+      "enabled": false,
       "timeout": 60000,
       "environment": {
         "N8N_API_KEY": "{env:N8N_MCP_API_KEY}",

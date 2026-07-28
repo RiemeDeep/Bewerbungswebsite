@@ -496,6 +496,11 @@ export function MatchPreviewTest() {
                   </div>
                   <h2>{matchAnalysisState.analysis.summary.headline}</h2>
                   <p>{matchAnalysisState.analysis.summary.rationale}</p>
+                  <p>
+                    <a href={`/match/preview/${matchAnalysisState.accessToken}`}>
+                      Gespeicherte Analyse im geschuetzten Testpfad oeffnen
+                    </a>
+                  </p>
                   <ul aria-label="Bewertete Anforderungen">
                     {matchAnalysisState.analysis.requirements.map((requirement) => (
                       <li key={requirement.requirementId}>
