@@ -5,15 +5,23 @@ import {
   assistantMessageRequestSchema,
   assistantResponseSchema,
   healthResponseSchema,
+  jobContextInputSchema,
+  jobContextSchema,
+  matchAnalysisSchema,
   type ApiErrorResponse,
   type AssistantErrorCode,
 } from "@bewerbungswebsite/contracts";
 import express, { type ErrorRequestHandler, type Express } from "express";
 
+import type { JobContextPreviewService } from "./job-context-preview.js";
+import { MatchAnalysisError, type MatchAnalyzer } from "./match-analyzer.js";
 import { ProfileAssistantError, type ProfileAssistantService } from "./profile-assistant.js";
+import { UrlSecurityError } from "./url-security.js";
 
 export type AppDependencies = {
   profileAssistant?: ProfileAssistantService;
+  jobContextPreview?: JobContextPreviewService;
+  matchAnalyzer?: MatchAnalyzer;
 };
 
 function createErrorResponse(input: {
@@ -23,6 +31,16 @@ function createErrorResponse(input: {
   retryable: boolean;
 }): ApiErrorResponse {
   return apiErrorResponseSchema.parse({ error: input });
+}
+
+function createJobProviderErrorResponse(requestId: string) {
+  return createErrorResponse({
+    code: "ASSISTANT_INTERNAL_ERROR",
+    message:
+      "Die externe Stellenerkennung ist voruebergehend nicht erreichbar. Bitte versuchen Sie es erneut.",
+    requestId,
+    retryable: true,
+  });
 }
 
 export function createApp(dependencies: AppDependencies = {}): Express {
@@ -81,6 +99,89 @@ export function createApp(dependencies: AppDependencies = {}): Express {
             message: "Die Anfrage konnte nicht verarbeitet werden.",
             requestId,
             retryable: true,
+          }),
+        );
+      }
+    });
+  }
+
+  const jobContextPreview = dependencies.jobContextPreview;
+  if (jobContextPreview) {
+    app.post("/api/v1/job-context/preview", async (request, response) => {
+      const requestId = randomUUID();
+      const parsedRequest = jobContextInputSchema.safeParse(request.body);
+
+      if (!parsedRequest.success) {
+        response.status(400).json(
+          createErrorResponse({
+            code: "INVALID_REQUEST",
+            message: "Die Anfrage ist ungueltig.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      try {
+        response
+          .status(200)
+          .json(jobContextSchema.parse(await jobContextPreview.preview(parsedRequest.data)));
+      } catch (error) {
+        if (error instanceof UrlSecurityError) {
+          response.status(400).json(
+            createErrorResponse({
+              code: "INVALID_REQUEST",
+              message: "Die URL konnte nicht sicher abgerufen werden.",
+              requestId,
+              retryable: false,
+            }),
+          );
+          return;
+        }
+
+        response.status(502).json(createJobProviderErrorResponse(requestId));
+      }
+    });
+  }
+
+  const matchAnalyzer = dependencies.matchAnalyzer;
+  if (matchAnalyzer) {
+    app.post("/api/v1/match/analyze", async (request, response) => {
+      const requestId = randomUUID();
+      const parsedRequest = jobContextSchema.safeParse(request.body);
+
+      if (!parsedRequest.success) {
+        response.status(400).json(
+          createErrorResponse({
+            code: "INVALID_REQUEST",
+            message: "Die Anfrage ist ungueltig.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      try {
+        response
+          .status(200)
+          .json(
+            matchAnalysisSchema.parse(
+              await matchAnalyzer.analyze({ jobContext: parsedRequest.data }),
+            ),
+          );
+      } catch (error) {
+        response.status(error instanceof MatchAnalysisError ? 400 : 500).json(
+          createErrorResponse({
+            code:
+              error instanceof MatchAnalysisError ? "INVALID_REQUEST" : "ASSISTANT_INTERNAL_ERROR",
+            message:
+              error instanceof MatchAnalysisError
+                ? "Der bestaetigte Stellenkontext enthaelt keine auswertbaren Anforderungen."
+                : "Die synthetische Match-Analyse konnte nicht verarbeitet werden.",
+            requestId,
+            retryable: !(error instanceof MatchAnalysisError),
           }),
         );
       }

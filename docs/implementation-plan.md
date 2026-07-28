@@ -142,10 +142,28 @@ Abnahme:
 
 ## Technischer Machbarkeitsnachweis
 
-Status: Stufe 1 am 2026-07-28 bestanden; Stop/Go `GO`; Stufe 2 wartet auf Migration Readiness Review
+Status: Stufe 1 bis Stufe 4 am 2026-07-28 mit synthetischen Daten bestanden; Gesamt-Stop/Go `GO`
 
 Detailplan:
 `docs/plans/technical-feasibility-gate.md`
+
+Migration Readiness Review:
+`docs/plans/migration-readiness-review-stage-2.md`
+
+Stufe-2-Abschlussreview:
+`docs/plans/technical-feasibility-stage-2-review.md`
+
+Stufe-3-Readiness:
+`docs/plans/technical-feasibility-stage-3-readiness.md`
+
+Stufe-3-Abschlussreview:
+`docs/plans/technical-feasibility-stage-3-review.md`
+
+Stufe-4-Readiness:
+`docs/plans/technical-feasibility-stage-4-readiness.md`
+
+Stufe-4-Abschlussreview:
+`docs/plans/technical-feasibility-stage-4-review.md`
 
 Der Machbarkeitsnachweis ist ein nicht produktiver, phasenuebergreifender Technikstrang mit
 ausschliesslich synthetischen Daten. Er prueft die risikoreichen Architekturgrenzen, bevor weitere
@@ -174,6 +192,18 @@ Ergebnis Stufe 1:
 - injizierbarer HTTP-Durchstich, der in der normalen Serverkomposition nicht registriert ist;
 - 52 erfolgreiche Tests, erfolgreiche Typpruefung, Linting und Builds.
 
+Vorbereitung Stufe 2:
+
+- minimale lokale Migration, synthetischer Seed und SQL-Negativtests wurden versioniert;
+- die Projektpipeline prueft die SQL-Artefakte statisch auf Sicherheitsleitplanken und synthetische
+  Daten;
+- die Migration wurde gegen die lokale Supabase-Datenbank ausgefuehrt;
+- der synthetische Seed wurde lokal geladen;
+- `supabase/tests/stage_2_profile_knowledge.sql` wurde lokal erfolgreich ausgefuehrt;
+- ein serverseitiger Postgres-Repository-Adapter hinter `ProfileRepository` wurde implementiert und
+  gegen die lokale synthetische Datenbank getestet.
+- Stufe 2 erhielt im Abschlussreview `GO` fuer Stufe 3 mit synthetischen Daten.
+
 ## Phase 3: Profilassistent
 
 Status: offen, abhaengig von Phase 2
@@ -200,16 +230,28 @@ Abnahme:
 
 ## Phase 4: Stellen- und Unternehmenskontext
 
-Status: offen, abhaengig von Contracts und Sicherheitsdesign
+Status: Readiness gestartet; erste Contracts vorbereitet, produktive Nutzung offen
+
+Readiness-Plan:
+`docs/plans/phase-4.0-job-context-and-crawl-readiness.md`
+
+Extraktions-Evaluation:
+`docs/plans/phase-4.1-job-context-extraction-evaluation.md`
+
+Retention-Konzept:
+`docs/plans/phase-4.2-job-context-retention.md`
 
 Umsetzungseinheiten:
 
-1. URL-/Texteingabe und Request-Contracts.
+1. URL-/Texteingabe und Request-Contracts. Gestartet mit `jobContextInputSchema`,
+   `crawlResultSchema` und `jobContextSchema`.
 2. SSRF-Schutz vor und nach jedem Redirect einschliesslich IPv4/IPv6-Tests.
 3. gekapselter Crawl-Adapter mit Groessen-, Seiten- und Zeitlimits.
 4. Stellenextraktion als strukturiertes `JobContext`-Objekt.
-5. editierbare Bestaetigungsvorschau und Texteingabe-Fallback.
-6. TTL-, Rohtext- und Loeschkonzept.
+5. editierbare Bestaetigungsvorschau und Texteingabe-Fallback. Gestartet in der nicht verlinkten
+   `/test/match`-UI mit lokaler `jobContextSchema`-Validierung und unveraenderbaren Quellen.
+6. TTL-, Rohtext- und Loeschkonzept. Gestartet mit `jobContextRetentionPolicySchema`,
+   `jobContextStorageRecordSchema`, Hash-only-Rohtextmodell und deterministischen Expiry-Helpers.
 
 Abnahme:
 
@@ -220,13 +262,30 @@ Abnahme:
 
 ## Phase 5: Match-Analyse
 
-Status: offen, abhaengig von Phase 2-4
+Status: gestartet; Contract, erste Invarianten und synthetische Repository-Grenze umgesetzt,
+produktive Analyse offen
+
+Contract-Plan:
+`docs/plans/phase-5.0-match-analysis-contract.md`
 
 Umsetzungseinheiten:
 
-1. `MatchAnalysis`-Contract und deterministische Invarianten.
-2. Anforderungsnormalisierung und einzeln begruendete Statusbewertung.
-3. Beitragsfelder, Matrix, Belege, Transferpotenzial und Luecken.
+1. `MatchAnalysis`-Contract und deterministische Invarianten. Gestartet mit
+   `matchAnalysisSchema`, Evidence-/Requirement-Referenzpruefung, Lueckenpflicht und Verbot
+   dominanter Prozentfelder.
+2. Anforderungsnormalisierung und einzeln begruendete Statusbewertung. Gestartet mit
+   `normalizeJobContextRequirements`, stabilen `requirementId`s, Deduplizierung und
+   Importance-Priorisierung.
+3. Beitragsfelder, Matrix, Belege, Transferpotenzial und Luecken. Gestartet mit
+   `createDeterministicMockMatchAnalyzer`, synthetischer Evidence, validierter `MatchAnalysis` und
+   sichtbaren Material-Gaps fuer nicht gestuetzte Muss-Anforderungen.
+   Nicht verlinkte `/test/match` zeigt nach JobContext-Bestaetigung eine synthetische
+   Match-Ergebnisvorschau ueber `/api/test/match-analysis`.
+   Echte Profil-Evidence-Anbindung ist nur als gesperrter Contract vorbereitet:
+   `matchEvidenceItemSchema`, `matchEvidenceSetSchema` und `createMatchEvidenceAllowlist` erzwingen
+   `published`, `job_analysis` und oeffentliche Sichtbarkeit.
+   Zusaetzlich existiert `createInMemoryMatchEvidenceRepository` mit rein synthetischem Fixture, das
+   Draft-Claims, falsche Nutzungskontexte, interne Evidence und doppelte Evidence-IDs ausschliesst.
 4. vorsichtige 90-Tage-Hypothesen mit Evidenz und Annahmen.
 5. Assistent im bestaetigten Stellenkontext.
 6. zufaelliger Zugriffsschutz, TTL sowie `noindex, nofollow`.
@@ -261,18 +320,19 @@ Abnahme:
 
 ## Aktuelle kleine Umsetzungseinheit
 
-Migration Readiness Review fuer Stufe 2:
+Phase-5.0 Match-Analyse:
 
-1. die in Stufe 1 benoetigten Felder gegen das fachliche Wissensmodell pruefen;
-2. `allowed_contexts`, Claim-Typen und Konfidenzwerte fuer die erste Migration reduzieren;
-3. Schemaexposition, Rollen und restriktive RLS-Matrix festlegen;
-4. Lebenszyklus von Claim, Evidence, Rueckzug und Re-Indexierung als Invarianten festlegen;
-5. Umfang des ausschliesslich synthetischen lokalen Seeds bestimmen;
-6. ADR-Bedarf fuer Schemaexposition oder neue Lebenszyklen pruefen;
-7. erst danach die lokale Supabase-Migration fuer Stufe 2 freigeben.
+1. `MatchAnalysis`-Contract mit Evidence-/Requirement-Invarianten umgesetzt;
+2. `normalizeJobContextRequirements` fuer stabile Requirements umgesetzt;
+3. deterministischer Mock-Match-Analyzer und nicht verlinkte `/test/match`-Ergebnisvorschau
+   umgesetzt;
+4. `matchEvidenceSetSchema` und `createMatchEvidenceAllowlist` als gesperrte Profil-Evidence-Grenze
+   umgesetzt;
+5. `createInMemoryMatchEvidenceRepository` mit rein synthetischem Fixture vorbereitet;
+6. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
 
-Explizit nicht enthalten: weitere biografische Interviews, echte Profilimporte, Remote-Migration,
-reales LLM, Web-UI, Crawling, Match-Analyse, n8n und Kontaktversand.
+Explizit nicht enthalten: echte Profilimporte, Remote-Migration, produktives reales LLM,
+produktives Crawling, produktive Match-Analyse, n8n und Kontaktversand.
 
 ## Phasenuebergreifende Gates
 

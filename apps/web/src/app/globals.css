@@ -359,6 +359,27 @@ p {
   font-weight: 700;
 }
 
+.match-edit-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.match-edit-grid label {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.match-edit-grid input,
+.match-edit-grid textarea {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--color-ink);
+  background: #ffffff;
+  border: 1px solid rgb(7 58 68 / 18%);
+  border-radius: 10px;
+}
+
 .preview-output-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

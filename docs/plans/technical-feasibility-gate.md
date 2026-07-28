@@ -1,7 +1,7 @@
 # Technischer Machbarkeitsnachweis
 
 Stand: 2026-07-28
-Status: Stufe 1 bestanden, Stop/Go `GO`, Migration Readiness Review als naechste Einheit
+Status: alle vier Stufen mit synthetischen Daten bestanden; Gesamt-Stop/Go `GO`
 
 ## Anlass
 
@@ -145,7 +145,7 @@ Browserintegration.
 
 ## Stufe 2: Lokale Supabase- und RLS-Pruefung
 
-Status: Stufe 1 bestanden; Umsetzung gesperrt bis zum Migration Readiness Review
+Status: abgeschlossen; Stop/Go `GO` fuer Stufe 3 mit synthetischen Daten
 
 ### Ziel
 
@@ -168,6 +168,33 @@ festgelegt; ein produktiver Seed bleibt eine spaetere, getrennte Freigabeentsche
 7. Optional `pgvector` mit deterministischen Testvektoren pruefen; noch keinen
    Embedding-Anbieter festlegen.
 
+Review-Artefakt: `docs/plans/migration-readiness-review-stage-2.md`.
+
+Abschlussreview: `docs/plans/technical-feasibility-stage-2-review.md`.
+
+Vorbereitete Artefakte:
+
+- `supabase/migrations/20260728122000_stage_2_profile_knowledge_base.sql`
+- `supabase/seed/stage-2-profile-knowledge.synthetic.sql`
+- `supabase/tests/stage_2_profile_knowledge.sql`
+
+Ausfuehrungsstand:
+
+- `pnpm dlx supabase init` hat die lokale Supabase-Konfiguration angelegt.
+- `pnpm dlx supabase start` hat den lokalen Stack gestartet und die Migration angewendet.
+- Der synthetische Seed wurde lokal geladen und ist in `supabase/config.toml` als Reset-Seed
+  eingetragen.
+- `supabase/tests/stage_2_profile_knowledge.sql` wurde lokal erfolgreich gegen
+  `postgresql://postgres:postgres@127.0.0.1:54322/postgres` ausgefuehrt.
+- `apps/orchestrator/src/supabase-profile-repository.ts` implementiert den serverseitigen
+  Postgres-Adapter hinter der bestehenden `ProfileRepository`-Schnittstelle.
+- `apps/orchestrator/src/supabase-profile-repository.test.ts` prueft die SQL-Filter statisch und gegen
+  die lokale synthetische Supabase-Datenbank.
+
+Stop/Go: `GO`. Stufe 2 belegt lokale Persistenz, RLS-Grundschutz, restriktive Retrieval-Filter und
+den austauschbaren Postgres-Adapter mit synthetischen Daten. Nicht belegt sind produktive
+Rollenprozesse, Storage, Embeddings, Vektorsuche, Remote-Migrationen oder reale Profilinhalte.
+
 ### Abnahme
 
 - anonyme Clients koennen keine privaten oder nicht veroeffentlichten Inhalte lesen;
@@ -178,7 +205,7 @@ festgelegt; ein produktiver Seed bleibt eine spaetere, getrennte Freigabeentsche
 
 ## Stufe 3: Reale Modellintegration mit synthetischen Daten
 
-Status: gesperrt bis Stufe 2 und Providerentscheidung
+Status: abgeschlossen; Stop/Go `GO` fuer Stufe 4 mit synthetischen Daten
 
 ### Ziel
 
@@ -194,6 +221,24 @@ Evidence-Grenzen verlaesslich einhaelt.
 5. Fremde Evidence-IDs, Freitext statt JSON und Prompt-Injection-Testfaelle pruefen.
 6. Netzwerkbasierte Integrationstests getrennt von der deterministischen Standardsuite ausfuehren.
 
+Readiness-Artefakt: `docs/plans/technical-feasibility-stage-3-readiness.md`.
+Abschlussreview: `docs/plans/technical-feasibility-stage-3-review.md`.
+
+Ausfuehrungsstand:
+
+- `apps/orchestrator/src/openai-structured-provider.ts` implementiert den schmalen OpenAI-Adapter ohne
+  SDK-Abhaengigkeit.
+- Der Adapter nutzt serverseitiges `fetch`, Timeout via `AbortController`, OpenAI JSON-Schema-Ausgabe
+  und maximal einen schemaorientierten Reparaturversuch.
+- `apps/orchestrator/src/openai-structured-provider.test.ts` prueft gueltige Antworten,
+  Reparaturversuch, HTTP-Providerfehler und einen opt-in Integrationstest.
+- Der opt-in Integrationstest wurde mit OpenAI und ausschliesslich synthetischen Daten erfolgreich
+  ausgefuehrt.
+
+Stop/Go: `GO`. Stufe 3 belegt, dass ein realer OpenAI-Provider mit synthetischen Daten
+schema-validierbare Antworten liefern kann und Providerfehler kontrolliert behandelt werden. Nicht
+belegt sind produktiver Providerbetrieb, echte Profilinhalte, UI-Zustaende oder End-to-End-Verhalten.
+
 ### Abnahme
 
 - gueltige Antworten bestehen Schema- und Evidence-Pruefung;
@@ -204,7 +249,7 @@ Evidence-Grenzen verlaesslich einhaelt.
 
 ## Stufe 4: Minimaler End-to-End-Flow
 
-Status: gesperrt bis Stufe 3
+Status: abgeschlossen; Stop/Go `GO` fuer Gesamt-Gate mit synthetischen Daten
 
 ### Ziel
 
@@ -218,6 +263,29 @@ pruefen.
 3. Antwort, Quellenchips, fehlende Evidenz, Lade- und Fehlerzustand darstellen.
 4. Keine produktive Aktivierung, keine dauerhafte Chat-Speicherung und kein Stellenkontext.
 5. Mobile, Tastatur- und Accessibility-Pruefung fuer den Testfluss.
+
+Readiness-Artefakt: `docs/plans/technical-feasibility-stage-4-readiness.md`.
+Abschlussreview: `docs/plans/technical-feasibility-stage-4-review.md`.
+
+Ausfuehrungsstand:
+
+- BFF-Testroute `POST /api/test/profile-assistant` ist nur bei `ENABLE_SYNTHETIC_ASSISTANT_TEST=1`
+  aktiv.
+- Testseite `/test/profilassistent` ist nur bei `NEXT_PUBLIC_ENABLE_SYNTHETIC_ASSISTANT_TEST=1` aktiv
+  und `noindex, nofollow` markiert.
+- UI-Zustaende fuer Initial, Loading, Erfolg, fehlende Evidenz und Fehler sind implementiert und
+  komponentengetestet.
+- Standardsuite verwendet deterministische Mock-Antworten und keine echten Provideraufrufe.
+- Oeffentliche Startseite bleibt unveraendert und zeigt weiterhin korrekt `Kein KI-Aufruf`.
+- BFF-Testroute kann im expliziten Modus `SYNTHETIC_ASSISTANT_MODE=orchestrator` an
+  `ORCHESTRATOR_BASE_URL` weiterleiten.
+- Orchestrator-Runtime verdrahtet den Profilassistenten nur bei `ENABLE_SYNTHETIC_ASSISTANT_TEST=1`
+  mit lokaler Supabase und deterministischem Mockprovider.
+- Opt-in Playwright-Test `tests/e2e/synthetic-assistant.spec.ts` belegt Browser -> BFF ->
+  Orchestrator -> lokale Supabase -> validierte Antwort.
+
+Stop/Go: `GO`. Stufe 4 belegt den minimalen End-to-End-Flow mit synthetischen Daten. Nicht belegt
+sind produktive Aktivierung, echte Profilinhalte, OpenAI im Browserpfad oder Remote-Supabase.
 
 ### Abnahme
 
@@ -236,6 +304,10 @@ Der technische Machbarkeitsnachweis ist bestanden, wenn:
 - ein realer Provider mit synthetischen Daten schema-konform arbeitet;
 - der Browser-zu-Datenbank-Durchstich ohne private Inhalte funktioniert;
 - offene Produktionsrisiken und nicht getestete Bereiche dokumentiert sind.
+
+Aktueller Stand: bestanden mit synthetischen Daten. RLS, Providergrenze, lokale Supabase-Persistenz,
+BFF, Orchestrator und Browser-Testseite sind stufenweise und im lokalen opt-in End-to-End-Lauf
+nachgewiesen. Produktive Nutzung bleibt weiterhin gesperrt und benoetigt eigene Freigaben.
 
 Danach wird entschieden, ob der Profil-Workshop chronologisch fortgesetzt, die Architektur angepasst
 oder das Vorhaben im Umfang reduziert wird.

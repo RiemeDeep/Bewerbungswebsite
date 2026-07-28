@@ -1,0 +1,63 @@
+{
+  "fixtureType": "public_job_context_evaluation",
+  "createdAt": "2026-07-28",
+  "cases": [
+    {
+      "id": "neways-enterprise-planner",
+      "platform": "company_careers_site",
+      "url": "https://careers.newayselectronics.com/de/job/enterprise-planer-m-w-d-2662366/?pubid=10104886",
+      "observedFirecrawl": {
+        "success": true,
+        "statusCode": 200,
+        "title": "Enterprise Planner (m/w/d) - Neways",
+        "markdownLength": 5458
+      },
+      "expectedSignals": {
+        "company": "Neways",
+        "jobTitle": "Enterprise Planner (m/w/d)",
+        "notes": [
+          "Company-hosted careers page",
+          "Useful for extracting company plus job context from one source"
+        ]
+      }
+    },
+    {
+      "id": "indeed-projektmanager-telekom",
+      "platform": "job_board",
+      "url": "https://de.indeed.com/viewjob?jk=548412fe86c8a2c9&from=shareddesktop_copy",
+      "observedFirecrawl": {
+        "success": true,
+        "statusCode": 200,
+        "title": "Projektmanager Telekom (m/w/d) - 66386 Sankt Ingbert - Indeed.com",
+        "markdownLength": 9285
+      },
+      "expectedSignals": {
+        "company": null,
+        "jobTitle": "Projektmanager Telekom (m/w/d)",
+        "notes": [
+          "External job board page",
+          "Company context may be incomplete or mixed with platform boilerplate"
+        ]
+      }
+    },
+    {
+      "id": "arbeitsagentur-cam-programmierer",
+      "platform": "public_employment_portal",
+      "url": "https://www.arbeitsagentur.de/jobsuche/jobdetail/12265-513988_JB5205582-S",
+      "observedFirecrawl": {
+        "success": true,
+        "statusCode": 200,
+        "title": "CAM Programmierer (m/w/d) | Jobsuche der BA",
+        "markdownLength": 6362
+      },
+      "expectedSignals": {
+        "company": null,
+        "jobTitle": "CAM Programmierer (m/w/d)",
+        "notes": [
+          "Public employment portal",
+          "Good test for structured portal text and public-sector boilerplate"
+        ]
+      }
+    }
+  ]
+}

@@ -1,7 +1,8 @@
 # Offene Entscheidungen fuer Phase 2
 
 Stand: 2026-07-28
-Status: Workshop-Leitplanken und technisches Machbarkeits-Gate entschieden, weitere Phase-2-Entscheidungen offen
+Status: Workshop-Leitplanken, technisches Machbarkeits-Gate und Migration Readiness Review fuer die
+lokale Stufe 2 entschieden; produktive Phase-2-Entscheidungen teilweise offen
 
 ## Arbeitsreihenfolge ab 2026-07-27
 
@@ -64,6 +65,12 @@ Priorisierte Challenge-Fragen fuer den ersten Workshop-Durchlauf:
 | Werden Tabellen im `public`-Schema oder in getrennten Schemas angelegt? | Offen  | API-Exposition und serverseitigen Zugriff pruefen     |
 | Welche Rollen duerfen Claims reviewen und publizieren?                  | Offen  | Vier-Augen-Prinzip light aus Spezifikation erhalten   |
 | Wie werden Rueckzug und Re-Indexierung transaktional gekoppelt?         | Offen  | vor Ingestion als Invariante festlegen                |
+
+Ergaenzung am 2026-07-28: Fuer den lokalen technischen Machbarkeitsnachweis Stufe 2 sind die
+Migrationsentscheidungen in `docs/plans/migration-readiness-review-stage-2.md` reduziert entschieden.
+Freigegeben ist nur eine lokale Migration mit synthetischem Seed und RLS-Negativtests. Die produktive
+Schemaexposition, redaktionelle Rollen, Storage, Embeddings, Remote-Projektwahl und echte Profilimporte
+bleiben offen.
 
 ## Vor Dokument-Upload und Embeddings
 

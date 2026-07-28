@@ -87,7 +87,7 @@ Status: nach ersten Claim- und Pilotentwuerfen pausiert am 2026-07-27
 
 ### 2.0.4 Migration Readiness Review
 
-Status: offen
+Status: abgeschlossen am 2026-07-28 fuer den lokalen technischen Machbarkeitsnachweis Stufe 2
 
 - fachliches Modell gegen die Spezifikation pruefen;
 - notwendige Enums und Constraints festlegen;
@@ -96,6 +96,10 @@ Status: offen
 - Seed-/Importumfang bestimmen;
 - ADR-Bedarf pruefen;
 - Phase 2.1 fuer die erste Migration freigeben.
+
+Ergebnis: `docs/plans/migration-readiness-review-stage-2.md` gibt eine lokale Stufe-2-Migration mit
+ausschliesslich synthetischem Seed frei. Produktive Phase 2.1, Remote-Migrationen, echte Profilinhalte,
+Storage, Embeddings und Providerentscheidungen bleiben separat gesperrt.
 
 ## Geplante Artefakte
 

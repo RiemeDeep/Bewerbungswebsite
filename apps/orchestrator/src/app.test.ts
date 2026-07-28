@@ -4,18 +4,66 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "./app.js";
+import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
+import {
+  createDeterministicMockJobContextExtractor,
+  JobContextExtractionError,
+} from "./job-context-extractor.js";
+import { createJobContextPreviewService } from "./job-context-preview.js";
+import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
 import {
   createDeterministicMockProvider,
   createInMemoryProfileRepository,
   createProfileAssistantService,
   type StructuredModelProvider,
 } from "./profile-assistant.js";
+import type { DnsResolver } from "./url-security.js";
 
 const validAssistantRequest = {
   sessionId: "99999999-9999-4999-8999-999999999999",
   analysisId: null,
   message: "Welche technischen Prozessverbesserungen sind belegt?",
 };
+
+const publicResolver: DnsResolver = async () => [{ address: "93.184.216.34", family: 4 }];
+
+const validJobContext = {
+  company: {
+    name: "Beispiel GmbH",
+    description: "Synthetischer Kontext.",
+    industrySignals: [],
+    sizeSignals: [],
+    valuesSignals: [],
+  },
+  job: {
+    title: "Technische Projektkoordination",
+    location: null,
+    workModel: null,
+    employmentType: "Vollzeit",
+    responsibilities: ["Projektstatus dokumentieren"],
+    mustRequirements: ["Technische Anforderungen klaeren", "Branchenspezifische Zertifizierung"],
+    shouldRequirements: ["Kommunikation mit Stakeholdern"],
+    benefits: [],
+  },
+  ambiguities: [],
+  sourceSections: [],
+  sources: [
+    {
+      url: "https://example.com/jobs/technische-projektrolle",
+      retrievedAt: "2026-07-28T12:00:00.000Z",
+      title: "Stelle",
+    },
+  ],
+};
+
+function createTestJobContextPreview() {
+  return createJobContextPreviewService({
+    crawlProvider: createDeterministicMockCrawlProvider(),
+    extractor: createDeterministicMockJobContextExtractor(),
+    dnsResolver: publicResolver,
+    now: () => new Date("2026-07-28T12:00:00.000Z"),
+  });
+}
 
 async function createTestAssistant(
   provider: StructuredModelProvider = createDeterministicMockProvider(),
@@ -168,5 +216,172 @@ describe("POST /api/v1/assistant/messages", () => {
     });
     expect(response.body).not.toHaveProperty("answer");
     expect(JSON.stringify(response.body)).not.toContain("freeText");
+  });
+});
+
+describe("POST /api/v1/job-context/preview", () => {
+  it("is not registered by the default server composition", async () => {
+    await request(createApp())
+      .post("/api/v1/job-context/preview")
+      .send({
+        jobUrl: "https://example.com/jobs/technische-projektrolle",
+        companyUrl: null,
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(404);
+  });
+
+  it("returns a validated job context preview for safe public URLs", async () => {
+    const response = await request(createApp({ jobContextPreview: createTestJobContextPreview() }))
+      .post("/api/v1/job-context/preview")
+      .send({
+        jobUrl: "https://example.com/jobs/technische-projektrolle",
+        companyUrl: "https://example.com",
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      job: {
+        title: "Technische Projektkoordination",
+        responsibilities: ["Technische Anforderungen klaeren und strukturiert dokumentieren"],
+      },
+      sources: [
+        { url: "https://example.com/jobs/technische-projektrolle" },
+        { url: "https://example.com/" },
+      ],
+    });
+  });
+
+  it("returns a validated job context preview for pasted text", async () => {
+    const response = await request(createApp({ jobContextPreview: createTestJobContextPreview() }))
+      .post("/api/v1/job-context/preview")
+      .send({
+        jobUrl: null,
+        companyUrl: null,
+        pastedText: "Beispiel GmbH sucht technische Projektkoordination in Vollzeit.",
+        suppliedJobTitle: "Projektkoordination",
+        suppliedCompanyName: "Beispiel GmbH",
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      company: { name: "Beispiel GmbH" },
+      job: { title: "Projektkoordination", employmentType: "Vollzeit" },
+      sources: [{ title: "Direkte Texteingabe" }],
+    });
+  });
+
+  it("rejects invalid input without exposing validation details", async () => {
+    const response = await request(createApp({ jobContextPreview: createTestJobContextPreview() }))
+      .post("/api/v1/job-context/preview")
+      .send({
+        jobUrl: null,
+        companyUrl: null,
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      error: { code: "INVALID_REQUEST", message: "Die Anfrage ist ungueltig." },
+    });
+    expect(JSON.stringify(response.body)).not.toContain("At least one");
+  });
+
+  it("rejects unsafe URLs before crawling", async () => {
+    const response = await request(createApp({ jobContextPreview: createTestJobContextPreview() }))
+      .post("/api/v1/job-context/preview")
+      .send({
+        jobUrl: "http://127.0.0.1/jobs",
+        companyUrl: null,
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      error: { code: "INVALID_REQUEST", message: "Die URL konnte nicht sicher abgerufen werden." },
+    });
+  });
+
+  it("maps job context provider failures to retryable upstream errors", async () => {
+    const response = await request(
+      createApp({
+        jobContextPreview: {
+          async preview() {
+            throw new JobContextExtractionError("The provider request timed out.");
+          },
+        },
+      }),
+    )
+      .post("/api/v1/job-context/preview")
+      .send({
+        jobUrl: "https://example.com/jobs/technische-projektrolle",
+        companyUrl: null,
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(502);
+
+    expect(response.body).toMatchObject({
+      error: {
+        code: "ASSISTANT_INTERNAL_ERROR",
+        message:
+          "Die externe Stellenerkennung ist voruebergehend nicht erreichbar. Bitte versuchen Sie es erneut.",
+        retryable: true,
+      },
+    });
+  });
+});
+
+describe("POST /api/v1/match/analyze", () => {
+  it("is not registered by the default server composition", async () => {
+    await request(createApp()).post("/api/v1/match/analyze").send(validJobContext).expect(404);
+  });
+
+  it("returns a validated synthetic match analysis", async () => {
+    const response = await request(
+      createApp({ matchAnalyzer: createDeterministicMockMatchAnalyzer() }),
+    )
+      .post("/api/v1/match/analyze")
+      .send(validJobContext)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      schemaVersion: "1.0",
+      subject: { companyName: "Beispiel GmbH" },
+      warnings: [
+        "Diese Match-Analyse ist synthetisch und verwendet keine produktiven Profilbelege.",
+        "Es wird bewusst keine Match-Prozentzahl erzeugt.",
+      ],
+    });
+    expect(response.body).not.toHaveProperty("matchPercentage");
+  });
+
+  it("rejects invalid match analysis input", async () => {
+    const response = await request(
+      createApp({ matchAnalyzer: createDeterministicMockMatchAnalyzer() }),
+    )
+      .post("/api/v1/match/analyze")
+      .send({ ...validJobContext, job: { ...validJobContext.job, mustRequirements: [""] } })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      error: { code: "INVALID_REQUEST", retryable: false },
+    });
   });
 });

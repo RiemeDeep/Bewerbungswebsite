@@ -6,3 +6,6 @@ playwright-report
 test-results
 pnpm-lock.yaml
 OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md
+supabase/.branches
+supabase/.temp
+supabase/**/*.sql
