@@ -177,8 +177,8 @@ Empfohlene rclone-Struktur:
 - Dateinamenverschluesselung und Verzeichnisnamenverschluesselung aktivieren.
 - rclone-Konfiguration nur root-lesbar halten: `/root/.config/rclone/rclone.conf` mit Modus `0600`.
 
-Stand auf dem VPS: `rclone` ist installiert. `/root/.config/rclone/rclone.conf` existiert noch nicht;
-der Offsite-Timer ist deshalb noch nicht aktiviert.
+Stand auf dem VPS: `rclone` ist installiert, `/root/.config/rclone/rclone.conf` ist root-only
+konfiguriert und der Offsite-Timer ist aktiviert. Der erste manuelle Sync war erfolgreich.
 
 Nach der einmaligen Google-OAuth-Konfiguration:
 

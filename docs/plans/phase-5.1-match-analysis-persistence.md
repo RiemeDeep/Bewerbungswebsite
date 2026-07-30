@@ -60,8 +60,8 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
   ausgefuehrt und entfernt;
 - taegliche Custom-Format-Backups laufen um 02:30 Uhr `Europe/Berlin` mit 14 Tagen Aufbewahrung;
 - ein isolierter Restore-Probelauf in einem temporaeren Docker-Volume wurde erfolgreich ausgefuehrt;
-- die verschluesselte Google-Drive-Offsite-Kopie ist per rclone vorbereitet, aber bis zur einmaligen
-  OAuth-Konfiguration noch nicht aktiv.
+- die verschluesselte Google-Drive-Offsite-Kopie ist per rclone aktiv; der erste manuelle Sync war
+  erfolgreich und der Timer ist aktiviert.
 
 ## Nicht Enthalten
 
@@ -74,4 +74,4 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
 
 - produktionsgeeignete Analyseerzeugung getrennt vom synthetischen Analyzer planen;
 - echte Profil-Evidence erst nach fachlicher Freigabe und RLS-Pruefung anbinden;
-- Google-Drive-rclone-OAuth abschliessen, Offsite-Timer aktivieren und ersten Offsite-Lauf pruefen.
+- naechsten regulaeren Offsite-Timerlauf pruefen.

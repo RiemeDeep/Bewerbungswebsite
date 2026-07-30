@@ -81,9 +81,9 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
   erfolgreich gelesen. Der isolierte Restore-Probelauf wurde auf dem VPS mit
   `/opt/bewerbungswebsite/deploy/postgres/restore-test.sh` erfolgreich gegen ein temporaeres
   Docker-Volume ausgefuehrt.
-- Offsite-Ziel fachlich entschieden: Google Drive ueber rclone `crypt`. `rclone` ist auf dem VPS
-  installiert, die Skripte und systemd-Units sind vorbereitet; die einmalige Google-OAuth-Konfiguration
-  steht noch aus und der Offsite-Timer ist noch nicht aktiviert.
+- Offsite-Ziel fachlich entschieden und aktiviert: Google Drive ueber rclone `crypt`. `rclone` ist auf
+  dem VPS installiert, OAuth/crypt sind konfiguriert, der erste manuelle Sync war erfolgreich und der
+  Offsite-Timer ist aktiviert.
 
 ## Tests und Pruefungen
 
@@ -116,8 +116,8 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 
 ## Offene Punkte und Risiken
 
-- Backups liegen derzeit noch auf demselben VPS. Die verschluesselte Google-Drive-Offsite-Kopie ist
-  vorbereitet, aber wegen ausstehender OAuth-Autorisierung noch nicht aktiv.
+- Backups werden zusaetzlich verschluesselt nach Google Drive kopiert. Der erste Offsite-Lauf hat zwei
+  Dumps im crypt-Remote sichtbar gemacht.
 - Der 30-Tage-Hard-Delete ist produktiv deployt und per n8n-Integrationstest verifiziert.
 - Die initiale Self-Hosted-Migration ist absichtlich nur fuer ein leeres Volume gedacht. Fuer
   spaetere Schemaaenderungen fehlt noch ein allgemeiner idempotenter Migration-Runner.
@@ -130,9 +130,8 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 
 ## Naechster sinnvoller Schritt
 
-Die Google-Drive-rclone-OAuth-Konfiguration abschliessen und den Offsite-Timer aktivieren. Danach den
-Offsite-Lauf einmal manuell ausfuehren und `rclone lsf bewerbungswebsite-postgres-crypt:postgres`
-pruefen. Erst danach produktive Analyseerzeugung oder echte Profil-Evidence anbinden.
+Den aktivierten Offsite-Timer beim naechsten regulaeren Lauf pruefen. Erst danach produktive
+Analyseerzeugung oder echte Profil-Evidence anbinden.
 
 ## motai-rag
 
