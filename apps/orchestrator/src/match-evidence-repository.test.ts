@@ -204,7 +204,9 @@ describe.skipIf(!process.env.LOCAL_SUPABASE_DATABASE_URL)(
       );
 
       try {
-        await expect(repository.retrieveForRequirements(jobAnalysisRequirements, 30)).resolves.toEqual({
+        await expect(
+          repository.retrieveForRequirements(jobAnalysisRequirements, 30),
+        ).resolves.toEqual({
           schemaVersion: "1.0",
           evidence: [
             {

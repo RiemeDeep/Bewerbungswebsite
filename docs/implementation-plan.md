@@ -324,8 +324,8 @@ Umsetzungseinheiten:
    Orchestrator-Endpunkt `POST /api/internal/match/analyses/expire-due` ist vorbereitet,
    authentisiert per Bearer-Secret aus `ORCHESTRATOR_REQUEST_SECRET`, gibt nur `expiredCount`,
    `deletedCount` und `expiredAt` zurueck, markiert faellige aktive Analysen als `expired`, loescht
-    bereits `expired`/`deleted` Analysen nach 30 Tagen physisch und weist nach Cleanup fuer
-    Detailansicht und Match-Assistent einheitlich Nichtfund nach.
+   bereits `expired`/`deleted` Analysen nach 30 Tagen physisch und weist nach Cleanup fuer
+   Detailansicht und Match-Assistent einheitlich Nichtfund nach.
 7. produktionsgeeignete Analyseerzeugung getrennt vom synthetischen Analyzer vorbereitet.
    `createMatchAnalyzerService` fuehrt Provider-Ausgaben nur nach Schema-, Subject-, Requirement- und
    Evidence-Allowlist-Pruefung weiter. `createOpenAiMatchAnalysisProvider` erzeugt strukturierte

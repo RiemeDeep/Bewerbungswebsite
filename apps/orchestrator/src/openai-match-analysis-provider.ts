@@ -103,7 +103,12 @@ const matchAnalysisJsonSchema = {
         properties: {
           title: boundedString(200),
           description: boundedString(1_000),
-          requirementIds: { type: "array", minItems: 1, maxItems: 10, items: stableRequirementId() },
+          requirementIds: {
+            type: "array",
+            minItems: 1,
+            maxItems: 10,
+            items: stableRequirementId(),
+          },
           evidenceIds: { type: "array", minItems: 1, maxItems: 10, items: uuidString() },
           confidence: { enum: ["high", "medium", "low"] },
         },
@@ -121,7 +126,9 @@ const matchAnalysisJsonSchema = {
           requirementId: stableRequirementId(),
           label: boundedString(300),
           importance: { enum: ["must", "should", "could", "unknown"] },
-          status: { enum: ["supported", "partially_supported", "transferable", "not_supported", "unclear"] },
+          status: {
+            enum: ["supported", "partially_supported", "transferable", "not_supported", "unclear"],
+          },
           explanation: boundedString(1_000),
           evidenceIds: { type: "array", maxItems: 10, items: uuidString() },
         },

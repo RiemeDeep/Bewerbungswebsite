@@ -477,7 +477,9 @@ export function MatchPreviewTest({ analysisMode = "mock" }: MatchPreviewTestProp
               ) : null}
               {confirmationState.status === "confirmed" ? (
                 <p className="preview-status" role="status">
-                  Stellenkontext bestaetigt. Die {usesOrchestrator ? "Orchestrator-Analyse" : "synthetische Mock-Analyse"} wurde gestartet.
+                  Stellenkontext bestaetigt. Die{" "}
+                  {usesOrchestrator ? "Orchestrator-Analyse" : "synthetische Mock-Analyse"} wurde
+                  gestartet.
                 </p>
               ) : null}
 
@@ -504,9 +506,19 @@ export function MatchPreviewTest({ analysisMode = "mock" }: MatchPreviewTestProp
               ) : null}
 
               {matchAnalysisState.status === "success" ? (
-                <section aria-label={usesOrchestrator ? "Orchestrator-Match-Ergebnis" : "Synthetisches Match-Ergebnis"}>
+                <section
+                  aria-label={
+                    usesOrchestrator
+                      ? "Orchestrator-Match-Ergebnis"
+                      : "Synthetisches Match-Ergebnis"
+                  }
+                >
                   <div className="preview-output-heading">
-                    <p>{usesOrchestrator ? "Orchestrator-Match-Ergebnis" : "Synthetisches Match-Ergebnis"}</p>
+                    <p>
+                      {usesOrchestrator
+                        ? "Orchestrator-Match-Ergebnis"
+                        : "Synthetisches Match-Ergebnis"}
+                    </p>
                     <span>{matchAnalysisState.analysis.summary.confidence}</span>
                   </div>
                   <h2>{matchAnalysisState.analysis.summary.headline}</h2>
