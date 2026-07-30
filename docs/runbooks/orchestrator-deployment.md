@@ -178,7 +178,8 @@ Empfohlene rclone-Struktur:
 - rclone-Konfiguration nur root-lesbar halten: `/root/.config/rclone/rclone.conf` mit Modus `0600`.
 
 Stand auf dem VPS: `rclone` ist installiert, `/root/.config/rclone/rclone.conf` ist root-only
-konfiguriert und der Offsite-Timer ist aktiviert. Der erste manuelle Sync war erfolgreich.
+konfiguriert und der Offsite-Timer ist aktiviert. Der erste manuelle Sync und der erste automatische
+Timerlauf waren erfolgreich.
 
 Nach der einmaligen Google-OAuth-Konfiguration:
 

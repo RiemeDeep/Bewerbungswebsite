@@ -83,7 +83,7 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
   Docker-Volume ausgefuehrt.
 - Offsite-Ziel fachlich entschieden und aktiviert: Google Drive ueber rclone `crypt`. `rclone` ist auf
   dem VPS installiert, OAuth/crypt sind konfiguriert, der erste manuelle Sync war erfolgreich und der
-  Offsite-Timer ist aktiviert.
+  erste automatische Offsite-Timerlauf war erfolgreich.
 
 ## Tests und Pruefungen
 
@@ -98,6 +98,7 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 - Docker-Compose-Konfiguration: gueltig.
 - PostgreSQL und Orchestrator: gesund, keine Restarts.
 - Erweiterter n8n-Cleanup-Integrationstest mit Expiry- und Hard-Delete-Probe: erfolgreich.
+- Erster automatischer Offsite-Timerlauf: erfolgreich.
 - SQL-Negativtest fuer Token-Hash, RLS und Constraints: erfolgreich und zurueckgerollt.
 - pgvector 0.8.1, RLS und App-Rollen-Zugriff verifiziert.
 - n8n-Workflow-Validierung: 0 Fehler, 0 Warnungen.
@@ -130,8 +131,8 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 
 ## Naechster sinnvoller Schritt
 
-Den aktivierten Offsite-Timer beim naechsten regulaeren Lauf pruefen. Erst danach produktive
-Analyseerzeugung oder echte Profil-Evidence anbinden.
+Einen allgemeinen idempotenten Migration-Runner fuer spaetere Schemaaenderungen planen. Erst danach
+produktive Analyseerzeugung oder echte Profil-Evidence anbinden.
 
 ## motai-rag
 
