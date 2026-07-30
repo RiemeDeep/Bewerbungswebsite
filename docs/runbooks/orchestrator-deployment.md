@@ -24,7 +24,7 @@ PostgreSQL laeuft im selben Compose-Projekt:
 - nur isoliertes Backend-Netzwerk, keine Portfreigabe an Host oder n8n
 - RLS fuer `public.match_analyses`, keine direkten Rechte fuer `anon` oder `authenticated`
 - Profil-Schema, Provenienz-Migration und read-only Runtime-Policies sind auf dem VPS angewendet;
-  Profil-Tabellen bleiben leer, bis der echte Import separat freigegeben wird
+  der erste freigegebene Pilotfall ist importiert, Runtime-Aktivierung bleibt gesperrt
 
 Synthetische Runtime-Flags sind nicht gesetzt. `MATCH_DATABASE_URL` aktiviert nur den
 produktionsgeeigneten Match-Store. Ein gleichzeitiger synthetischer Match-Modus wird vom Startschema
@@ -138,8 +138,7 @@ docker exec bewerbungswebsite-postgres \
 
 Der Profil-Pending-Run wurde am 2026-07-30 nach Backup, Restore-Test und leerem Profilbestand remote
 ausgefuehrt. Danach waren sechs Migrationen im Ledger registriert, `verify-runtime-access.sh` lief
-erfolgreich und alle Profiltabellen blieben leer. Echte Inhalte werden nicht zusammen mit einem Release
-importiert.
+erfolgreich und alle Profiltabellen blieben bis zum separaten Import-Gate leer.
 
 ## Profilimport
 
@@ -156,9 +155,9 @@ pnpm --filter @bewerbungswebsite/orchestrator profile:import
 ```
 
 `apply` benoetigt `PROFILE_IMPORT_CONFIRM=IMPORT_APPROVED_PROFILE` und eine administrative
-`PROFILE_DATABASE_URL`. Dieser Modus ist fuer den VPS noch gesperrt. Die Runtime-Verbindung aus
-`.env.orchestrator` besitzt absichtlich keine Schreibrechte und darf nicht fuer Imports erweitert
-werden.
+`PROFILE_DATABASE_URL`. Der erste Pilotimport wurde am 2026-07-30 separat nach Backup und Restore-Test
+ausgefuehrt. Die Runtime-Verbindung aus `.env.orchestrator` besitzt absichtlich keine Schreibrechte und
+darf nicht fuer Imports erweitert werden.
 
 Authentisierten Cleanup mit dem n8n-Credential testen:
 

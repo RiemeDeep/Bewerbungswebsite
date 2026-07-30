@@ -1,8 +1,7 @@
 # Phase 2.1: Profil-Schema und Import-Readiness
 
 Stand: 2026-07-30
-Status: lokal und remote mit synthetischen Daten nachgewiesen; echter Import und Runtime-Aktivierung
-gesperrt
+Status: lokal und remote nachgewiesen; erster echter Pilotimport erfolgt, Runtime-Aktivierung gesperrt
 
 ## Ziel
 
@@ -23,7 +22,6 @@ Traffic zu aktivieren.
 
 ## Nicht enthalten
 
-- Import echter Profilinhalte in lokale oder entfernte Datenbanken;
 - Upload privater Originaldokumente;
 - Embeddings oder Dokument-Chunks fuer echte Inhalte;
 - Aktivierung von Profilassistent, Match-Analyse oder statischer Projektansicht mit echten Daten.
@@ -113,6 +111,11 @@ Fehlerausgaben enthalten weder Profilinhalt noch Dateipfad oder Datenbankwert.
   bereinigt.
 - private Pilot-Importdatei nur validiert: 1 Entitaet, 4 Source-Metadaten, 13 Claims und 14 Evidence
   Items; kein Schreibvorgang.
+- echter Remote-Import des ersten Pilotfalls erfolgreich: 1 Entitaet, 4 Source-Metadaten, 13 Claims
+  und 14 Evidence Items; `document_chunks` bleibt leer.
+- Runtime-Verifikation nach Import erfolgreich; Runtime-Rolle sieht nur die freigegebenen Profilzeilen
+  und keine privaten Source-Titel, Speicherpfade oder Chunks.
+- Nach-Import-Backup und Offsite-Sync erfolgreich.
 
 ## Remote-Migration
 
@@ -120,13 +123,16 @@ Abgeschlossen am 2026-07-30 auf dem Self-Hosted PostgreSQL des Hostinger-VPS. Es
 Policies, Grants und Tests angewendet. Echte Profilinhalte wurden nicht importiert und Runtime-Flags
 nicht aktiviert.
 
-## Gates vor echtem Import
+## Echter Pilotimport
 
-1. Private Importdatei erneut gegen den finalen Importvertrag validieren.
-2. Evidence-Auszuege auf Drittinformationen, Adressen, Geburtsdaten, interne Locator und andere private
-   Details pruefen.
-3. Datenbankbackup unmittelbar vor Import erstellen.
-4. Import mit administrativer Einmalverbindung ausfuehren; Runtime-Rolle bleibt read-only.
-5. Counts und erlaubte Retrieval-Ergebnisse pruefen, ohne Inhalte in Logs auszugeben.
-6. Rueckzugstest fuer mindestens einen synthetischen Probe-Claim ausfuehren.
-7. Echte Runtime-Flags erst in einem separaten Go-live-Gate aktivieren.
+Abgeschlossen am 2026-07-30 auf dem Self-Hosted PostgreSQL des Hostinger-VPS. Die private JSON-Datei
+wurde nur temporaer fuer Validate und Apply in den Orchestrator-Container uebertragen und danach
+geloescht. Der Import erfolgte mit administrativer Einmalverbindung; die Runtime-Rolle blieb read-only.
+
+## Gates vor Runtime-Aktivierung
+
+1. erlaubte Retrieval-Ergebnisse fachlich ohne Inhaltslogging stichprobenartig pruefen.
+2. Rueckzugstest fuer mindestens einen synthetischen Probe-Claim ausfuehren.
+3. UI-/BFF-Pfade fuer echte Profilbasis separat freigeben.
+4. Datenschutz- und Rechtscheck vor oeffentlicher Auslieferung abschliessen.
+5. Echte Runtime-Flags erst in einem separaten Go-live-Gate aktivieren.
