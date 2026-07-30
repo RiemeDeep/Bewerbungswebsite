@@ -424,8 +424,9 @@ Phase-5.0 Match-Analyse:
     und persoenliche Bestaetigungen getrennt normalisiert;
 20. Phase-2.1-Schema mit getrenntem fachlichem Reviewstatus und Belegbasis, kontrolliertem Importpfad,
     Parent-Entity-/Parent-Claim-Filtern und RLS-Negativtests lokal vorbereitet und remote migriert;
-21. erster echter Pilotimport nach Backup, Restore-Test und Validate erfolgreich ausgefuehrt; Runtime-
-    Aktivierung bleibt ein separates Go-live-Gate.
+21. erster echter Pilotimport nach Backup, Restore-Test und Validate erfolgreich ausgefuehrt;
+22. technische Retrieval-Stichproben ohne Inhaltslogging und synthetischer Rueckzugstest remote
+    erfolgreich; Runtime-Aktivierung bleibt ein separates Go-live-Gate.
 
 Explizit nicht enthalten: echte Profilimporte, produktives Crawling, Kontaktversand und produktive
 Nutzung mit echten Profilinhalten. Der reale LLM-Pfad ist technisch vorbereitet, aber nur

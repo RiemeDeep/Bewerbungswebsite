@@ -116,6 +116,10 @@ Fehlerausgaben enthalten weder Profilinhalt noch Dateipfad oder Datenbankwert.
 - Runtime-Verifikation nach Import erfolgreich; Runtime-Rolle sieht nur die freigegebenen Profilzeilen
   und keine privaten Source-Titel, Speicherpfade oder Chunks.
 - Nach-Import-Backup und Offsite-Sync erfolgreich.
+- technische Retrieval-Stichproben gegen echte importierte Claims erfolgreich, ohne Claim- oder
+  Evidence-Inhalte in Logs oder Doku auszugeben.
+- synthetischer Rueckzugstest remote in Rollback-Transaktion erfolgreich: Runtime-Sichtbarkeit fiel von
+  1 Claim/1 Evidence vor Rueckzug auf 0/0 nach Rueckzug; keine Testdaten persistiert.
 
 ## Remote-Migration
 
@@ -131,8 +135,7 @@ geloescht. Der Import erfolgte mit administrativer Einmalverbindung; die Runtime
 
 ## Gates vor Runtime-Aktivierung
 
-1. erlaubte Retrieval-Ergebnisse fachlich ohne Inhaltslogging stichprobenartig pruefen.
-2. Rueckzugstest fuer mindestens einen synthetischen Probe-Claim ausfuehren.
-3. UI-/BFF-Pfade fuer echte Profilbasis separat freigeben.
-4. Datenschutz- und Rechtscheck vor oeffentlicher Auslieferung abschliessen.
-5. Echte Runtime-Flags erst in einem separaten Go-live-Gate aktivieren.
+1. fachliche Stichproben direkt in der Anwendung oder ueber sichere Admin-Ansicht pruefen.
+2. UI-/BFF-Pfade fuer echte Profilbasis separat freigeben.
+3. Datenschutz- und Rechtscheck vor oeffentlicher Auslieferung abschliessen.
+4. Echte Runtime-Flags erst in einem separaten Go-live-Gate aktivieren.
