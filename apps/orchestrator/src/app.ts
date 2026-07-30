@@ -26,6 +26,7 @@ import {
   type MatchAssistantService,
 } from "./match-assistant.js";
 import { ProfileAssistantError, type ProfileAssistantService } from "./profile-assistant.js";
+import type { ProfileReviewRepository } from "./profile-review-repository.js";
 import { UrlSecurityError } from "./url-security.js";
 
 export type AppDependencies = {
@@ -34,6 +35,7 @@ export type AppDependencies = {
   matchAnalyzer?: MatchAnalyzer;
   matchAnalysisStore?: MatchAnalysisStore;
   matchAssistant?: MatchAssistantService;
+  profileReviewRepository?: ProfileReviewRepository;
   now?: () => Date;
 };
 
@@ -357,6 +359,63 @@ export function createApp(dependencies: AppDependencies = {}): Express {
           createErrorResponse({
             code: "ASSISTANT_INTERNAL_ERROR",
             message: "Der interne Cleanup-Lauf konnte nicht verarbeitet werden.",
+            requestId,
+            retryable: true,
+          }),
+        );
+      }
+    });
+  }
+
+  const profileReviewRepository = dependencies.profileReviewRepository;
+  if (profileReviewRepository) {
+    app.get("/api/internal/profile/review-sample", async (request, response) => {
+      const requestId = randomUUID();
+      const internalSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+
+      if (!internalSecret || internalSecret === "replace-me") {
+        response.status(503).json(
+          createErrorResponse({
+            code: "ASSISTANT_INTERNAL_ERROR",
+            message: "Der interne Review-Endpunkt ist nicht konfiguriert.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      if (!isAuthorizedInternalRequest(request.get("authorization"), internalSecret)) {
+        response.status(401).json(
+          createErrorResponse({
+            code: "INVALID_REQUEST",
+            message: "Die Anfrage ist ungueltig.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      const parsedLimit = Number.parseInt(String(request.query.limit ?? "25"), 10);
+      const limit = Number.isInteger(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 25) : 25;
+
+      try {
+        response
+          .set("cache-control", "private, no-store, max-age=0")
+          .set("referrer-policy", "no-referrer")
+          .set("x-robots-tag", "noindex,nofollow")
+          .status(200)
+          .json({
+            schemaVersion: "1.0",
+            generatedAt: now().toISOString(),
+            claims: await profileReviewRepository.listReviewClaims(limit),
+          });
+      } catch {
+        response.status(500).json(
+          createErrorResponse({
+            code: "ASSISTANT_INTERNAL_ERROR",
+            message: "Die Review-Stichprobe konnte nicht verarbeitet werden.",
             requestId,
             retryable: true,
           }),

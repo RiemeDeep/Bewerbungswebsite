@@ -21,6 +21,7 @@ import {
   createDeterministicMockProvider,
   createProfileAssistantService,
 } from "./profile-assistant.js";
+import { createPostgresPoolProfileReviewRepository } from "./profile-review-repository.js";
 import { createPostgresPoolProfileRepository } from "./supabase-profile-repository.js";
 
 const runtimeEnvironmentSchema = z
@@ -165,6 +166,12 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     const store = createPostgresPoolMatchAnalysisStore(environment.MATCH_DATABASE_URL);
     dependencies.matchAnalysisStore = store;
     closeHandlers.push(() => store.close());
+
+    const profileReviewRepository = createPostgresPoolProfileReviewRepository(
+      environment.MATCH_DATABASE_URL,
+    );
+    dependencies.profileReviewRepository = profileReviewRepository;
+    closeHandlers.push(() => profileReviewRepository.close());
   }
 
   if (environment.ENABLE_MATCH_ANALYSIS === "1") {

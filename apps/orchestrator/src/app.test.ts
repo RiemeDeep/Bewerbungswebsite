@@ -22,6 +22,7 @@ import {
   createProfileAssistantService,
   type StructuredModelProvider,
 } from "./profile-assistant.js";
+import type { ProfileReviewRepository } from "./profile-review-repository.js";
 import type { DnsResolver } from "./url-security.js";
 
 const validAssistantRequest = {
@@ -86,6 +87,31 @@ function createTestMatchAnalysisStore(): MatchAnalysisStore {
     async deleteByAnalysisId() {
       storedAnalysis = null;
       return true;
+    },
+  };
+}
+
+function createTestProfileReviewRepository(): ProfileReviewRepository {
+  return {
+    async listReviewClaims(limit) {
+      return [
+        {
+          claimId: "11111111-1111-4111-8111-111111111111",
+          claimType: "project_fact",
+          statement: "Synthetischer Review-Claim.",
+          allowedContexts: ["public_profile", "profile_assistant", "job_analysis"],
+          evidence: [
+            {
+              evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              publicLabel: "Synthetisches Review-Label",
+              publicExcerpt: "Synthetischer Review-Auszug.",
+              evidenceBasis: "subject_attestation",
+              allowedContexts: ["public_profile", "profile_assistant", "job_analysis"],
+              sourceType: "synthetic_subject_attestation",
+            },
+          ],
+        },
+      ].slice(0, limit);
     },
   };
 }
@@ -678,6 +704,86 @@ describe("POST /api/internal/match/analyses/expire-due", () => {
         deletedCount: 0,
         expiredAt: "2026-07-31T12:00:00.000Z",
       });
+    } finally {
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
+    }
+  });
+});
+
+describe("GET /api/internal/profile/review-sample", () => {
+  it("rejects review access when the internal secret is not configured", async () => {
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+    delete process.env.ORCHESTRATOR_REQUEST_SECRET;
+
+    try {
+      const response = await request(
+        createApp({ profileReviewRepository: createTestProfileReviewRepository() }),
+      )
+        .get("/api/internal/profile/review-sample")
+        .set("authorization", `Bearer ${internalSecret}`)
+        .expect(503);
+
+      expect(response.body).toMatchObject({
+        error: { code: "ASSISTANT_INTERNAL_ERROR", retryable: false },
+      });
+    } finally {
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
+    }
+  });
+
+  it("rejects anonymous and incorrectly authenticated review requests", async () => {
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+    process.env.ORCHESTRATOR_REQUEST_SECRET = internalSecret;
+
+    try {
+      const app = createApp({ profileReviewRepository: createTestProfileReviewRepository() });
+
+      await request(app).get("/api/internal/profile/review-sample").expect(401);
+      await request(app)
+        .get("/api/internal/profile/review-sample")
+        .set("authorization", "Bearer wrong-secret")
+        .expect(401);
+    } finally {
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
+    }
+  });
+
+  it("returns a no-store internal review sample without private source fields", async () => {
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+    process.env.ORCHESTRATOR_REQUEST_SECRET = internalSecret;
+
+    try {
+      const app = createApp({
+        profileReviewRepository: createTestProfileReviewRepository(),
+        now: () => new Date("2026-07-30T15:00:00.000Z"),
+      });
+      const response = await request(app)
+        .get("/api/internal/profile/review-sample?limit=99")
+        .set("authorization", `Bearer ${internalSecret}`)
+        .expect(200);
+
+      expect(response.headers["cache-control"]).toBe("private, no-store, max-age=0");
+      expect(response.headers["x-robots-tag"]).toBe("noindex,nofollow");
+      expect(response.headers["referrer-policy"]).toBe("no-referrer");
+      expect(response.body).toMatchObject({
+        schemaVersion: "1.0",
+        generatedAt: "2026-07-30T15:00:00.000Z",
+        claims: [
+          {
+            claimId: "11111111-1111-4111-8111-111111111111",
+            claimType: "project_fact",
+            evidence: [
+              {
+                evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                evidenceBasis: "subject_attestation",
+                sourceType: "synthetic_subject_attestation",
+              },
+            ],
+          },
+        ],
+      });
+      expect(JSON.stringify(response.body)).not.toContain("storagePath");
+      expect(JSON.stringify(response.body)).not.toContain("sourceTitle");
     } finally {
       restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
     }

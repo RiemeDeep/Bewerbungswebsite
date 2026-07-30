@@ -70,6 +70,7 @@ describe("orchestrator runtime dependencies", () => {
     });
 
     expect(runtime.dependencies.matchAnalysisStore).toBeDefined();
+    expect(runtime.dependencies.profileReviewRepository).toBeDefined();
     expect(runtime.dependencies.matchAnalyzer).toBeUndefined();
     expect(runtime.dependencies.matchAssistant).toBeUndefined();
     await expect(runtime.close()).resolves.toBeUndefined();
