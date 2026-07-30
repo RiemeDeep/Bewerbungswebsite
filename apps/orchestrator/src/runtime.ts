@@ -6,10 +6,17 @@ import { createFirecrawlCrawlProvider } from "./firecrawl-crawl-provider.js";
 import { createDeterministicMockJobContextExtractor } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
 import { createPostgresPoolMatchAnalysisStore } from "./match-analysis-store.js";
-import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
+import {
+  createDeterministicMockMatchAnalyzer,
+  createMatchAnalyzerService,
+} from "./match-analyzer.js";
 import { createDeterministicMockMatchAssistantService } from "./match-assistant.js";
-import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
+import {
+  createPostgresPoolMatchEvidenceRepository,
+  createSyntheticMatchEvidenceRepository,
+} from "./match-evidence-repository.js";
 import { createOpenAiJobContextExtractor } from "./openai-job-context-extractor.js";
+import { createOpenAiMatchAnalysisProvider } from "./openai-match-analysis-provider.js";
 import {
   createDeterministicMockProvider,
   createProfileAssistantService,
@@ -20,6 +27,7 @@ const runtimeEnvironmentSchema = z
   .object({
     ENABLE_SYNTHETIC_ASSISTANT_TEST: z.literal("1").optional(),
     ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
+    ENABLE_MATCH_ANALYSIS: z.literal("1").optional(),
     ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
     ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: z.literal("1").optional(),
     SYNTHETIC_PROFILE_DATABASE_URL: z
@@ -33,6 +41,7 @@ const runtimeEnvironmentSchema = z
       .min(1)
       .default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
     MATCH_DATABASE_URL: z.string().trim().min(1).optional(),
+    PROFILE_DATABASE_URL: z.string().trim().min(1).optional(),
     CRAWL_PROVIDER: z.enum(["mock", "firecrawl"]).default("mock"),
     JOB_CONTEXT_EXTRACTOR: z.enum(["mock", "openai"]).default("mock"),
     FIRECRAWL_API_KEY: z.string().optional(),
@@ -43,6 +52,7 @@ const runtimeEnvironmentSchema = z
     LLM_ANALYSIS_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
     LLM_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
     LLM_REQUEST_RETRIES: z.coerce.number().int().min(0).default(1),
+    LLM_REPAIR_ATTEMPTS: z.coerce.number().int().min(0).default(1),
   })
   .superRefine((environment, context) => {
     if (
@@ -54,6 +64,46 @@ const runtimeEnvironmentSchema = z
         code: "custom",
         message: "MATCH_DATABASE_URL cannot be combined with synthetic match runtime flags.",
         path: ["MATCH_DATABASE_URL"],
+      });
+    }
+
+    if (
+      environment.ENABLE_MATCH_ANALYSIS === "1" &&
+      (environment.ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST === "1" ||
+        environment.ENABLE_SYNTHETIC_MATCH_STORAGE_TEST === "1")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ANALYSIS cannot be combined with synthetic match runtime flags.",
+        path: ["ENABLE_MATCH_ANALYSIS"],
+      });
+    }
+
+    if (environment.ENABLE_MATCH_ANALYSIS === "1" && !environment.MATCH_DATABASE_URL) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ANALYSIS requires MATCH_DATABASE_URL.",
+        path: ["MATCH_DATABASE_URL"],
+      });
+    }
+
+    if (environment.ENABLE_MATCH_ANALYSIS === "1" && !environment.PROFILE_DATABASE_URL) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ANALYSIS requires PROFILE_DATABASE_URL.",
+        path: ["PROFILE_DATABASE_URL"],
+      });
+    }
+
+    if (
+      environment.ENABLE_MATCH_ANALYSIS === "1" &&
+      !environment.LLM_API_KEY?.trim() &&
+      !environment.OPENAI_API_KEY?.trim()
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ANALYSIS requires LLM_API_KEY or OPENAI_API_KEY.",
+        path: ["LLM_API_KEY"],
       });
     }
   });
@@ -115,6 +165,23 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     const store = createPostgresPoolMatchAnalysisStore(environment.MATCH_DATABASE_URL);
     dependencies.matchAnalysisStore = store;
     closeHandlers.push(() => store.close());
+  }
+
+  if (environment.ENABLE_MATCH_ANALYSIS === "1") {
+    const evidenceRepository = createPostgresPoolMatchEvidenceRepository(
+      environment.PROFILE_DATABASE_URL ?? "",
+    );
+
+    dependencies.matchAnalyzer = createMatchAnalyzerService({
+      evidenceRepository,
+      provider: createOpenAiMatchAnalysisProvider({
+        apiKey: environment.LLM_API_KEY ?? environment.OPENAI_API_KEY ?? "",
+        model: environment.LLM_ANALYSIS_MODEL,
+        timeoutMs: environment.LLM_REQUEST_TIMEOUT_MS,
+        repairAttempts: environment.LLM_REPAIR_ATTEMPTS,
+      }),
+    });
+    closeHandlers.push(() => evidenceRepository.close());
   }
 
   if (environment.ENABLE_SYNTHETIC_MATCH_STORAGE_TEST === "1") {

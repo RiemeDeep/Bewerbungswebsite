@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { JobContext, MatchEvidenceSet } from "@bewerbungswebsite/contracts";
 
-import { createDeterministicMockMatchAnalyzer, MatchAnalysisError } from "./match-analyzer.js";
+import {
+  createDeterministicMockMatchAnalyzer,
+  createMatchAnalyzerService,
+  MatchAnalysisError,
+} from "./match-analyzer.js";
 import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
 
 const jobContext: JobContext = {
@@ -190,5 +194,100 @@ describe("createDeterministicMockMatchAnalyzer", () => {
         sourceType: "synthetic_profile_claim",
       },
     ]);
+  });
+});
+
+describe("createMatchAnalyzerService", () => {
+  async function createValidProviderAnalysis() {
+    return createDeterministicMockMatchAnalyzer({
+      evidenceRepository: createSyntheticMatchEvidenceRepository(),
+    }).analyze({ jobContext });
+  }
+
+  it("passes normalized requirements, evidence and the allowlist to the provider", async () => {
+    const provider = vi.fn(async () => createValidProviderAnalysis());
+    const analyzer = createMatchAnalyzerService({
+      evidenceRepository: createSyntheticMatchEvidenceRepository(),
+      evidenceLimit: 5,
+      provider: { generateObject: provider },
+    });
+
+    await expect(analyzer.analyze({ jobContext })).resolves.toMatchObject({
+      schemaVersion: "1.0",
+      summary: { confidence: "medium" },
+    });
+
+    expect(provider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobContext,
+        requirements: expect.arrayContaining([
+          expect.objectContaining({ label: "Technische Anforderungen klaeren" }),
+        ]),
+        evidenceSet: expect.objectContaining({
+          evidence: expect.arrayContaining([
+            expect.objectContaining({ evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }),
+          ]),
+        }),
+        allowedEvidenceIds: [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        ],
+      }),
+    );
+  });
+
+  it("rejects provider evidence metadata outside the repository allowlist", async () => {
+    const validAnalysis = await createValidProviderAnalysis();
+    const analyzer = createMatchAnalyzerService({
+      evidenceRepository: createSyntheticMatchEvidenceRepository(),
+      provider: {
+        async generateObject() {
+          return {
+            ...validAnalysis,
+            evidence: validAnalysis.evidence.map((evidence, index) =>
+              index === 0 ? { ...evidence, publicLabel: "Manipulierter Beleg" } : evidence,
+            ),
+          };
+        },
+      },
+    });
+
+    await expect(analyzer.analyze({ jobContext })).rejects.toThrow(MatchAnalysisError);
+  });
+
+  it("rejects provider analyses that omit confirmed requirements", async () => {
+    const validAnalysis = await createValidProviderAnalysis();
+    const analyzer = createMatchAnalyzerService({
+      evidenceRepository: createSyntheticMatchEvidenceRepository(),
+      provider: {
+        async generateObject() {
+          return {
+            ...validAnalysis,
+            requirements: validAnalysis.requirements.filter(
+              (requirement) => requirement.label !== "Branchenspezifische Zertifizierung",
+            ),
+          };
+        },
+      },
+    });
+
+    await expect(analyzer.analyze({ jobContext })).rejects.toThrow(MatchAnalysisError);
+  });
+
+  it("rejects provider analyses that change the canonical subject", async () => {
+    const validAnalysis = await createValidProviderAnalysis();
+    const analyzer = createMatchAnalyzerService({
+      evidenceRepository: createSyntheticMatchEvidenceRepository(),
+      provider: {
+        async generateObject() {
+          return {
+            ...validAnalysis,
+            subject: { ...validAnalysis.subject, companyName: "Andere GmbH" },
+          };
+        },
+      },
+    });
+
+    await expect(analyzer.analyze({ jobContext })).rejects.toThrow(MatchAnalysisError);
   });
 });

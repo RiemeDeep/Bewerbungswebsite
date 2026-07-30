@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
@@ -32,6 +34,46 @@ const jobContext = {
     },
   ],
 };
+
+const realMatchRuntimeJobContext = {
+  ...jobContext,
+  job: {
+    ...jobContext.job,
+    responsibilities: [],
+    mustRequirements: ["Stellenanalyse"],
+    shouldRequirements: [],
+  },
+};
+
+async function readLocalEnvValue(key: string): Promise<string | undefined> {
+  if (process.env[key]) {
+    return process.env[key];
+  }
+
+  let envFile: string;
+  try {
+    envFile = await readFile(new URL("../../../.env", import.meta.url), "utf8");
+  } catch {
+    return undefined;
+  }
+
+  for (const line of envFile.split(/\r?\n/u)) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine || trimmedLine.startsWith("#")) {
+      continue;
+    }
+    const separatorIndex = trimmedLine.indexOf("=");
+    if (separatorIndex === -1 || trimmedLine.slice(0, separatorIndex).trim() !== key) {
+      continue;
+    }
+    return trimmedLine
+      .slice(separatorIndex + 1)
+      .trim()
+      .replace(/^["']|["']$/gu, "");
+  }
+
+  return undefined;
+}
 
 describe.skipIf(!process.env.LOCAL_SUPABASE_DATABASE_URL)(
   "local Supabase match storage runtime",
@@ -101,3 +143,50 @@ describe.skipIf(!process.env.LOCAL_SUPABASE_DATABASE_URL)(
     });
   },
 );
+
+describe("opt-in real match analysis runtime", () => {
+  it("creates a schema-valid analysis through the guarded runtime flag", async () => {
+    const shouldRun = (await readLocalEnvValue("RUN_PROVIDER_INTEGRATION_TESTS")) === "1";
+    const databaseUrl = await readLocalEnvValue("LOCAL_SUPABASE_DATABASE_URL");
+    const apiKey =
+      (await readLocalEnvValue("LLM_API_KEY")) ?? (await readLocalEnvValue("OPENAI_API_KEY"));
+
+    if (!shouldRun || !databaseUrl || !apiKey) {
+      return;
+    }
+
+    const runtime = createRuntimeApp({
+      ENABLE_MATCH_ANALYSIS: "1",
+      MATCH_DATABASE_URL: databaseUrl,
+      PROFILE_DATABASE_URL: databaseUrl,
+      LLM_API_KEY: apiKey,
+      LLM_ANALYSIS_MODEL: (await readLocalEnvValue("LLM_ANALYSIS_MODEL")) ?? "gpt-4.1-mini",
+      LLM_REQUEST_TIMEOUT_MS: (await readLocalEnvValue("LLM_REQUEST_TIMEOUT_MS")) ?? "15000",
+      LLM_REPAIR_ATTEMPTS: (await readLocalEnvValue("LLM_REPAIR_ATTEMPTS")) ?? "1",
+    });
+    const app = createApp(runtime.dependencies);
+
+    try {
+      const response = await request(app)
+        .post("/api/v1/match/analyze")
+        .send(realMatchRuntimeJobContext)
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        schemaVersion: "1.0",
+        subject: {
+          companyName: "Beispiel GmbH",
+          jobTitle: "Technische Projektkoordination",
+        },
+      });
+      expect(response.body.evidence).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ evidenceId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc" }),
+        ]),
+      );
+      expect(response.body).not.toHaveProperty("matchPercentage");
+    } finally {
+      await runtime.close();
+    }
+  }, 45_000);
+});

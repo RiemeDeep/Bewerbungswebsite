@@ -32,6 +32,10 @@ type MatchAssistantState =
   | { status: "success"; response: MatchAssistantResponse }
   | { status: "error"; message: string; retryable: boolean };
 
+type MatchPreviewTestProps = {
+  analysisMode?: "mock" | "orchestrator";
+};
+
 function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
   return (
     typeof value === "object" &&
@@ -56,7 +60,8 @@ function nullableText(value: string) {
   return value.trim() ? value.trim() : null;
 }
 
-export function MatchPreviewTest() {
+export function MatchPreviewTest({ analysisMode = "mock" }: MatchPreviewTestProps) {
+  const usesOrchestrator = analysisMode === "orchestrator";
   const [jobUrl, setJobUrl] = useState("https://example.com/jobs/technische-projektrolle");
   const [companyUrl, setCompanyUrl] = useState("https://example.com");
   const [pastedText, setPastedText] = useState(
@@ -246,10 +251,18 @@ export function MatchPreviewTest() {
         <p className="section-eyebrow">Synthetischer Match-Testmodus</p>
         <h1 id="match-preview-title">Match-Vorschau testen</h1>
         <p>
-          Diese nicht verlinkte Seite prueft nur die Erkennungsvorschau fuer Stellen- und
-          Unternehmenskontext. Sie startet keine Match-Analyse und verwendet keine produktiven
-          Profildaten.
+          Diese nicht verlinkte Seite prueft den technischen Match-Ablauf mit synthetischem
+          Stellenkontext. Sie ist keine produktive Bewerbungsseite und darf keine echten
+          Profilfreigaben ersetzen.
         </p>
+        <div className="assistant-preview-output" role="note">
+          <strong>{usesOrchestrator ? "Orchestrator-Modus" : "Mock-Modus"}</strong>
+          <p>
+            {usesOrchestrator
+              ? "Die Analyse wird serverseitig ueber den lokalen Orchestrator angefordert. Sie bleibt feature-flag-geschuetzt und darf nur mit freigegebenen Evidence-Ausziehungsweise synthetischen Testdaten genutzt werden."
+              : "Vorschau und Analyse werden lokal als synthetischer Mock erzeugt. Es werden keine produktiven Profilbelege, kein reales LLM und kein produktiver Crawl verwendet."}
+          </p>
+        </div>
 
         <form className="assistant-form" onSubmit={submitPreview}>
           <label htmlFor="job-url">Stellen-URL</label>
@@ -464,7 +477,7 @@ export function MatchPreviewTest() {
               ) : null}
               {confirmationState.status === "confirmed" ? (
                 <p className="preview-status" role="status">
-                  Stellenkontext bestaetigt. Die synthetische Match-Analyse wurde gestartet.
+                  Stellenkontext bestaetigt. Die {usesOrchestrator ? "Orchestrator-Analyse" : "synthetische Mock-Analyse"} wurde gestartet.
                 </p>
               ) : null}
 
@@ -474,7 +487,9 @@ export function MatchPreviewTest() {
                 type="button"
               >
                 {matchAnalysisState.status === "loading"
-                  ? "Analysiere synthetisch ..."
+                  ? usesOrchestrator
+                    ? "Analysiere im Orchestrator ..."
+                    : "Analysiere synthetisch ..."
                   : "Stellenkontext bestaetigen"}
               </button>
 
@@ -489,9 +504,9 @@ export function MatchPreviewTest() {
               ) : null}
 
               {matchAnalysisState.status === "success" ? (
-                <section aria-label="Synthetisches Match-Ergebnis">
+                <section aria-label={usesOrchestrator ? "Orchestrator-Match-Ergebnis" : "Synthetisches Match-Ergebnis"}>
                   <div className="preview-output-heading">
-                    <p>Synthetisches Match-Ergebnis</p>
+                    <p>{usesOrchestrator ? "Orchestrator-Match-Ergebnis" : "Synthetisches Match-Ergebnis"}</p>
                     <span>{matchAnalysisState.analysis.summary.confidence}</span>
                   </div>
                   <h2>{matchAnalysisState.analysis.summary.headline}</h2>

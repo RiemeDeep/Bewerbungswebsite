@@ -1,3 +1,4 @@
+import { Pool } from "pg";
 import { z } from "zod";
 
 import {
@@ -176,6 +177,48 @@ export interface MatchEvidenceRepository {
   ): Promise<MatchEvidenceSet>;
 }
 
+type Queryable = {
+  query(text: string, values: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
+};
+
+const retrievalRowSchema = z
+  .object({
+    claim_id: z.string().uuid(),
+    statement: z.string().trim().min(1),
+    evidence_id: z.string().uuid(),
+    public_label: z.string().trim().min(1),
+    public_excerpt: z.string().trim().max(1_000).nullable(),
+    source_type: z.string().trim().min(1),
+    visibility: z.enum(["public_excerpt", "public"]),
+    publication_status: z.literal("published"),
+    allowed_contexts: z.array(usageContextSchema),
+  })
+  .strict();
+
+const retrieveMatchEvidenceSql = `
+  select
+    c.id::text as claim_id,
+    c.statement,
+    e.id::text as evidence_id,
+    e.public_label,
+    e.public_excerpt,
+    sd.document_type as source_type,
+    e.visibility::text as visibility,
+    e.publication_status::text as publication_status,
+    e.allowed_contexts::text[] as allowed_contexts
+  from public.profile_claims c
+  join public.evidence_items e on e.claim_id = c.id
+  join public.source_documents sd on sd.id = e.source_document_id
+  where c.publication_status = 'published'
+    and c.visibility <> 'private'
+    and 'job_analysis'::public.profile_usage_context = any(c.allowed_contexts)
+    and e.publication_status = 'published'
+    and e.visibility in ('public_excerpt', 'public')
+    and 'job_analysis'::public.profile_usage_context = any(e.allowed_contexts)
+    and sd.publication_status = 'published'
+  order by c.id, e.id
+`;
+
 function tokenize(value: string): Set<string> {
   const normalized = value.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("de-DE");
   return new Set((normalized.match(/[\p{L}\p{N}]+/gu) ?? []).filter((token) => token.length >= 4));
@@ -283,4 +326,58 @@ export function createInMemoryMatchEvidenceRepository(
 
 export function createSyntheticMatchEvidenceRepository(): MatchEvidenceRepository {
   return createInMemoryMatchEvidenceRepository(syntheticMatchEvidenceFixture);
+}
+
+export function createPostgresMatchEvidenceRepository(client: Queryable): MatchEvidenceRepository {
+  return {
+    async retrieveForRequirements(requirements, limit) {
+      const result = await client.query(retrieveMatchEvidenceSql, []);
+      const requirementTokens = tokenize(
+        requirements.map((requirement) => requirement.label).join(" "),
+      );
+      const candidates = result.rows
+        .map((rawRow) => {
+          const row = retrievalRowSchema.parse(rawRow);
+          const score = countMatches(
+            requirementTokens,
+            `${row.statement} ${row.public_label} ${row.public_excerpt ?? ""}`,
+          );
+
+          return { row, score };
+        })
+        .filter((candidate) => candidate.score > 0)
+        .sort(
+          (left, right) =>
+            right.score - left.score || left.row.evidence_id.localeCompare(right.row.evidence_id),
+        )
+        .slice(0, limit)
+        .map(({ row }) => ({
+          evidenceId: row.evidence_id,
+          claimId: row.claim_id,
+          statement: row.statement,
+          publicLabel: row.public_label,
+          publicExcerpt: row.public_excerpt,
+          sourceType: row.source_type,
+          visibility: row.visibility,
+          publicationStatus: row.publication_status,
+          allowedContexts: row.allowed_contexts,
+        }));
+
+      return matchEvidenceSetSchema.parse({ schemaVersion: "1.0", evidence: candidates });
+    },
+  };
+}
+
+export function createPostgresPoolMatchEvidenceRepository(
+  connectionString: string,
+): MatchEvidenceRepository & { close(): Promise<void> } {
+  const pool = new Pool({ connectionString });
+  const repository = createPostgresMatchEvidenceRepository(pool);
+
+  return {
+    ...repository,
+    async close() {
+      await pool.end();
+    },
+  };
 }

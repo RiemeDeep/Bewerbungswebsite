@@ -100,9 +100,18 @@ describe("MatchPreviewTest", () => {
     render(<MatchPreviewTest />);
 
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Match-Vorschau testen");
+    expect(screen.getByText("Mock-Modus")).toBeTruthy();
     expect(screen.getByLabelText("Stellen-URL")).toBeTruthy();
     expect(screen.getByLabelText("Stellentext als Fallback")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Vorschau pruefen" })).toBeTruthy();
+  });
+
+  it("renders the guarded orchestrator mode notice", () => {
+    render(<MatchPreviewTest analysisMode="orchestrator" />);
+
+    expect(screen.getByText("Orchestrator-Modus")).toBeTruthy();
+    expect(screen.getByText(/serverseitig ueber den lokalen Orchestrator/u)).toBeTruthy();
+    expect(screen.queryByText("Mock-Modus")).toBeNull();
   });
 
   it("renders an editable successful preview with requirements and sources", async () => {
@@ -213,7 +222,7 @@ describe("MatchPreviewTest", () => {
     await waitFor(() =>
       expect(
         screen.getByText(
-          "Stellenkontext bestaetigt. Die synthetische Match-Analyse wurde gestartet.",
+          "Stellenkontext bestaetigt. Die synthetische Mock-Analyse wurde gestartet.",
         ),
       ).toBeTruthy(),
     );

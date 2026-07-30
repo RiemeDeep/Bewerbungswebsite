@@ -75,6 +75,53 @@ describe("orchestrator runtime dependencies", () => {
     await expect(runtime.close()).resolves.toBeUndefined();
   });
 
+  it("enables production match analysis only with explicit store, profile database and provider config", async () => {
+    const runtime = createRuntimeApp({
+      ENABLE_MATCH_ANALYSIS: "1",
+      MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+      PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+      LLM_API_KEY: "sk-test",
+      LLM_ANALYSIS_MODEL: "test-model",
+      LLM_REQUEST_TIMEOUT_MS: "1000",
+      LLM_REPAIR_ATTEMPTS: "1",
+    });
+
+    expect(runtime.dependencies.matchAnalysisStore).toBeDefined();
+    expect(runtime.dependencies.matchAnalyzer).toBeDefined();
+    expect(runtime.dependencies.matchAssistant).toBeUndefined();
+    await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
+  it("rejects production match analysis without match storage", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ANALYSIS: "1",
+        PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+        LLM_API_KEY: "sk-test",
+      }),
+    ).toThrow("requires MATCH_DATABASE_URL");
+  });
+
+  it("rejects production match analysis without profile evidence storage", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ANALYSIS: "1",
+        MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+        LLM_API_KEY: "sk-test",
+      }),
+    ).toThrow("requires PROFILE_DATABASE_URL");
+  });
+
+  it("rejects production match analysis without provider credentials", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ANALYSIS: "1",
+        MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+        PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+      }),
+    ).toThrow("requires LLM_API_KEY or OPENAI_API_KEY");
+  });
+
   it("rejects production match storage combined with synthetic match flags", () => {
     expect(() =>
       createRuntimeApp({
@@ -82,6 +129,18 @@ describe("orchestrator runtime dependencies", () => {
         ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: "1",
       }),
     ).toThrow("cannot be combined with synthetic match runtime flags");
+  });
+
+  it("rejects production match analysis combined with synthetic match flags", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ANALYSIS: "1",
+        ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: "1",
+        MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+        PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+        LLM_API_KEY: "sk-test",
+      }),
+    ).toThrow("ENABLE_MATCH_ANALYSIS cannot be combined with synthetic match runtime flags");
   });
 
   it("enables the job context preview with the deterministic mock extractor by default", async () => {

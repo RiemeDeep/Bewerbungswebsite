@@ -269,9 +269,10 @@ Abnahme:
 
 ## Phase 5: Match-Analyse
 
-Status: gestartet; Contract, erste Invarianten, synthetische Repository-Grenze, Match-Assistent,
-Access-/TTL-Prototyp, nicht verlinkte Detailansicht, produktionsgeeigneter Match-Store und aktiver
-interner Cleanup-Betrieb umgesetzt; produktive Analyse offen
+Status: gestartet; Contract, Invarianten, synthetische und Postgres-Evidence-Grenzen,
+Match-Assistent, Access-/TTL-Prototyp, nicht verlinkte Detailansicht, produktionsgeeigneter
+Match-Store, aktiver interner Cleanup-Betrieb und feature-flag-geschuetzte echte Analyse-Runtime
+vorbereitet; produktive Nutzung mit echten Profilinhalten bleibt offen
 
 Contract-Plan:
 `docs/plans/phase-5.0-match-analysis-contract.md`
@@ -323,8 +324,17 @@ Umsetzungseinheiten:
    Orchestrator-Endpunkt `POST /api/internal/match/analyses/expire-due` ist vorbereitet,
    authentisiert per Bearer-Secret aus `ORCHESTRATOR_REQUEST_SECRET`, gibt nur `expiredCount`,
    `deletedCount` und `expiredAt` zurueck, markiert faellige aktive Analysen als `expired`, loescht
-   bereits `expired`/`deleted` Analysen nach 30 Tagen physisch und weist nach Cleanup fuer
-   Detailansicht und Match-Assistent einheitlich Nichtfund nach.
+    bereits `expired`/`deleted` Analysen nach 30 Tagen physisch und weist nach Cleanup fuer
+    Detailansicht und Match-Assistent einheitlich Nichtfund nach.
+7. produktionsgeeignete Analyseerzeugung getrennt vom synthetischen Analyzer vorbereitet.
+   `createMatchAnalyzerService` fuehrt Provider-Ausgaben nur nach Schema-, Subject-, Requirement- und
+   Evidence-Allowlist-Pruefung weiter. `createOpenAiMatchAnalysisProvider` erzeugt strukturierte
+   `MatchAnalysis`-Objekte per JSON-Schema und optionalem Repair-Versuch. `createPostgresMatchEvidenceRepository`
+   laedt ausschliesslich `published` Claims und `public_excerpt`/`public` Evidence fuer
+   `job_analysis`, inklusive veroeffentlichter Source Documents. Die Runtime aktiviert diesen Pfad nur
+   mit `ENABLE_MATCH_ANALYSIS=1`, `MATCH_DATABASE_URL`, `PROFILE_DATABASE_URL` und Provider-Key; die
+   Kombination mit synthetischen Match-Flags ist verboten. Die nicht verlinkte `/test/match`-UI zeigt
+   serverseitig den Mock- oder Orchestrator-Modus und bleibt Preview-/Test-only.
 
 Abnahme:
 
@@ -383,12 +393,17 @@ Phase-5.0 Match-Analyse:
     erfolgreichem Credential- und Expiry-Test aktiviert;
 15. selbst gehostetes PostgreSQL 16 mit pgvector, isoliertem Netzwerk, RLS, App-Rolle,
     verschluesselten Secrets und taeglichem 14-Tage-Backup auf dem VPS eingerichtet;
-16. naechster Schritt: produktionsgeeignete Analyseerzeugung und Profil-Evidence-Anbindung separat
-    planen; keine synthetische Analyse fuer produktiven Traffic aktivieren.
+16. produktionsgeeignete Analyseerzeugung ohne automatische Aktivierung vorbereitet:
+    `MatchAnalyzerService`, OpenAI-Provider, Postgres-`MatchEvidenceRepository`, Runtime-Guards,
+    opt-in Integrationstest und BFF-/UI-Kennzeichnung fuer Orchestrator-Modus;
+17. naechster Schritt: opt-in Durchstich lokal mit Provider und synthetischem Stage-2-Seed ausfuehren
+    beziehungsweise danach echte Profil-Evidence erst nach fachlicher Freigabe anbinden; keine
+    synthetische Analyse fuer produktiven Traffic aktivieren.
 
-Explizit nicht enthalten: echte Profilimporte, produktives reales LLM, produktives Crawling,
-produktive Match-Analyse und Kontaktversand. Der aktive n8n-Einsatz ist auf den deterministischen
-Retention-Cleanup begrenzt.
+Explizit nicht enthalten: echte Profilimporte, produktives Crawling, Kontaktversand und produktive
+Nutzung mit echten Profilinhalten. Der reale LLM-Pfad ist technisch vorbereitet, aber nur
+feature-flag-geschuetzt und ohne produktive Profilfreigabe nutzbar. Der aktive n8n-Einsatz ist auf den
+deterministischen Retention-Cleanup begrenzt.
 
 ## Phasenuebergreifende Gates
 

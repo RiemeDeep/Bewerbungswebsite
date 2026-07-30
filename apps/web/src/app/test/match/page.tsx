@@ -16,5 +16,9 @@ export default function MatchPreviewTestPage() {
     notFound();
   }
 
-  return <MatchPreviewTest />;
+  return (
+    <MatchPreviewTest
+      analysisMode={process.env.MATCH_PREVIEW_MODE === "orchestrator" ? "orchestrator" : "mock"}
+    />
+  );
 }

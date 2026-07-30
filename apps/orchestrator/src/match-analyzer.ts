@@ -18,6 +18,17 @@ export interface MatchAnalyzer {
   analyze(input: MatchAnalyzerInput): Promise<MatchAnalysis>;
 }
 
+export type MatchAnalysisProviderInput = {
+  jobContext: JobContext;
+  requirements: ReadonlyArray<NormalizedJobRequirement>;
+  evidenceSet: MatchEvidenceSet;
+  allowedEvidenceIds: ReadonlyArray<string>;
+};
+
+export interface MatchAnalysisProvider {
+  generateObject(input: MatchAnalysisProviderInput): Promise<unknown>;
+}
+
 export class MatchAnalysisError extends Error {
   constructor(message: string) {
     super(message);
@@ -27,6 +38,12 @@ export class MatchAnalysisError extends Error {
 
 export type DeterministicMockMatchAnalyzerOptions = {
   evidenceRepository: MatchEvidenceRepository;
+  evidenceLimit?: number;
+};
+
+export type MatchAnalyzerServiceOptions = {
+  evidenceRepository: MatchEvidenceRepository;
+  provider: MatchAnalysisProvider;
   evidenceLimit?: number;
 };
 
@@ -141,6 +158,94 @@ function createFirst90DaysHypotheses(
       ],
     },
   ] as const;
+}
+
+function validateCanonicalSubject(analysis: MatchAnalysis, jobContext: JobContext) {
+  const firstSource = jobContext.sources[0] ?? null;
+  const expectedSubject = {
+    companyName: jobContext.company.name,
+    jobTitle: jobContext.job.title,
+    sourceUrl: firstSource?.url ?? null,
+    retrievedAt: firstSource?.retrievedAt ?? null,
+  };
+
+  if (JSON.stringify(analysis.subject) !== JSON.stringify(expectedSubject)) {
+    throw new MatchAnalysisError("The provider changed the canonical match subject.");
+  }
+}
+
+function validateRequirementCoverage(
+  analysis: MatchAnalysis,
+  requirements: ReadonlyArray<NormalizedJobRequirement>,
+) {
+  const expectedRequirementIds = new Set(
+    requirements.map((requirement) => requirement.requirementId),
+  );
+  const actualRequirementIds = new Set(
+    analysis.requirements.map((requirement) => requirement.requirementId),
+  );
+
+  if (expectedRequirementIds.size !== actualRequirementIds.size) {
+    throw new MatchAnalysisError("The provider did not assess the confirmed requirements.");
+  }
+
+  for (const requirementId of expectedRequirementIds) {
+    if (!actualRequirementIds.has(requirementId)) {
+      throw new MatchAnalysisError("The provider did not assess the confirmed requirements.");
+    }
+  }
+}
+
+function validateEvidenceObjects(analysis: MatchAnalysis, evidenceSet: MatchEvidenceSet) {
+  const allowedEvidenceById = new Map(
+    evidenceSet.evidence.map((evidence) => [evidence.evidenceId, evidence]),
+  );
+
+  for (const evidence of analysis.evidence) {
+    const allowedEvidence = allowedEvidenceById.get(evidence.evidenceId);
+    if (
+      !allowedEvidence ||
+      allowedEvidence.publicLabel !== evidence.publicLabel ||
+      allowedEvidence.publicExcerpt !== evidence.publicExcerpt ||
+      allowedEvidence.sourceType !== evidence.sourceType
+    ) {
+      throw new MatchAnalysisError("The provider referenced evidence outside the allowlist.");
+    }
+  }
+}
+
+export function createMatchAnalyzerService(options: MatchAnalyzerServiceOptions): MatchAnalyzer {
+  return {
+    async analyze(input) {
+      const requirements = normalizeJobContextRequirements(input.jobContext);
+      if (requirements.length === 0) {
+        throw new MatchAnalysisError("At least one normalized requirement is required.");
+      }
+
+      const evidenceSet = await options.evidenceRepository.retrieveForRequirements(
+        requirements,
+        options.evidenceLimit ?? 30,
+      );
+      const allowedEvidenceIds = [...createMatchEvidenceAllowlist(evidenceSet)];
+      const rawAnalysis = await options.provider.generateObject({
+        jobContext: input.jobContext,
+        requirements,
+        evidenceSet,
+        allowedEvidenceIds,
+      });
+      const parsedAnalysis = matchAnalysisSchema.safeParse(rawAnalysis);
+
+      if (!parsedAnalysis.success) {
+        throw new MatchAnalysisError("The provider returned an invalid match analysis.");
+      }
+
+      validateCanonicalSubject(parsedAnalysis.data, input.jobContext);
+      validateRequirementCoverage(parsedAnalysis.data, requirements);
+      validateEvidenceObjects(parsedAnalysis.data, evidenceSet);
+
+      return parsedAnalysis.data;
+    },
+  };
 }
 
 export function createDeterministicMockMatchAnalyzer(
