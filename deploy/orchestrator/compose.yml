@@ -31,7 +31,7 @@ services:
     build:
       context: ../..
       dockerfile: apps/orchestrator/Dockerfile
-    image: bewerbungswebsite-orchestrator:local
+    image: ${ORCHESTRATOR_IMAGE:-bewerbungswebsite-orchestrator:local}
     container_name: bewerbungswebsite-orchestrator
     restart: unless-stopped
     env_file:

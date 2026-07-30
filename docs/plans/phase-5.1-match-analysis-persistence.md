@@ -64,7 +64,9 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
   erste automatische Timerlauf waren erfolgreich;
 - ein idempotenter Pending-Migrations-Runner ist versioniert und hat auf dem VPS die bestehende
   Baseline registriert, um spaetere Self-Hosted-Schemaaenderungen einmalig und nachvollziehbar
-  auszufuehren.
+  auszufuehren;
+- ein minimaler lokaler Release-/Rollback-Pfad fuer den Orchestrator ist versioniert und auf dem VPS
+  getestet.
 
 ## Nicht Enthalten
 
@@ -76,5 +78,4 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
 ## Naechste Implementierungseinheit
 
 - produktionsgeeignete Analyseerzeugung getrennt vom synthetischen Analyzer planen;
-- echte Profil-Evidence erst nach fachlicher Freigabe und RLS-Pruefung anbinden;
-- einfachen Release-/Rollback-Pfad fuer den VPS festlegen.
+- echte Profil-Evidence erst nach fachlicher Freigabe und RLS-Pruefung anbinden.

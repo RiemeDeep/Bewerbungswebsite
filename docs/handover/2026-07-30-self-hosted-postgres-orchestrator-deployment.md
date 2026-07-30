@@ -27,6 +27,8 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
   gegenseitige Sperre zu synthetischen Flags.
 - `deploy/orchestrator/compose.yml`: Orchestrator und PostgreSQL 16/pgvector mit Healthchecks,
   persistentem Volume und getrennten Docker-Netzwerken.
+- `deploy/orchestrator/release.sh`, `deploy/orchestrator/rollback.sh` und `.env.release.example`:
+  getesteter lokaler Release-/Rollback-Pfad mit timestamp-getaggten Orchestrator-Images.
 - `deploy/postgres/migrations/`: Self-Hosted-Rollen, restriktiver App-Zugriff, initialer
   Migrations-Runner, Pending-Migrations-Runner und Runtime-Verifikation.
 - `deploy/postgres/backup.sh`, `deploy/postgres/restore-test.sh` und `deploy/postgres/systemd/`:
@@ -123,8 +125,9 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 - Die initiale Self-Hosted-Migration ist absichtlich nur fuer ein leeres Volume gedacht. Der
   idempotente Pending-Migrations-Runner ist versioniert, hat auf dem VPS die bestehende Baseline
   registriert und war beim zweiten Lauf idempotent.
-- Deployment erfolgt aktuell per kontrolliertem Datei-Sync und Remote-Build. Ein CI-/Releasepfad
-  mit Image-Registry, Versionierung und Rollback fehlt.
+- Deployment erfolgt aktuell per kontrolliertem Datei-Sync und Remote-Build. Ein minimaler lokaler
+  Release-/Rollback-Pfad ist versioniert und auf dem VPS getestet; eine Image-Registry und CI-Pipeline
+  fehlen weiterhin.
 - Produktive Analyseerzeugung, echte Profil-Evidence, reales LLM, Crawling und Kontaktversand sind
   weiterhin nicht aktiviert.
 - Der gesamte lokale Arbeitsstand einschliesslich vorheriger Match-Cleanup-Aenderungen ist noch
@@ -132,8 +135,8 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 
 ## Naechster sinnvoller Schritt
 
-Als naechsten Betriebsbaustein einen einfachen Release-/Rollback-Pfad festlegen. Erst danach
-produktive Analyseerzeugung oder echte Profil-Evidence anbinden.
+Als naechstes die produktionsgeeignete Analyseerzeugung getrennt vom synthetischen Analyzer planen.
+Echte Profil-Evidence erst nach fachlicher Freigabe und RLS-Pruefung anbinden.
 
 ## motai-rag
 

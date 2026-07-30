@@ -31,7 +31,24 @@ abgelehnt.
 ## Deployment
 
 Die Compose-Datei liegt unter `deploy/orchestrator/compose.yml`. Das Image wird aus dem
-Repository-Root gebaut:
+Repository-Root gebaut. Fuer normale Releases das versionierte Release-Skript verwenden:
+
+```bash
+/opt/bewerbungswebsite/deploy/orchestrator/release.sh
+```
+
+Das Skript baut ein timestamp-getaggtes Image `bewerbungswebsite-orchestrator:<UTC timestamp>`, schreibt
+das aktuelle und vorherige Image root-only nach `deploy/orchestrator/.env.release` und startet den
+Orchestrator mit diesem Image. Rollback auf das vorherige lokal vorhandene Image:
+
+```bash
+/opt/bewerbungswebsite/deploy/orchestrator/rollback.sh
+```
+
+Der Pfad ist auf dem VPS getestet: Release, Healthcheck, Rollback, erneutes Release und Healthcheck
+waren erfolgreich. `.env.release` ist `0600 root:root`.
+
+Manueller Compose-Build ohne Release-Tag bleibt fuer Debugging moeglich:
 
 ```bash
 docker compose -f /opt/bewerbungswebsite/deploy/orchestrator/compose.yml build
