@@ -79,7 +79,17 @@ describe("createOpenAiMatchAnalysisProvider", () => {
         expect(init.headers.authorization).toBe("Bearer test-key");
         expect(JSON.parse(init.body)).toMatchObject({
           model: "test-model",
-          response_format: { type: "json_schema" },
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              strict: true,
+              schema: {
+                properties: {
+                  schemaVersion: { type: "string", const: "1.0" },
+                },
+              },
+            },
+          },
         });
         expect(init.body).toContain("allowedEvidenceIds");
         expect(init.body).toContain("canonicalSubject");

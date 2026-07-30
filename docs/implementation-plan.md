@@ -272,7 +272,8 @@ Abnahme:
 Status: gestartet; Contract, Invarianten, synthetische und Postgres-Evidence-Grenzen,
 Match-Assistent, Access-/TTL-Prototyp, nicht verlinkte Detailansicht, produktionsgeeigneter
 Match-Store, aktiver interner Cleanup-Betrieb und feature-flag-geschuetzte echte Analyse-Runtime
-vorbereitet; produktive Nutzung mit echten Profilinhalten bleibt offen
+vorbereitet sowie lokal mit synthetischem Stage-2-Seed und realem Provider nachgewiesen; produktive
+Nutzung mit echten Profilinhalten bleibt offen
 
 Contract-Plan:
 `docs/plans/phase-5.0-match-analysis-contract.md`
@@ -335,6 +336,11 @@ Umsetzungseinheiten:
    mit `ENABLE_MATCH_ANALYSIS=1`, `MATCH_DATABASE_URL`, `PROFILE_DATABASE_URL` und Provider-Key; die
    Kombination mit synthetischen Match-Flags ist verboten. Die nicht verlinkte `/test/match`-UI zeigt
    serverseitig den Mock- oder Orchestrator-Modus und bleibt Preview-/Test-only.
+   Der opt-in Provider-Durchstich wurde am 2026-07-30 lokal mit frisch migriertem synthetischem
+   Stage-2-Seed erfolgreich ausgefuehrt. Dabei wurde eine OpenAI-Strict-Schema-Inkompatibilitaet fuer
+   `schemaVersion` gefunden, durch den expliziten JSON-Schema-Typ `string` behoben und per Unit-Test
+   abgesichert. Postgres-Retrieval, Provider, Schema-/Subject-/Requirement-/Evidence-Pruefungen und
+   der HTTP-Endpunkt liefen danach gemeinsam erfolgreich durch.
 
 Abnahme:
 
@@ -396,9 +402,12 @@ Phase-5.0 Match-Analyse:
 16. produktionsgeeignete Analyseerzeugung ohne automatische Aktivierung vorbereitet:
     `MatchAnalyzerService`, OpenAI-Provider, Postgres-`MatchEvidenceRepository`, Runtime-Guards,
     opt-in Integrationstest und BFF-/UI-Kennzeichnung fuer Orchestrator-Modus;
-17. naechster Schritt: opt-in Durchstich lokal mit Provider und synthetischem Stage-2-Seed ausfuehren
-    beziehungsweise danach echte Profil-Evidence erst nach fachlicher Freigabe anbinden; keine
-    synthetische Analyse fuer produktiven Traffic aktivieren.
+17. opt-in Durchstich lokal mit realem Provider und synthetischem Stage-2-Seed ausgefuehrt; gefundene
+    Strict-Schema-Inkompatibilitaet behoben und der komplette API-Pfad erfolgreich verifiziert;
+18. naechster Schritt: Profil-Workshop und redaktionelle Normalisierung fortsetzen, erste echte Claims
+    und Evidence einzeln fachlich freigeben und erst nach erneuter RLS-/Datenschutzpruefung einen
+    kontrollierten Importpfad vorbereiten; keine synthetische Analyse fuer produktiven Traffic
+    aktivieren.
 
 Explizit nicht enthalten: echte Profilimporte, produktives Crawling, Kontaktversand und produktive
 Nutzung mit echten Profilinhalten. Der reale LLM-Pfad ist technisch vorbereitet, aber nur

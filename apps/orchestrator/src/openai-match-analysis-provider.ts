@@ -71,7 +71,7 @@ const matchAnalysisJsonSchema = {
     "warnings",
   ],
   properties: {
-    schemaVersion: { const: "1.0" },
+    schemaVersion: { type: "string", const: "1.0" },
     subject: {
       type: "object",
       additionalProperties: false,
