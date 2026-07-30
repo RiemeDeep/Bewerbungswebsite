@@ -45,22 +45,16 @@ if [ "${baseline_count}" = "0" ]; then
     exit 1
   fi
 
-  while IFS='|' read -r migration_id migration_path; do
-    case "${migration_id}" in
-      ''|'#'*) continue ;;
-    esac
-
-    psql -v ON_ERROR_STOP=1 -U postgres -d "${database}" \
-      -v migration_id="${migration_id}" \
-      -v migration_path="${migration_path}" <<'SQL' >/dev/null
+  psql -v ON_ERROR_STOP=1 -U postgres -d "${database}" <<'SQL' >/dev/null
 insert into public.bewerbungswebsite_schema_migrations (id, path)
-values (:'migration_id', :'migration_path')
+values
+  ('000_self_hosted_roles', '/migrations/self-hosted/000_self_hosted_roles.sql'),
+  ('20260728225000_match_analysis_storage', '/migrations/supabase/20260728225000_match_analysis_storage.sql'),
+  ('020_match_analysis_runtime_access', '/migrations/self-hosted/020_match_analysis_runtime_access.sql')
 on conflict (id) do nothing;
 SQL
-  done < "${manifest}"
 
-  printf '%s\n' "Registered existing self-hosted migration baseline."
-  exit 0
+  printf '%s\n' "Registered historical self-hosted migration baseline."
 fi
 
 while IFS='|' read -r migration_id migration_path; do

@@ -1,4 +1,7 @@
 # id|path
 000_self_hosted_roles|/migrations/self-hosted/000_self_hosted_roles.sql
 20260728225000_match_analysis_storage|/migrations/supabase/20260728225000_match_analysis_storage.sql
+20260728122000_stage_2_profile_knowledge_base|/migrations/supabase/20260728122000_stage_2_profile_knowledge_base.sql
+20260730143000_profile_review_provenance|/migrations/supabase/20260730143000_profile_review_provenance.sql
 020_match_analysis_runtime_access|/migrations/self-hosted/020_match_analysis_runtime_access.sql
+030_profile_runtime_access|/migrations/self-hosted/030_profile_runtime_access.sql

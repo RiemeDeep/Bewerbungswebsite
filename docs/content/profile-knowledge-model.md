@@ -1,7 +1,7 @@
 # Fachliches Modell der Profil-Wissensbasis
 
-Stand: 2026-07-24  
-Status: Arbeitsgrundlage fuer Phase 2.0
+Stand: 2026-07-30
+Status: Arbeitsgrundlage fuer Phase 2.0, Selbstaussagen-Review konkretisiert
 
 ## Zweck
 
@@ -120,6 +120,25 @@ Grundsaetze:
 
 Spaetere Zuordnung laut Spezifikation: `source_documents`.
 
+### Durch Michael verifizierte Primaerangabe
+
+Eine normalisierte und von Michael ausdruecklich als wahr verifizierte Primaerangabe darf als private
+Metadatenquelle fuer einen `subject_verified` Claim gefuehrt werden. Diese Einstufung bestaetigt die
+Wahrheit und fachliche Freigabe durch die betroffene Person. Die davon getrennte Belegbasis zeigt, ob
+zusaetzlich ein unabhaengiger Dokumentnachweis vorliegt.
+
+Regeln:
+
+- Claim-Sprache nennt `Michael bestaetigt ...`, `Nach Michaels Bestaetigung ...` oder eine gleich klare
+  Kennzeichnung;
+- fachlicher Reviewstatus ist `subject_verified`;
+- Belegbasis bleibt `subject_attestation`, solange kein unabhaengiger Beleg hinzukommt;
+- oeffentliches Evidence Label nennt `Persoenliche Bestaetigung`;
+- normalisierte Reviewquelle bleibt `private`, auch wenn ein einzelner Auszug freigegeben wird;
+- eine spaeter gefundene Dokumentquelle wird als eigenes Evidence Item ergaenzt und aendert die
+  Belegbasis erst nach erneutem Review;
+- Widersprueche zu Plan- oder Dokumentwerten werden nicht zusammengefuehrt, sondern sichtbar getrennt.
+
 ### Dokument-Chunk
 
 Ein Chunk ist ein Retrieval-Artefakt, keine fachliche Source of Truth. Er verweist immer auf sein
@@ -145,31 +164,43 @@ Spaetere Zuordnung laut Spezifikation: `document_chunks`.
 | Luecke              | Claim oder ermittelter fehlender Beleg | `Dazu liegt keine freigegebene Information vor.`      |
 | Offene Frage        | Review-/Klaerstatus                    | `Dieser Punkt sollte im Gespraech geklaert werden.`   |
 
-## Konfidenz und Belegstaerke
+## Fachlicher Reviewstatus und Belegbasis
 
-Konfidenz bezeichnet die Verlaesslichkeit einer gespeicherten Aussage, nicht Michaels Eignung.
+Die fachliche Verifizierung durch Michael und die Art des Nachweises sind getrennte Achsen. Damit wird
+eine wahrheitsgemaesse Primaerangabe nicht als unsicher abgewertet, zugleich aber auch nicht als
+unabhaengig dokumentiert ausgegeben.
 
-Vorgeschlagene redaktionelle Abstufung:
+Vorgeschlagener fachlicher Reviewstatus:
 
-- `verified`: direkte und gepruefte Quelle;
-- `supported`: mehrere konsistente Angaben, aber begrenzte Primaerquelle;
-- `self_reported`: ausdrueckliche Selbstaussage;
+- `unreviewed`: noch nicht durch Michael geprueft;
+- `subject_verified`: durch Michael als wahr bestaetigt und fuer die angegebenen Kontexte freigegeben;
+- `subject_disputed`: durch Michael bestritten oder korrekturbeduerftig.
+
+Vorgeschlagene Belegbasis:
+
+- `direct_document`: unabhaengige direkte Dokumentquelle;
+- `documented_plan`: Dokument belegt Planung, nicht die vollstaendige Umsetzung;
+- `subject_attestation`: durch Michael verifizierte Primaerangabe ohne unabhaengigen Dokumentnachweis;
+- `supporting_document`: Dokument stuetzt Teilaspekte, ohne den gesamten Claim direkt zu belegen;
 - `uncertain`: widerspruechlich oder unvollstaendig.
 
-Die finalen Werte werden vor Phase 2.1 mit den Konfidenzregeln der Spezifikation abgeglichen.
+Die lokale Phase-2.1-Migration ersetzt das vorlaeufige Feld `confidence` durch getrennte, typisierte
+Review- und Belegattribute. Sie darf nur auf einen leeren Profilbestand angewendet werden, damit keine
+alten Werte automatisch als fachliche Verifizierung oder unabhaengiger Dokumentbeleg umgedeutet
+werden.
 
 ## Erlaubte Nutzungskontexte
 
 Sichtbarkeit allein beantwortet noch nicht, in welchem Produktkontext ein Claim verwendet werden
-darf. Phase 2.0 prueft deshalb eine getrennte Nutzungskontext-Achse:
+darf. Phase 2.1 setzt deshalb eine getrennte, typisierte Nutzungskontext-Achse um:
 
 - `public_profile`;
 - `profile_assistant`;
 - `job_analysis`;
 - `admin_review`.
 
-Ob diese Achse als Feld, Zuordnungstabelle oder abgeleitete Policy umgesetzt wird, bleibt eine offene
-Phase-2-Entscheidung.
+Die erlaubten Kontexte liegen als Enum-Array auf Claims und Evidence Items. Evidence-Kontexte muessen
+eine Teilmenge der zugehoerigen Claim-Kontexte sein; Repository-Abfragen filtern beide Ebenen.
 
 ## Claim-zentriertes Retrieval
 
@@ -198,6 +229,8 @@ Reihenfolge:
 - Schlussfolgerungen referenzieren die verwendeten Claims oder Evidence IDs.
 - Fehlender Beleg darf keine positive Konfidenz erzeugen.
 - Zeitraeume, Zahlen und Rollenbezeichnungen werden nicht aus anderen Angaben rekonstruiert.
+- Durch Michael verifizierte Primaerangaben mit Zahlen oder Zeitraeumen bleiben in der Belegbasis
+  sichtbar `subject_attestation`, solange kein unabhaengiger Nachweis zugeordnet ist.
 - Widersprueche bleiben sichtbar, bis ein Review sie aufloest.
 
 ## Noch offene Modellfragen

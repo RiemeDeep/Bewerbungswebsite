@@ -182,12 +182,17 @@ describe("createPostgresMatchEvidenceRepository", () => {
 
     expect(calls).toHaveLength(1);
     expect(calls[0]?.values).toEqual([]);
+    expect(calls[0]?.text).toContain("join public.profile_entities pe on pe.id = c.entity_id");
+    expect(calls[0]?.text).toContain("pe.publication_status = 'published'");
+    expect(calls[0]?.text).toContain("pe.visibility <> 'private'");
     expect(calls[0]?.text).toContain("c.publication_status = 'published'");
     expect(calls[0]?.text).toContain("c.visibility <> 'private'");
+    expect(calls[0]?.text).toContain("c.subject_review_status = 'subject_verified'");
     expect(calls[0]?.text).toContain(
       "'job_analysis'::public.profile_usage_context = any(c.allowed_contexts)",
     );
     expect(calls[0]?.text).toContain("e.visibility in ('public_excerpt', 'public')");
+    expect(calls[0]?.text).toContain("e.evidence_basis <> 'uncertain'");
     expect(calls[0]?.text).toContain(
       "'job_analysis'::public.profile_usage_context = any(e.allowed_contexts)",
     );

@@ -207,13 +207,18 @@ const retrieveMatchEvidenceSql = `
     e.publication_status::text as publication_status,
     e.allowed_contexts::text[] as allowed_contexts
   from public.profile_claims c
+  join public.profile_entities pe on pe.id = c.entity_id
   join public.evidence_items e on e.claim_id = c.id
   join public.source_documents sd on sd.id = e.source_document_id
-  where c.publication_status = 'published'
+  where pe.publication_status = 'published'
+    and pe.visibility <> 'private'
+    and c.publication_status = 'published'
     and c.visibility <> 'private'
+    and c.subject_review_status = 'subject_verified'
     and 'job_analysis'::public.profile_usage_context = any(c.allowed_contexts)
     and e.publication_status = 'published'
     and e.visibility in ('public_excerpt', 'public')
+    and e.evidence_basis <> 'uncertain'
     and 'job_analysis'::public.profile_usage_context = any(e.allowed_contexts)
     and sd.publication_status = 'published'
   order by c.id, e.id

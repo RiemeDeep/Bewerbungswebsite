@@ -21,3 +21,8 @@ beleggestuetzte Wissensbasis der Bewerbungswebsite.
 - `source-inventory.md`: aktueller, in Git zulaessiger Inventarstand ohne private Inhalte.
 - `workshop-progress.md`: operativer Workshop-Stand ohne Rohnotizen oder private Profilangaben.
 - `visibility-publication-matrix.md`: Sichtbarkeit, Nutzungskontext und Freigabe.
+
+Private normalisierte Claims und Importdateien bleiben unter dem ignorierten Pfad
+`docs/docs_michael/`. Der Importvertrag und die Sicherheitsgates sind in
+`docs/plans/phase-2.1-profile-import-readiness.md` dokumentiert; echte Profilwerte gehoeren weder in
+Migrationen noch in synthetische Fixtures.

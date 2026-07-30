@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "entities": [
+    {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "entityType": "synthetic_project",
+      "canonicalName": "Synthetisches Importprojekt",
+      "slug": "synthetisches-importprojekt",
+      "summary": "Klar synthetische Entitaet fuer Importtests.",
+      "visibility": "public",
+      "publicationStatus": "published"
+    }
+  ],
+  "sourceDocuments": [
+    {
+      "id": "10000000-0000-4000-8000-000000000101",
+      "title": "Synthetische persoenliche Bestaetigung",
+      "documentType": "synthetic_subject_attestation",
+      "storagePath": null,
+      "checksum": null,
+      "mimeType": null,
+      "visibility": "private",
+      "publicationStatus": "published",
+      "ingestionStatus": "metadata_only",
+      "version": 1
+    }
+  ],
+  "claims": [
+    {
+      "id": "10000000-0000-4000-8000-000000000201",
+      "entityId": "10000000-0000-4000-8000-000000000001",
+      "claimType": "project_fact",
+      "statement": "Die fiktive Person bestaetigt einen synthetischen Projektfakt.",
+      "validFrom": null,
+      "validTo": null,
+      "subjectReviewStatus": "subject_verified",
+      "visibility": "internal",
+      "publicationStatus": "published",
+      "allowedContexts": ["public_profile", "profile_assistant", "job_analysis"],
+      "reviewedAt": "2026-07-30T00:00:00Z",
+      "withdrawnAt": null
+    }
+  ],
+  "evidenceItems": [
+    {
+      "id": "10000000-0000-4000-8000-000000000301",
+      "claimId": "10000000-0000-4000-8000-000000000201",
+      "sourceDocumentId": "10000000-0000-4000-8000-000000000101",
+      "sourceLocator": null,
+      "publicLabel": "Synthetische persoenliche Bestaetigung",
+      "publicExcerpt": "Freigegebener synthetischer Auszug fuer Importtests.",
+      "evidenceStrength": "direct",
+      "evidenceBasis": "subject_attestation",
+      "visibility": "public_excerpt",
+      "publicationStatus": "published",
+      "allowedContexts": ["public_profile", "profile_assistant", "job_analysis"]
+    }
+  ]
+}

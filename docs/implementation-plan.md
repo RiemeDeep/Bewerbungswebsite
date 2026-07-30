@@ -111,7 +111,8 @@ Abnahme:
 
 ## Phase 2: Strukturierte Wissensbasis
 
-Status: Phase 2.0.1 abgeschlossen; Inhaltsworkshop nach Pilotfall pausiert; Migration offen
+Status: Phase 2.0.1 abgeschlossen; erster Pilotfall fachlich freigegeben und lokal importbereit;
+produktive Migration, echter Import und Runtime-Aktivierung offen
 
 Detailplan fuer Wissensarchitektur und Profil-Workshop:
 `docs/plans/phase-2.0-knowledge-architecture.md`
@@ -121,11 +122,15 @@ Vor der ersten Migration:
 1. Wissensklassen, Claim-/Evidence-Modell und Invarianten dokumentieren. Abgeschlossen am
    2026-07-24.
 2. Profil-Workshop mit gesicherten Fakten, Evidence Stories, Grenzen und Praeferenzen durchfuehren.
-   Gestartet am 2026-07-25; Leitplanken entschieden, 38 logische Quellen inventarisiert, Block 1
+   Gestartet am 2026-07-25; Leitplanken entschieden, 39 logische Quellen inventarisiert, Block 1
    privat reviewt und 42 kleine private Claim-Kandidaten normalisiert. Der erste Projektfall wurde
-   als private Pilot-Evidence-Story mit zwoelf weiteren Claim-Kandidaten erfasst; oeffentliche
-   Einzelfreigaben bleiben offen. Weitere Detail-Workshops sind bis zum technischen
-   Machbarkeits-Gate pausiert.
+   als private Pilot-Evidence-Story mit zwoelf weiteren Claim-Kandidaten erfasst. Der Workshop wurde
+   nach bestandenem Technik-Gate am 2026-07-30 mit dem ersten Pilotfall fortgesetzt. 13 kleine Claims
+   und Evidence Labels sind fachlich freigegeben.
+   `subject_verified` durch Michael und die Belegbasis `subject_attestation` bleiben von
+   Dokumentbelegen und dokumentierter Planung getrennt. Schema-, Import-, RLS- und
+   Datenschutzpruefung sind lokal abgeschlossen; die private Importdatei ist als `published`
+   vorbereitet, aber nicht angewendet.
 3. Quellen nur als Metadaten inventarisieren; keine privaten Dokumente in Git ablegen. Lebenslauf,
    Arbeitszeugnisse, Zertifikate/Lizenzen sowie Unternehmens- und Projektunterlagen sind als erste
    Quellengruppen bestaetigt.
@@ -134,11 +139,19 @@ Vor der ersten Migration:
 
 Umsetzungseinheiten ab Phase 2.1:
 
-1. Datenmodell als Supabase-Migration mit Enums, Constraints und Indizes.
-2. Restriktive RLS-Policies und anonyme Negativtests.
-3. Trennung privater Dokumente, oeffentlicher Auszuege und Claims.
-4. Freigegebener Seed-/Importpfad und serverseitige Profilabfrage.
+1. Datenmodell als Supabase-Migration mit Enums, Constraints und Indizes. Lokal vorbereitet mit
+   getrenntem `subject_review_status` und `evidence_basis`; Remote-Migration offen.
+2. Restriktive RLS-Policies und anonyme Negativtests. Lokal fuer `anon`, `authenticated` und die
+   spaltenbegrenzte read-only Self-Hosted-Runtime-Rolle nachgewiesen; Remote-Verifikation offen.
+3. Trennung privater Dokumente, oeffentlicher Auszuege und Claims. Im Runtime-Grant und privaten
+   Pilot-Importvertrag umgesetzt; Dokumenttitel, Pfade, Locator und Chunks bleiben gesperrt.
+4. Freigegebener Seed-/Importpfad und serverseitige Profilabfrage. Atomarer validate-by-default
+   Importer, synthetischer Apply-Test sowie Defense-in-depth-Filter in Profil- und Match-Repositories
+   umgesetzt; echter Import offen.
 5. Rueckzug und Re-Indexierungsereignisse.
+
+Phase-2.1-Readiness-Plan:
+`docs/plans/phase-2.1-profile-import-readiness.md`
 
 Abnahme:
 
@@ -404,10 +417,16 @@ Phase-5.0 Match-Analyse:
     opt-in Integrationstest und BFF-/UI-Kennzeichnung fuer Orchestrator-Modus;
 17. opt-in Durchstich lokal mit realem Provider und synthetischem Stage-2-Seed ausgefuehrt; gefundene
     Strict-Schema-Inkompatibilitaet behoben und der komplette API-Pfad erfolgreich verifiziert;
-18. naechster Schritt: Profil-Workshop und redaktionelle Normalisierung fortsetzen, erste echte Claims
-    und Evidence einzeln fachlich freigeben und erst nach erneuter RLS-/Datenschutzpruefung einen
-    kontrollierten Importpfad vorbereiten; keine synthetische Analyse fuer produktiven Traffic
-    aktivieren.
+18. Profil-Workshop und redaktionelle Normalisierung mit dem ersten Pilotfall fortgesetzt;
+19. erster Pilotfall fachlich freigegeben: oeffentliche Benennung,
+    transparente Grenzen und Nutzung in Profil, Profilassistent und Stellenanalyse grundsaetzlich
+    freigegeben; 13 Aussagen durch Michael als wahr verifiziert, Dokumentbelege, dokumentierte Planung
+    und persoenliche Bestaetigungen getrennt normalisiert;
+20. Phase-2.1-Schema mit getrenntem fachlichem Reviewstatus und Belegbasis, kontrolliertem Importpfad,
+    Parent-Entity-/Parent-Claim-Filtern und RLS-Negativtests lokal vorbereitet; Migration und echter
+    Import bleiben bis zur separaten Remote-Freigabe gesperrt.
+21. naechster Schritt: lokalen Phase-2.1-Stand abschliessend pruefen und veroeffentlichen; danach
+    produktive Migration und echten Import als getrennte, ausdruecklich freizugebende Gates planen.
 
 Explizit nicht enthalten: echte Profilimporte, produktives Crawling, Kontaktversand und produktive
 Nutzung mit echten Profilinhalten. Der reale LLM-Pfad ist technisch vorbereitet, aber nur

@@ -23,6 +23,8 @@ PostgreSQL laeuft im selben Compose-Projekt:
 - Volume: `bewerbungswebsite_postgres_data`
 - nur isoliertes Backend-Netzwerk, keine Portfreigabe an Host oder n8n
 - RLS fuer `public.match_analyses`, keine direkten Rechte fuer `anon` oder `authenticated`
+- Profil-Schema, Provenienz-Migration und read-only Runtime-Policies sind lokal vorbereitet, aber noch
+  nicht auf dem VPS angewendet
 
 Synthetische Runtime-Flags sind nicht gesetzt. `MATCH_DATABASE_URL` aktiviert nur den
 produktionsgeeigneten Match-Store. Ein gleichzeitiger synthetischer Match-Modus wird vom Startschema
@@ -106,14 +108,16 @@ docker exec bewerbungswebsite-postgres \
   sh /migrations/self-hosted/apply-initial-migrations.sh
 ```
 
-Der Runner legt Self-Hosted-Rollen und pgvector an, wendet die versionierte Match-Migration an,
-vergibt die restriktiven App-Rechte und fuehrt den SQL-Negativtest in einer Rollback-Transaktion
-aus. Er ist keine wiederholbare Up-Migration und darf auf einer bereits migrierten Datenbank nicht
-erneut ausgefuehrt werden.
+Der Runner legt Self-Hosted-Rollen und pgvector an, wendet auf einem neuen leeren Volume die
+versionierten Match- und Profilmigrationen an, vergibt restriktive App-Rechte und fuehrt SQL-
+Negativtests in Rollback-Transaktionen aus. Abschliessend registriert er alle enthaltenen Migrationen
+im Migrationsledger. Er ist keine wiederholbare Up-Migration und darf auf einer bereits migrierten
+Datenbank nicht erneut ausgefuehrt werden.
 
 Nach der Initialisierung verwaltet der Pending-Runner spaetere Self-Hosted-Migrationen anhand von
 `deploy/postgres/migrations/self-hosted-manifest.txt`. Beim ersten Lauf auf einer bereits initialisierten
-Datenbank registriert er die bestehende Baseline, ohne alte Migrationen erneut auszufuehren:
+historischen Datenbank registriert er nur die fest definierte Match-Analyse-Baseline. Neuere
+Profileintraege im Manifest werden danach normal ausgefuehrt und nicht als Baseline uebersprungen:
 
 ```bash
 docker exec bewerbungswebsite-postgres \
@@ -131,6 +135,29 @@ Runtime-Zugriff, pgvector, RLS und Tabellenstand pruefen:
 docker exec bewerbungswebsite-postgres \
   sh /migrations/self-hosted/verify-runtime-access.sh
 ```
+
+Der Profil-Pending-Run ist noch nicht remote freigegeben. Vor seiner spaeteren Ausfuehrung gelten die
+Gates aus `docs/plans/phase-2.1-profile-import-readiness.md`. Insbesondere bleibt der Profilbestand nach
+der Schema-Migration leer und echte Inhalte werden nicht zusammen mit einem Release importiert.
+
+## Profilimport
+
+Der kontrollierte Importvertrag liegt in `apps/orchestrator/src/profile-import.ts`. Private
+Importdateien bleiben unter einem ignorierten lokalen Pfad und duerfen nicht in Images, Git, Logs oder
+Deployment-Syncs gelangen.
+
+Reine lokale Validierung:
+
+```powershell
+$env:PROFILE_IMPORT_FILE = "<private-json-path>"
+$env:PROFILE_IMPORT_MODE = "validate"
+pnpm --filter @bewerbungswebsite/orchestrator profile:import
+```
+
+`apply` benoetigt `PROFILE_IMPORT_CONFIRM=IMPORT_APPROVED_PROFILE` und eine administrative
+`PROFILE_DATABASE_URL`. Dieser Modus ist fuer den VPS noch gesperrt. Die Runtime-Verbindung aus
+`.env.orchestrator` besitzt absichtlich keine Schreibrechte und darf nicht fuer Imports erweitert
+werden.
 
 Authentisierten Cleanup mit dem n8n-Credential testen:
 

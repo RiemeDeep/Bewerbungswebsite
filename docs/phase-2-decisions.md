@@ -1,8 +1,8 @@
 # Offene Entscheidungen fuer Phase 2
 
-Stand: 2026-07-28
-Status: Workshop-Leitplanken, technisches Machbarkeits-Gate und Migration Readiness Review fuer die
-lokale Stufe 2 entschieden; produktive Phase-2-Entscheidungen teilweise offen
+Stand: 2026-07-30
+Status: Workshop-Leitplanken, technisches Machbarkeits-Gate und lokale Phase-2.1-Import-Readiness
+entschieden; Pilotfall fachlich freigegeben, produktive Migration und echter Import weiter offen
 
 ## Arbeitsreihenfolge ab 2026-07-27
 
@@ -18,8 +18,26 @@ lokale Stufe 2 entschieden; produktive Phase-2-Entscheidungen teilweise offen
 
 Detailplan: `docs/plans/technical-feasibility-gate.md`.
 
-Die Entscheidung aendert die Arbeitsreihenfolge, aber keine fachliche Invariante. Ein ADR wird erst
-notwendig, wenn der Spike von den bestehenden Komponenten- oder Sicherheitsgrenzen abweicht.
+Fortsetzungsentscheidung am 2026-07-30: Das Gesamt-Gate und der zusaetzliche opt-in
+Match-Analyse-Provider-Durchstich sind bestanden. Der Workshop wird mit dem bereits normalisierten
+Pilotfall fortgesetzt. Der erste Freigabeblock darf dokumentierte Fakten und klar gekennzeichnete
+Selbstaussagen enthalten. Claim-, Evidence-, RLS- und Datenschutzreview sind lokal abgeschlossen;
+Remote-Migration, echter Import und Runtime-Aktivierung bleiben getrennt gesperrt.
+
+### Selbstaussagen im Veroeffentlichungsreview
+
+| Entscheidung                                                            | Status      | Festgelegte Richtung                                                                       |
+| ----------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
+| Duerfen nicht mehr dokumentierbare Erinnerungsangaben verwendet werden? | Entschieden | ja, wenn Michael sie als `subject_verified` bestaetigt und die Belegbasis sichtbar bleibt  |
+| Was belegt eine normalisierte persoenliche Reviewquelle?                | Entschieden | Wahrheit und Freigabe der Primaerangabe durch Michael; kein unabhaengiger Dokumentnachweis |
+| Duerfen Dokument- und Erinnerungswerte zusammengefuehrt werden?         | Entschieden | nein; getrennte Claims und sichtbare Belegklasse                                           |
+| Duerfen private Originaldokumente oeffentlich ausgeliefert werden?      | Entschieden | nein; nur einzeln freigegebene Labels und Auszuege                                         |
+| Wann wechselt ein Pilot-Claim auf `published`?                          | Entschieden | erst nach finaler Formulierungs-, Evidence-, Drittinformations- und Kontextpruefung        |
+| Werden fachliche Verifizierung und Belegbasis getrennt?                 | Entschieden | ja; `subject_verified` ist Reviewstatus, `subject_attestation` eine Belegbasis             |
+
+Die Entscheidung aendert die Arbeitsreihenfolge, aber keine fachliche Invariante. Die umgesetzte
+Trennung und ihre Sicherheitsfolgen sind im ADR
+`docs/decisions/2026-07-30-profile-review-and-provenance.md` festgehalten.
 
 Ergaenzung am 2026-07-28: Die Ausrichtung wurde verbindlich geschaerft in
 `docs/decisions/2026-07-28-technical-completeness-before-public-promotion.md`. Naechste Nachweise
@@ -61,22 +79,28 @@ Priorisierte Challenge-Fragen fuer den ersten Workshop-Durchlauf:
 
 ## Vor der ersten Migration
 
-| Entscheidung                                                            | Status | Vorlaeufige Richtung                                  |
-| ----------------------------------------------------------------------- | ------ | ----------------------------------------------------- |
-| Wie wird `analysis_only` technisch modelliert?                          | Offen  | `allowed_contexts` getrennt von `visibility`          |
-| Benoetigen Evidence Stories eine eigene Tabelle?                        | Offen  | zunaechst Entitaet plus Claims/Evidence bevorzugen    |
-| Welche Claim-Typen werden als Enum festgeschrieben?                     | Offen  | erst nach Workshop reduzieren                         |
-| Welche Konfidenzwerte werden gespeichert?                               | Offen  | mit Spezifikation und Workshop-Ergebnissen abgleichen |
-| Welches Supabase-Projekt und welche Region werden genutzt?              | Offen  | vor Remote-Migration explizit waehlen                 |
-| Werden Tabellen im `public`-Schema oder in getrennten Schemas angelegt? | Offen  | API-Exposition und serverseitigen Zugriff pruefen     |
-| Welche Rollen duerfen Claims reviewen und publizieren?                  | Offen  | Vier-Augen-Prinzip light aus Spezifikation erhalten   |
-| Wie werden Rueckzug und Re-Indexierung transaktional gekoppelt?         | Offen  | vor Ingestion als Invariante festlegen                |
+| Entscheidung                                                            | Status      | Festgelegte Richtung                                                                     |
+| ----------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
+| Wie wird `analysis_only` technisch modelliert?                          | Entschieden | `allowed_contexts` getrennt von `visibility`                                             |
+| Benoetigen Evidence Stories eine eigene Tabelle?                        | Entschieden | redaktionelle Arbeitseinheit; Import als Entitaet plus Claims/Evidence                   |
+| Welche Claim-Typen werden als Enum festgeschrieben?                     | Teilweise   | bestehende fuenf Typen reichen fuer Pilotfall; Arbeitsweise/Praeferenzen spaeter pruefen |
+| Wie werden Reviewstatus und Belegbasis gespeichert?                     | Entschieden | getrennte typisierte Attribute gemaess ADR vom 2026-07-30                                |
+| Welches Supabase-Projekt und welche Region werden genutzt?              | Entschieden | kein zweites Supabase-Projekt; Self-Hosted PostgreSQL auf bestehendem Hostinger-VPS      |
+| Werden Tabellen im `public`-Schema oder in getrennten Schemas angelegt? | Entschieden | `public` ohne externe Data API; spaltenbegrenzte Grants und RLS fuer Runtime-Rolle       |
+| Welche Rollen duerfen Claims reviewen und publizieren?                  | Teilweise   | Michael verifiziert fachlich; Import nur administrativ, Runtime strikt read-only         |
+| Wie werden Rueckzug und Re-Indexierung transaktional gekoppelt?         | Offen       | vor Dokument-Ingestion als Invariante festlegen                                          |
 
 Ergaenzung am 2026-07-28: Fuer den lokalen technischen Machbarkeitsnachweis Stufe 2 sind die
 Migrationsentscheidungen in `docs/plans/migration-readiness-review-stage-2.md` reduziert entschieden.
 Freigegeben ist nur eine lokale Migration mit synthetischem Seed und RLS-Negativtests. Die produktive
 Schemaexposition, redaktionelle Rollen, Storage, Embeddings, Remote-Projektwahl und echte Profilimporte
 bleiben offen.
+
+Ergaenzung am 2026-07-30: Der erste fachlich freigegebene Pilotfall hat die produktionsgeeignete
+Trennung von `subject_review_status` und `evidence_basis` ausgeloest. Migration, read-only
+Self-Hosted-Runtime-Zugriff und validate-by-default Importpfad sind lokal mit synthetischen Daten
+nachgewiesen. Remote-Migration, echter Import, Dokument-Storage und Runtime-Aktivierung bleiben
+separate Gates.
 
 ## Vor Dokument-Upload und Embeddings
 

@@ -1,7 +1,7 @@
 # Profil-Workshop
 
-Stand: 2026-07-27
-Status: nach Block 1 und erstem Pilotfall fuer technischen Machbarkeitsnachweis pausiert
+Stand: 2026-07-30
+Status: erster Pilotfall fachlich freigegeben und lokal importbereit; weitere Projektfaelle offen
 
 ## Ziel
 
@@ -56,6 +56,23 @@ Detailplan: `docs/plans/technical-feasibility-gate.md`.
 Die Pause aendert keine Freigabe: Alle vorhandenen Workshop-Ergebnisse bleiben `private`,
 `admin_review` und `draft`. Nach bestandenem Gate oder einer bewussten Plananpassung wird Block 2
 chronologisch fortgesetzt; Block 3 und Block 4 bleiben bis dahin offen.
+
+## Fortsetzung ab 2026-07-30
+
+Das technische Gesamt-Gate und der anschliessende opt-in Provider-Durchstich mit synthetischen Daten
+sind bestanden. Block 2 wird deshalb mit dem bereits normalisierten Pilotfall fortgesetzt.
+
+Fuer den ersten Veroeffentlichungsreview gilt:
+
+- dokumentierte Fakten, dokumentierte Planung und persoenliche Einordnung bleiben getrennt;
+- Erinnerungsangaben duerfen verwendet werden, wenn Michael sie als `subject_verified` bestaetigt und
+  sie mit einer freigegebenen persoenlichen Reviewquelle verbunden sind;
+- die davon getrennte Belegbasis bleibt `subject_attestation`, wenn kein unabhaengiges Dokument
+  vorliegt;
+- fehlende Originalbelege und widerspruechliche Planwerte werden sichtbar genannt;
+- eine grundsaetzliche Freigabe eines Themas ersetzt nicht die finale Claim- und Evidence-Pruefung;
+- auch nach fachlicher Formulierungsfreigabe bleiben Remote-Migration, echter Import und
+  Runtime-Aktivierung getrennte ausdrueckliche Gates.
 
 ## Block 1: Fakten und Chronologie
 

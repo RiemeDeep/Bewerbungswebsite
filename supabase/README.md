@@ -13,9 +13,13 @@ Regeln:
 
 - `migrations/20260728122000_stage_2_profile_knowledge_base.sql` enthaelt das lokale minimale
   Wissensbasis-Schema fuer den technischen Machbarkeitsnachweis Stufe 2.
+- `migrations/20260730143000_profile_review_provenance.sql` trennt fachlichen Reviewstatus und
+  Evidence-Provenienz. Sie setzt einen leeren Profilbestand voraus.
 - `seed/stage-2-profile-knowledge.synthetic.sql` enthaelt ausschliesslich synthetische Testdaten.
 - `tests/stage_2_profile_knowledge.sql` enthaelt SQL-Negativtests fuer RLS, Direktzugriff und
   Retrieval-Filter.
+- `tests/profile_runtime_access.sql` prueft die spaltenbegrenzte Self-Hosted-Runtime-Rolle und die
+  Parent-Entity-, Parent-Claim- und Source-Grenzen mit synthetischen Daten.
 - `migrations/20260728225000_match_analysis_storage.sql` enthaelt die lokale kurzlebige
   MatchAnalysis-Persistenz mit Token-Hash, TTL, Status und restriktiver RLS.
 - `tests/match_analysis_storage.sql` prueft direkte Rollenrechte, RLS, fehlende Klartexttoken-Spalten,
@@ -33,9 +37,10 @@ $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- match-storage-runtime.test.ts
 ```
 
-Diese Artefakte sind nicht fuer Remote-Migrationen freigegeben. Vor einer produktiven Nutzung muessen
-Projekt, Region, Storage, Embeddings, redaktionelle Rollen und echte Profilfreigaben separat
-entschieden werden.
+Diese Artefakte sind nicht fuer Remote-Migrationen freigegeben. Als Ziel ist das bestehende
+Self-Hosted PostgreSQL auf dem Hostinger-VPS entschieden. Vor einer produktiven Nutzung muessen
+Backup, Remote-Migration, Storage, Embeddings, redaktionelle Rollen, echter Import und
+Runtime-Aktivierung separat freigegeben werden.
 
 ## JobContext-Retention
 

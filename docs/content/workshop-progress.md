@@ -1,7 +1,7 @@
 # Profil-Workshop: Arbeitsstand
 
-Stand: 2026-07-27
-Status: nach Block 1 und erstem privaten Pilotfall fuer technischen Machbarkeitsnachweis pausiert
+Stand: 2026-07-30
+Status: erster Pilotfall fachlich freigegeben und lokal importbereit; Remote-Migration und Import offen
 
 ## Session 1
 
@@ -54,28 +54,48 @@ oder fuer Retrieval zulaessig.
 
 ## Block 2: Projekte und Evidence Stories
 
-| Arbeitsschritt                                                 | Status        |
-| -------------------------------------------------------------- | ------------- |
-| ersten dokumentarisch vorbereiteten Pilotfall auswaehlen       | abgeschlossen |
-| vorhandene Quellen und Beleggrenzen pruefen                    | abgeschlossen |
-| Rolle, Eigenanteil, Teamleistung und Ergebnis reviewen         | abgeschlossen |
-| private Pilot-Evidence-Story normalisieren                     | abgeschlossen |
-| kleine Claim-Kandidaten aus dem Pilotfall ableiten             | abgeschlossen |
-| oeffentliche Einzelformulierungen und Evidence Items freigeben | offen         |
-| weitere Projektfaelle chronologisch bearbeiten                 | offen         |
+| Arbeitsschritt                                                  | Status                 |
+| --------------------------------------------------------------- | ---------------------- |
+| ersten dokumentarisch vorbereiteten Pilotfall auswaehlen        | abgeschlossen          |
+| vorhandene Quellen und Beleggrenzen pruefen                     | abgeschlossen          |
+| Rolle, Eigenanteil, Teamleistung und Ergebnis reviewen          | abgeschlossen          |
+| private Pilot-Evidence-Story normalisieren                      | abgeschlossen          |
+| kleine Claim-Kandidaten aus dem Pilotfall ableiten              | abgeschlossen          |
+| oeffentliche Einzelformulierungen und Evidence Labels freigeben | fachlich abgeschlossen |
+| weitere Projektfaelle chronologisch bearbeiten                  | offen                  |
 
 Der Pilotfall bleibt vollstaendig im ignorierten privaten Arbeitsbereich. Dokumentierte Planung,
 tatsaechliche Umsetzung und Selbstaussagen wurden getrennt; nicht vorhandene Quellen wurden nicht
-rekonstruiert. Die spaetere transparente Darstellung eines gescheiterten Vorhabens ist grundsaetzlich
-erlaubt, benoetigt aber weiterhin eine Claim- und Evidence-Einzelfreigabe.
+rekonstruiert. Die spaetere transparente Darstellung eines gescheiterten Vorhabens ist erlaubt;
+Claim- und Evidence-Einzelfreigaben fuer den Pilotfall sind abgeschlossen.
+
+Fortsetzung am 2026-07-30:
+
+- technisches Gesamt-Gate und anschliessender echter Provider-Durchstich mit synthetischen Daten
+  bestanden;
+- Pilotfall fuer den ersten Veroeffentlichungsreview ausgewaehlt;
+- oeffentliche Benennung des Unternehmens und Projekts fachlich erlaubt;
+- vollstaendige transparente Einordnung einschliesslich Scheitern und Grenzen erlaubt;
+- Verwendung fuer `public_profile`, `profile_assistant` und `job_analysis` erlaubt;
+- 13 kleine Claim-Entwuerfe nach Dokumentbeleg, dokumentierter Planung und persoenlicher Bestaetigung
+  getrennt;
+- Michael hat alle 13 Aussagen einschliesslich der tatsaechlichen Kapitaleinzahlung als wahr
+  verifiziert und die vorbereiteten Formulierungen fachlich freigegeben;
+- `subject_verified` und die Belegbasis `subject_attestation` werden getrennt gefuehrt, wenn kein
+  unabhaengiger Dokumentnachweis vorliegt;
+- Schema-, Import-, RLS- und Datenschutzpruefung sind lokal mit synthetischen Daten abgeschlossen;
+- die private Importdatei ist fachlich als `published` vorbereitet und erfolgreich validiert, wurde
+  aber weder lokal noch remote mit echten Daten angewendet.
 
 ## Geplante Fortsetzung
 
-Die weitere detaillierte Profilaufnahme ist bewusst pausiert, bis der gestufte technische
-Machbarkeitsnachweis aus `docs/plans/technical-feasibility-gate.md` abgeschlossen oder der Plan nach
-einem Stop/Go-Gate angepasst wurde.
+Die technische Pause ist nach bestandenem Gesamt-Gate beendet. Der Pilotfall ist fachlich bis zu
+kleinen freigegebenen Claims und Evidence Labels gefuehrt; Reviewstatus, Belegbasis, Importvertrag und
+RLS-Negativtests sind lokal umgesetzt. Produktive Migration, echter Import und Runtime-Aktivierung
+bleiben getrennte ausdrueckliche Gates. Danach werden weitere Projektfaelle wie vereinbart
+chronologisch bearbeitet.
 
-Bei Fortsetzung werden die weiteren Projektfaelle wie vereinbart chronologisch bearbeitet. Vor jedem
-Fall wird geprueft, ob eine konkrete Situation ausreichend abgrenzbar ist und welche Quellen nur
+Vor jedem weiteren Fall wird geprueft, ob eine konkrete Situation ausreichend abgrenzbar ist und
+welche Quellen nur
 Planung, tatsaechliche Umsetzung oder Ergebnis belegen. Die vorhandenen privaten Entwuerfe bleiben
 bis dahin unveraendert `draft` und nur fuer `admin_review` zulaessig.
