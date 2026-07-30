@@ -1,0 +1,4 @@
+# id|path
+000_self_hosted_roles|/migrations/self-hosted/000_self_hosted_roles.sql
+20260728225000_match_analysis_storage|/migrations/supabase/20260728225000_match_analysis_storage.sql
+020_match_analysis_runtime_access|/migrations/self-hosted/020_match_analysis_runtime_access.sql

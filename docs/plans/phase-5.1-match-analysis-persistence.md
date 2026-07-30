@@ -61,7 +61,10 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
 - taegliche Custom-Format-Backups laufen um 02:30 Uhr `Europe/Berlin` mit 14 Tagen Aufbewahrung;
 - ein isolierter Restore-Probelauf in einem temporaeren Docker-Volume wurde erfolgreich ausgefuehrt;
 - die verschluesselte Google-Drive-Offsite-Kopie ist per rclone aktiv; der erste manuelle Sync und der
-  erste automatische Timerlauf waren erfolgreich.
+  erste automatische Timerlauf waren erfolgreich;
+- ein idempotenter Pending-Migrations-Runner ist versioniert und hat auf dem VPS die bestehende
+  Baseline registriert, um spaetere Self-Hosted-Schemaaenderungen einmalig und nachvollziehbar
+  auszufuehren.
 
 ## Nicht Enthalten
 
@@ -74,4 +77,4 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
 
 - produktionsgeeignete Analyseerzeugung getrennt vom synthetischen Analyzer planen;
 - echte Profil-Evidence erst nach fachlicher Freigabe und RLS-Pruefung anbinden;
-- allgemeinen idempotenten Migration-Runner fuer spaetere Schemaaenderungen planen.
+- einfachen Release-/Rollback-Pfad fuer den VPS festlegen.

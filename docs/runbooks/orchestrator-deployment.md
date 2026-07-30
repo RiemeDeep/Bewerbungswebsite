@@ -94,6 +94,20 @@ vergibt die restriktiven App-Rechte und fuehrt den SQL-Negativtest in einer Roll
 aus. Er ist keine wiederholbare Up-Migration und darf auf einer bereits migrierten Datenbank nicht
 erneut ausgefuehrt werden.
 
+Nach der Initialisierung verwaltet der Pending-Runner spaetere Self-Hosted-Migrationen anhand von
+`deploy/postgres/migrations/self-hosted-manifest.txt`. Beim ersten Lauf auf einer bereits initialisierten
+Datenbank registriert er die bestehende Baseline, ohne alte Migrationen erneut auszufuehren:
+
+```bash
+docker exec bewerbungswebsite-postgres \
+  sh /migrations/self-hosted/apply-pending-migrations.sh
+```
+
+Neue Migrationen muessen als SQL-Datei versioniert und am Ende des Manifests eingetragen werden. Der
+Pending-Runner fuehrt noch nicht registrierte Eintraege transaktional aus und schreibt danach
+`public.bewerbungswebsite_schema_migrations` fort. Er ersetzt nicht den Initialrunner fuer leere
+Volumes.
+
 Runtime-Zugriff, pgvector, RLS und Tabellenstand pruefen:
 
 ```bash

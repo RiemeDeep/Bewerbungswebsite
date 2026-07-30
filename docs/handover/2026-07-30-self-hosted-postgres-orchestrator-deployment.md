@@ -28,7 +28,7 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 - `deploy/orchestrator/compose.yml`: Orchestrator und PostgreSQL 16/pgvector mit Healthchecks,
   persistentem Volume und getrennten Docker-Netzwerken.
 - `deploy/postgres/migrations/`: Self-Hosted-Rollen, restriktiver App-Zugriff, initialer
-  Migrations-Runner und Runtime-Verifikation.
+  Migrations-Runner, Pending-Migrations-Runner und Runtime-Verifikation.
 - `deploy/postgres/backup.sh`, `deploy/postgres/restore-test.sh` und `deploy/postgres/systemd/`:
   taegliches Custom-Format-Backup mit 14 Tagen Aufbewahrung und isoliertem Restore-Probelauf.
 - `deploy/postgres/offsite-backup.sh` und `deploy/postgres/offsite.env.example`: vorbereitete
@@ -120,8 +120,9 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 - Backups werden zusaetzlich verschluesselt nach Google Drive kopiert. Der erste Offsite-Lauf hat zwei
   Dumps im crypt-Remote sichtbar gemacht.
 - Der 30-Tage-Hard-Delete ist produktiv deployt und per n8n-Integrationstest verifiziert.
-- Die initiale Self-Hosted-Migration ist absichtlich nur fuer ein leeres Volume gedacht. Fuer
-  spaetere Schemaaenderungen fehlt noch ein allgemeiner idempotenter Migration-Runner.
+- Die initiale Self-Hosted-Migration ist absichtlich nur fuer ein leeres Volume gedacht. Der
+  idempotente Pending-Migrations-Runner ist versioniert, hat auf dem VPS die bestehende Baseline
+  registriert und war beim zweiten Lauf idempotent.
 - Deployment erfolgt aktuell per kontrolliertem Datei-Sync und Remote-Build. Ein CI-/Releasepfad
   mit Image-Registry, Versionierung und Rollback fehlt.
 - Produktive Analyseerzeugung, echte Profil-Evidence, reales LLM, Crawling und Kontaktversand sind
@@ -131,7 +132,7 @@ Flags oder echte Profilinhalte produktiv zu aktivieren.
 
 ## Naechster sinnvoller Schritt
 
-Einen allgemeinen idempotenten Migration-Runner fuer spaetere Schemaaenderungen planen. Erst danach
+Als naechsten Betriebsbaustein einen einfachen Release-/Rollback-Pfad festlegen. Erst danach
 produktive Analyseerzeugung oder echte Profil-Evidence anbinden.
 
 ## motai-rag
