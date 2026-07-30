@@ -111,8 +111,8 @@ Abnahme:
 
 ## Phase 2: Strukturierte Wissensbasis
 
-Status: Phase 2.0.1 abgeschlossen; erster Pilotfall fachlich freigegeben und lokal importbereit;
-produktive Migration, echter Import und Runtime-Aktivierung offen
+Status: Phase 2.0.1 abgeschlossen; erster Pilotfall fachlich freigegeben und technisch importbereit;
+Remote-Schema migriert, echter Import und Runtime-Aktivierung offen
 
 Detailplan fuer Wissensarchitektur und Profil-Workshop:
 `docs/plans/phase-2.0-knowledge-architecture.md`
@@ -139,8 +139,8 @@ Vor der ersten Migration:
 
 Umsetzungseinheiten ab Phase 2.1:
 
-1. Datenmodell als Supabase-Migration mit Enums, Constraints und Indizes. Lokal vorbereitet mit
-   getrenntem `subject_review_status` und `evidence_basis`; Remote-Migration offen.
+1. Datenmodell als Supabase-Migration mit Enums, Constraints und Indizes. Lokal und remote angewendet
+   mit getrenntem `subject_review_status` und `evidence_basis`; echter Import offen.
 2. Restriktive RLS-Policies und anonyme Negativtests. Lokal fuer `anon`, `authenticated` und die
    spaltenbegrenzte read-only Self-Hosted-Runtime-Rolle nachgewiesen; Remote-Verifikation offen.
 3. Trennung privater Dokumente, oeffentlicher Auszuege und Claims. Im Runtime-Grant und privaten
@@ -423,10 +423,9 @@ Phase-5.0 Match-Analyse:
     freigegeben; 13 Aussagen durch Michael als wahr verifiziert, Dokumentbelege, dokumentierte Planung
     und persoenliche Bestaetigungen getrennt normalisiert;
 20. Phase-2.1-Schema mit getrenntem fachlichem Reviewstatus und Belegbasis, kontrolliertem Importpfad,
-    Parent-Entity-/Parent-Claim-Filtern und RLS-Negativtests lokal vorbereitet; Migration und echter
-    Import bleiben bis zur separaten Remote-Freigabe gesperrt.
-21. naechster Schritt: lokalen Phase-2.1-Stand abschliessend pruefen und veroeffentlichen; danach
-    produktive Migration und echten Import als getrennte, ausdruecklich freizugebende Gates planen.
+    Parent-Entity-/Parent-Claim-Filtern und RLS-Negativtests lokal vorbereitet und remote migriert;
+21. naechster Schritt: echten Import als getrenntes, ausdruecklich freizugebendes Gate vorbereiten;
+    Runtime-Aktivierung bleibt danach ein weiteres separates Go-live-Gate.
 
 Explizit nicht enthalten: echte Profilimporte, produktives Crawling, Kontaktversand und produktive
 Nutzung mit echten Profilinhalten. Der reale LLM-Pfad ist technisch vorbereitet, aber nur

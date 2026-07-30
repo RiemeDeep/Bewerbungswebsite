@@ -1,7 +1,8 @@
 # Phase 2.1: Profil-Schema und Import-Readiness
 
 Stand: 2026-07-30
-Status: lokal mit synthetischen Daten nachgewiesen; Remote-Migration und echter Import gesperrt
+Status: lokal und remote mit synthetischen Daten nachgewiesen; echter Import und Runtime-Aktivierung
+gesperrt
 
 ## Ziel
 
@@ -22,7 +23,6 @@ Traffic zu aktivieren.
 
 ## Nicht enthalten
 
-- Anwendung der neuen Migrationen auf dem VPS;
 - Import echter Profilinhalte in lokale oder entfernte Datenbanken;
 - Upload privater Originaldokumente;
 - Embeddings oder Dokument-Chunks fuer echte Inhalte;
@@ -106,18 +106,19 @@ Fehlerausgaben enthalten weder Profilinhalt noch Dateipfad oder Datenbankwert.
 - Runtime-Verifikation bricht bei fehlendem pgvector, deaktivierter Match- oder Profil-RLS, zu breiten
   Profilrechten oder einem fehlgeschlagenen Parent-Entity-, Parent-Claim- oder Source-Negativtest mit
   Fehlerstatus ab.
+- Remote-Pending-Migration auf dem VPS erfolgreich: historisches Ledger von 3 auf 6 Eintraege erweitert,
+  Profil-Schema und Runtime-Policies angewendet, Profil-Tabellen anschliessend leer bestaetigt.
+- Remote-Backup vor Migration erstellt, isolierter Restore-Test erfolgreich, Offsite-Sync erfolgreich.
 - synthetischer Import im echten lokalen Apply-Modus erfolgreich und anschliessend vollstaendig
   bereinigt.
 - private Pilot-Importdatei nur validiert: 1 Entitaet, 4 Source-Metadaten, 13 Claims und 14 Evidence
   Items; kein Schreibvorgang.
 
-## Gates vor Remote-Migration
+## Remote-Migration
 
-1. finalen Commit und Manifest-Reihenfolge gegen den lokal nachgewiesenen Stand abgleichen.
-2. Backup und Restore-Faehigkeit aktuell bestaetigen.
-3. Pending-Migration zuerst mit leerem Profilbestand ausfuehren.
-4. `verify-runtime-access.sh` und `profile_runtime_access.sql` remote erfolgreich ausfuehren.
-5. Tabellen leer lassen und Orchestrator weiterhin ohne echte Analyseaktivierung betreiben.
+Abgeschlossen am 2026-07-30 auf dem Self-Hosted PostgreSQL des Hostinger-VPS. Es wurden nur Schema,
+Policies, Grants und Tests angewendet. Echte Profilinhalte wurden nicht importiert und Runtime-Flags
+nicht aktiviert.
 
 ## Gates vor echtem Import
 

@@ -23,8 +23,8 @@ PostgreSQL laeuft im selben Compose-Projekt:
 - Volume: `bewerbungswebsite_postgres_data`
 - nur isoliertes Backend-Netzwerk, keine Portfreigabe an Host oder n8n
 - RLS fuer `public.match_analyses`, keine direkten Rechte fuer `anon` oder `authenticated`
-- Profil-Schema, Provenienz-Migration und read-only Runtime-Policies sind lokal vorbereitet, aber noch
-  nicht auf dem VPS angewendet
+- Profil-Schema, Provenienz-Migration und read-only Runtime-Policies sind auf dem VPS angewendet;
+  Profil-Tabellen bleiben leer, bis der echte Import separat freigegeben wird
 
 Synthetische Runtime-Flags sind nicht gesetzt. `MATCH_DATABASE_URL` aktiviert nur den
 produktionsgeeigneten Match-Store. Ein gleichzeitiger synthetischer Match-Modus wird vom Startschema
@@ -136,9 +136,10 @@ docker exec bewerbungswebsite-postgres \
   sh /migrations/self-hosted/verify-runtime-access.sh
 ```
 
-Der Profil-Pending-Run ist noch nicht remote freigegeben. Vor seiner spaeteren Ausfuehrung gelten die
-Gates aus `docs/plans/phase-2.1-profile-import-readiness.md`. Insbesondere bleibt der Profilbestand nach
-der Schema-Migration leer und echte Inhalte werden nicht zusammen mit einem Release importiert.
+Der Profil-Pending-Run wurde am 2026-07-30 nach Backup, Restore-Test und leerem Profilbestand remote
+ausgefuehrt. Danach waren sechs Migrationen im Ledger registriert, `verify-runtime-access.sh` lief
+erfolgreich und alle Profiltabellen blieben leer. Echte Inhalte werden nicht zusammen mit einem Release
+importiert.
 
 ## Profilimport
 
