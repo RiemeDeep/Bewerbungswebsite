@@ -1,0 +1,109 @@
+{
+  "name": "Bewerbungswebsite - Retention Cleanup - Match Analyses",
+  "active": false,
+  "nodes": [
+    {
+      "id": "b6af3478-6dd4-4f42-afc5-a13d903c0f37",
+      "name": "Daily cleanup schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 3,
+              "triggerAtMinute": 15
+            }
+          ]
+        }
+      },
+      "notes": "Taeglicher Cleanup um 03:15 Uhr Europe/Berlin. Aktiviert nach erfolgreichem Credential-, Datenbank- und Expiry-Test."
+    },
+    {
+      "id": "7a6c9d42-b0ed-4317-9433-ace9c4c1a12d",
+      "name": "Expire due match analyses",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [320, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://bewerbungswebsite-orchestrator:4000/api/internal/match/analyses/expire-due",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__ASSIGN_IN_N8N__",
+          "name": "Bewerbungswebsite Orchestrator Cleanup Bearer"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 300000,
+      "notes": "Erwartete Antwort: { expiredCount: number, expiredAt: ISO timestamp }. Keine Analyse-IDs, Tokens oder Inhalte loggen."
+    }
+  ],
+  "connections": {
+    "Daily cleanup schedule": {
+      "main": [
+        [
+          {
+            "node": "Expire due match analyses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false,
+    "executionTimeout": 30
+  },
+  "pinData": {},
+  "meta": {
+    "project": "Bewerbungswebsite Michael Flatau",
+    "purpose": "short-lived match analysis retention cleanup",
+    "containsSecrets": false
+  },
+  "tags": [
+    {
+      "name": "bewerbungswebsite"
+    },
+    {
+      "name": "retention-cleanup"
+    }
+  ]
+}

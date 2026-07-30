@@ -35,6 +35,7 @@ export interface MatchAnalysisStore {
   create(input: CreateStoredMatchAnalysisInput): Promise<MatchAnalysisAccessMetadata>;
   getByAccessToken(accessToken: string): Promise<AccessibleMatchAnalysis | null>;
   expireDue(now: string): Promise<number>;
+  hardDeleteExpired(before: string): Promise<number>;
   deleteByAnalysisId(analysisId: string, deletedAt: string): Promise<boolean>;
 }
 
@@ -100,6 +101,12 @@ const deleteMatchAnalysisSql = `
   set status = 'deleted', deleted_at = $2::timestamptz
   where id = $1::uuid
     and status <> 'deleted'
+`;
+
+const hardDeleteExpiredSql = `
+  delete from public.match_analyses
+  where status in ('expired', 'deleted')
+    and expires_at <= $1::timestamptz
 `;
 
 export function hashMatchAnalysisAccessToken(accessToken: string): string {
@@ -168,6 +175,12 @@ export function createPostgresMatchAnalysisStore(
     async expireDue(expiryTime) {
       const parsedExpiryTime = z.string().datetime({ offset: true }).parse(expiryTime);
       const result = await client.query(expireDueSql, [parsedExpiryTime]);
+      return result.rowCount ?? 0;
+    },
+
+    async hardDeleteExpired(before) {
+      const parsedBefore = z.string().datetime({ offset: true }).parse(before);
+      const result = await client.query(hardDeleteExpiredSql, [parsedBefore]);
       return result.rowCount ?? 0;
     },
 

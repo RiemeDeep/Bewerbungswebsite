@@ -32,6 +32,16 @@ const validAssistantRequest = {
 
 const publicResolver: DnsResolver = async () => [{ address: "93.184.216.34", family: 4 }];
 const matchAccessToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123";
+const internalSecret = "test-internal-cleanup-secret";
+
+function restoreEnvValue(key: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[key];
+    return;
+  }
+
+  process.env[key] = value;
+}
 
 function createSyntheticMatchAnalyzer() {
   return createDeterministicMockMatchAnalyzer({
@@ -66,8 +76,12 @@ function createTestMatchAnalysisStore(): MatchAnalysisStore {
       return accessToken === matchAccessToken ? storedAnalysis : null;
     },
     async expireDue() {
+      const expiredCount = storedAnalysis ? 1 : 0;
       storedAnalysis = null;
-      return 1;
+      return expiredCount;
+    },
+    async hardDeleteExpired() {
+      return 0;
     },
     async deleteByAnalysisId() {
       storedAnalysis = null;
@@ -506,6 +520,10 @@ describe("stored match analysis routes", () => {
       .send(validJobContext)
       .expect(404);
     await request(createApp()).get(`/api/v1/match/analyses/${matchAccessToken}`).expect(404);
+    await request(createApp())
+      .post("/api/internal/match/analyses/expire-due")
+      .set("authorization", `Bearer ${internalSecret}`)
+      .expect(404);
   });
 
   it("creates and retrieves a stored analysis with restrictive response headers", async () => {
@@ -555,6 +573,113 @@ describe("stored match analysis routes", () => {
       expect(response.body).toMatchObject({
         error: { code: "MATCH_ANALYSIS_NOT_FOUND", retryable: false },
       });
+    }
+  });
+});
+
+describe("POST /api/internal/match/analyses/expire-due", () => {
+  it("rejects cleanup when the internal secret is not configured", async () => {
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+    delete process.env.ORCHESTRATOR_REQUEST_SECRET;
+
+    try {
+      const response = await request(
+        createApp({ matchAnalysisStore: createTestMatchAnalysisStore() }),
+      )
+        .post("/api/internal/match/analyses/expire-due")
+        .set("authorization", `Bearer ${internalSecret}`)
+        .expect(503);
+
+      expect(response.body).toMatchObject({
+        error: { code: "ASSISTANT_INTERNAL_ERROR", retryable: false },
+      });
+    } finally {
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
+    }
+  });
+
+  it("rejects anonymous and incorrectly authenticated cleanup requests", async () => {
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+    process.env.ORCHESTRATOR_REQUEST_SECRET = internalSecret;
+
+    try {
+      const store = createTestMatchAnalysisStore();
+      const app = createApp({ matchAnalysisStore: store });
+
+      await request(app).post("/api/internal/match/analyses/expire-due").expect(401);
+      await request(app)
+        .post("/api/internal/match/analyses/expire-due")
+        .set("authorization", "Bearer wrong-secret")
+        .expect(401);
+    } finally {
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
+    }
+  });
+
+  it("expires due analyses without exposing record identifiers", async () => {
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+    process.env.ORCHESTRATOR_REQUEST_SECRET = internalSecret;
+
+    try {
+      const store = createTestMatchAnalysisStore();
+      const app = createApp({
+        matchAnalyzer: createSyntheticMatchAnalyzer(),
+        matchAnalysisStore: store,
+        matchAssistant: createDeterministicMockMatchAssistantService({ store }),
+        now: () => new Date("2026-07-31T12:00:00.000Z"),
+      });
+
+      await request(app).post("/api/v1/match/analyses").send(validJobContext).expect(201);
+      const cleanupResponse = await request(app)
+        .post("/api/internal/match/analyses/expire-due")
+        .set("authorization", `Bearer ${internalSecret}`)
+        .expect(200);
+
+      expect(cleanupResponse.headers["cache-control"]).toBe("private, no-store, max-age=0");
+      expect(cleanupResponse.body).toEqual({
+        expiredCount: 1,
+        deletedCount: 0,
+        expiredAt: "2026-07-31T12:00:00.000Z",
+      });
+      expect(cleanupResponse.body).not.toHaveProperty("analysisIds");
+      expect(JSON.stringify(cleanupResponse.body)).not.toContain(matchAccessToken);
+
+      await request(app).get(`/api/v1/match/analyses/${matchAccessToken}`).expect(404);
+      await request(app)
+        .post("/api/v1/match/assistant/messages")
+        .send({
+          sessionId: "99999999-9999-4999-8999-999999999999",
+          message: "Ist diese Analyse noch vorhanden?",
+          accessToken: matchAccessToken,
+        })
+        .expect(404);
+    } finally {
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
+    }
+  });
+
+  it("is idempotent when no due analysis remains", async () => {
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+    process.env.ORCHESTRATOR_REQUEST_SECRET = internalSecret;
+
+    try {
+      const app = createApp({
+        matchAnalysisStore: createTestMatchAnalysisStore(),
+        now: () => new Date("2026-07-31T12:00:00.000Z"),
+      });
+
+      const response = await request(app)
+        .post("/api/internal/match/analyses/expire-due")
+        .set("authorization", `Bearer ${internalSecret}`)
+        .expect(200);
+
+      expect(response.body).toEqual({
+        expiredCount: 0,
+        deletedCount: 0,
+        expiredAt: "2026-07-31T12:00:00.000Z",
+      });
+    } finally {
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
     }
   });
 });

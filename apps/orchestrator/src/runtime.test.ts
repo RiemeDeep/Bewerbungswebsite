@@ -64,6 +64,26 @@ describe("orchestrator runtime dependencies", () => {
     ).toThrow("requires ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST");
   });
 
+  it("enables production match storage without synthetic analysis services", async () => {
+    const runtime = createRuntimeApp({
+      MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+    });
+
+    expect(runtime.dependencies.matchAnalysisStore).toBeDefined();
+    expect(runtime.dependencies.matchAnalyzer).toBeUndefined();
+    expect(runtime.dependencies.matchAssistant).toBeUndefined();
+    await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
+  it("rejects production match storage combined with synthetic match flags", () => {
+    expect(() =>
+      createRuntimeApp({
+        MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+        ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: "1",
+      }),
+    ).toThrow("cannot be combined with synthetic match runtime flags");
+  });
+
   it("enables the job context preview with the deterministic mock extractor by default", async () => {
     const runtime = createRuntimeApp({
       ENABLE_JOB_CONTEXT_PREVIEW: "1",

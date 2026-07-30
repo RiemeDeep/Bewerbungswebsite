@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup Bewerbungswebsite PostgreSQL database
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/bewerbungswebsite/deploy/postgres/backup.sh
+User=root
+Group=root

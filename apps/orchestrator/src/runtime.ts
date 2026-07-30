@@ -16,32 +16,47 @@ import {
 } from "./profile-assistant.js";
 import { createPostgresPoolProfileRepository } from "./supabase-profile-repository.js";
 
-const runtimeEnvironmentSchema = z.object({
-  ENABLE_SYNTHETIC_ASSISTANT_TEST: z.literal("1").optional(),
-  ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
-  ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
-  ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: z.literal("1").optional(),
-  SYNTHETIC_PROFILE_DATABASE_URL: z
-    .string()
-    .trim()
-    .min(1)
-    .default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
-  SYNTHETIC_MATCH_DATABASE_URL: z
-    .string()
-    .trim()
-    .min(1)
-    .default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
-  CRAWL_PROVIDER: z.enum(["mock", "firecrawl"]).default("mock"),
-  JOB_CONTEXT_EXTRACTOR: z.enum(["mock", "openai"]).default("mock"),
-  FIRECRAWL_API_KEY: z.string().optional(),
-  FIRECRAWL_API_BASE_URL: z.string().trim().url().default("https://api.firecrawl.dev"),
-  FIRECRAWL_STORE_IN_CACHE: z.enum(["0", "1"]).default("0"),
-  LLM_API_KEY: z.string().optional(),
-  OPENAI_API_KEY: z.string().optional(),
-  LLM_ANALYSIS_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
-  LLM_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
-  LLM_REQUEST_RETRIES: z.coerce.number().int().min(0).default(1),
-});
+const runtimeEnvironmentSchema = z
+  .object({
+    ENABLE_SYNTHETIC_ASSISTANT_TEST: z.literal("1").optional(),
+    ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
+    ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
+    ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: z.literal("1").optional(),
+    SYNTHETIC_PROFILE_DATABASE_URL: z
+      .string()
+      .trim()
+      .min(1)
+      .default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
+    SYNTHETIC_MATCH_DATABASE_URL: z
+      .string()
+      .trim()
+      .min(1)
+      .default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
+    MATCH_DATABASE_URL: z.string().trim().min(1).optional(),
+    CRAWL_PROVIDER: z.enum(["mock", "firecrawl"]).default("mock"),
+    JOB_CONTEXT_EXTRACTOR: z.enum(["mock", "openai"]).default("mock"),
+    FIRECRAWL_API_KEY: z.string().optional(),
+    FIRECRAWL_API_BASE_URL: z.string().trim().url().default("https://api.firecrawl.dev"),
+    FIRECRAWL_STORE_IN_CACHE: z.enum(["0", "1"]).default("0"),
+    LLM_API_KEY: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
+    LLM_ANALYSIS_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
+    LLM_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
+    LLM_REQUEST_RETRIES: z.coerce.number().int().min(0).default(1),
+  })
+  .superRefine((environment, context) => {
+    if (
+      environment.MATCH_DATABASE_URL &&
+      (environment.ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST === "1" ||
+        environment.ENABLE_SYNTHETIC_MATCH_STORAGE_TEST === "1")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "MATCH_DATABASE_URL cannot be combined with synthetic match runtime flags.",
+        path: ["MATCH_DATABASE_URL"],
+      });
+    }
+  });
 
 export type RuntimeApp = {
   dependencies: AppDependencies;
@@ -94,6 +109,12 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     dependencies.matchAnalyzer = createDeterministicMockMatchAnalyzer({
       evidenceRepository: createSyntheticMatchEvidenceRepository(),
     });
+  }
+
+  if (environment.MATCH_DATABASE_URL) {
+    const store = createPostgresPoolMatchAnalysisStore(environment.MATCH_DATABASE_URL);
+    dependencies.matchAnalysisStore = store;
+    closeHandlers.push(() => store.close());
   }
 
   if (environment.ENABLE_SYNTHETIC_MATCH_STORAGE_TEST === "1") {

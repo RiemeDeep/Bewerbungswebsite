@@ -6,6 +6,7 @@ import {
   isMatchAnalysisAccessExpired,
   matchAnalysisAccessMetadataSchema,
   matchAnalysisAccessPolicySchema,
+  matchAnalysisCleanupResponseSchema,
   matchAnalysisStorageRecordSchema,
   storedMatchAnalysisAccessSchema,
 } from "./match-access.js";
@@ -191,6 +192,33 @@ describe("storedMatchAnalysisAccessSchema", () => {
         createdAt: "2026-07-28T12:00:00.000Z",
         expiresAt: "2026-07-31T12:00:00.000Z",
         robotsDirective: "noindex,nofollow",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("matchAnalysisCleanupResponseSchema", () => {
+  it("accepts only minimized cleanup results", () => {
+    expect(
+      matchAnalysisCleanupResponseSchema.parse({
+        expiredCount: 2,
+        deletedCount: 1,
+        expiredAt: "2026-07-31T12:00:00.000Z",
+      }),
+    ).toEqual({
+      expiredCount: 2,
+      deletedCount: 1,
+      expiredAt: "2026-07-31T12:00:00.000Z",
+    });
+  });
+
+  it("rejects payloads that expose analysis identifiers", () => {
+    expect(() =>
+      matchAnalysisCleanupResponseSchema.parse({
+        expiredCount: 1,
+        deletedCount: 0,
+        expiredAt: "2026-07-31T12:00:00.000Z",
+        analysisIds: ["99999999-9999-4999-8999-999999999999"],
       }),
     ).toThrow();
   });

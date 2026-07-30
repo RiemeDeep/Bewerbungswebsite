@@ -269,8 +269,9 @@ Abnahme:
 
 ## Phase 5: Match-Analyse
 
-Status: gestartet; Contract, erste Invarianten, synthetische Repository-Grenze, Match-Assistent und
-Access-/TTL-Prototyp vorbereitet; produktive Analyse offen
+Status: gestartet; Contract, erste Invarianten, synthetische Repository-Grenze, Match-Assistent,
+Access-/TTL-Prototyp, nicht verlinkte Detailansicht, produktionsgeeigneter Match-Store und aktiver
+interner Cleanup-Betrieb umgesetzt; produktive Analyse offen
 
 Contract-Plan:
 `docs/plans/phase-5.0-match-analysis-contract.md`
@@ -311,10 +312,19 @@ Umsetzungseinheiten:
    `matchAnalysisStorageRecordSchema`, deterministischen Expiry-Helpers und einem
    Orchestrator-Helper fuer 256-bit Random-Token. Die Storage-Grenze wurde auf Token-Hash statt
    Klartexttoken korrigiert. Eine lokale Supabase-Migration, SQL-Negativtests und ein
-   Postgres-`MatchAnalysisStore` weisen Create/Get/Expire/Delete mit synthetischen Daten nach. Keine
-   Remote-Persistenz und keine oeffentliche Detailroute. Der Store ist hinter einem separaten
-   synthetischen Runtime-Flag verdrahtet; Creation, Get und Match-Assistent wurden lokal gegen
-   Supabase end-to-end nachgewiesen.
+   Postgres-`MatchAnalysisStore` weisen Create/Get/Expire/Delete mit synthetischen Daten nach. Der
+   Store ist fuer lokale Tests hinter einem separaten synthetischen Runtime-Flag und auf dem VPS
+   ueber die getrennte produktive Variable `MATCH_DATABASE_URL` verdrahtet; beide Modi duerfen
+   nicht kombiniert werden. Creation, Get und Match-Assistent wurden lokal gegen Supabase
+   end-to-end nachgewiesen. Die nicht verlinkte Detailansicht
+   `/match/preview/[accessToken]` laedt ausschliesslich serverseitig, ist flag-geschuetzt und setzt
+   `no-store`, `no-referrer` sowie `noindex,nofollow`. Unit-, Komponenten- und Header-Tests decken
+   gueltige, ungueltige und abgelaufene Zugaenge sowie Assistentenantworten ab. Der interne
+   Orchestrator-Endpunkt `POST /api/internal/match/analyses/expire-due` ist vorbereitet,
+   authentisiert per Bearer-Secret aus `ORCHESTRATOR_REQUEST_SECRET`, gibt nur `expiredCount`,
+   `deletedCount` und `expiredAt` zurueck, markiert faellige aktive Analysen als `expired`, loescht
+   bereits `expired`/`deleted` Analysen nach 30 Tagen physisch und weist nach Cleanup fuer
+   Detailansicht und Match-Assistent einheitlich Nichtfund nach.
 
 Abnahme:
 
@@ -366,12 +376,19 @@ Phase-5.0 Match-Analyse:
     Store-Port umgesetzt und lokal verifiziert;
 11. Store im synthetischen Runtime-Modus verdrahtet und Match-Assistent auf Zugriffstoken plus
     serverseitig geladenen Kontext umgestellt;
-12. naechster Schritt: nicht verlinkte Detailansicht und kontrollierten Expiry-/Cleanup-Ablauf
-    nachweisen;
-13. keine echte Profil-Evidence-Anbindung und keine produktive Match-Analyse aktivieren.
+12. nicht verlinkte Detailansicht mit serverseitigem Laden, restriktiven Headern und Tests
+    umgesetzt;
+13. authentisierten internen Cleanup-Endpunkt und kontrollierten Expiry-/Cleanup-Ablauf umgesetzt;
+14. n8n-Schedule-Workflow fuer `expireDue` lokal versioniert, remote importiert, validiert und nach
+    erfolgreichem Credential- und Expiry-Test aktiviert;
+15. selbst gehostetes PostgreSQL 16 mit pgvector, isoliertem Netzwerk, RLS, App-Rolle,
+    verschluesselten Secrets und taeglichem 14-Tage-Backup auf dem VPS eingerichtet;
+16. naechster Schritt: produktionsgeeignete Analyseerzeugung und Profil-Evidence-Anbindung separat
+    planen; keine synthetische Analyse fuer produktiven Traffic aktivieren.
 
-Explizit nicht enthalten: echte Profilimporte, Remote-Migration, produktives reales LLM,
-produktives Crawling, produktive Match-Analyse, n8n und Kontaktversand.
+Explizit nicht enthalten: echte Profilimporte, produktives reales LLM, produktives Crawling,
+produktive Match-Analyse und Kontaktversand. Der aktive n8n-Einsatz ist auf den deterministischen
+Retention-Cleanup begrenzt.
 
 ## Phasenuebergreifende Gates
 

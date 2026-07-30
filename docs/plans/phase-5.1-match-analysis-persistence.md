@@ -1,8 +1,8 @@
 # Phase 5.1: Kurzlebige MatchAnalysis-Persistenz
 
 Stand: 2026-07-28
-Status: lokal inklusive Runtime- und Assistentenfluss mit synthetischen Daten nachgewiesen, keine
-Remote-Migration freigegeben
+Status: lokal inklusive Runtime- und Assistentenfluss mit synthetischen Daten nachgewiesen;
+self-hosted Match-Store und Cleanup auf dem VPS in Betrieb
 
 ## Ziel
 
@@ -47,15 +47,31 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
   anschliessenden Nichtfund erfolgreich;
 - keine Remote-Migration und keine echten Profilinhalte verwendet.
 
+## Self-Hosted Runtime
+
+- PostgreSQL 16 mit pgvector laeuft intern auf dem Hostinger-VPS;
+- `MATCH_DATABASE_URL` aktiviert nur den Match-Store und ist mit synthetischen Match-Flags
+  unvereinbar;
+- die App-Rolle `bewerbungswebsite_app` besitzt nur die benoetigten Tabellenrechte und eine eigene
+  RLS-Policy;
+- Datenbank und Orchestrator besitzen keine oeffentliche Portfreigabe;
+- n8n ruft den authentisierten Cleanup taeglich um 03:15 Uhr `Europe/Berlin` auf;
+- ein vollstaendiger synthetischer Cleanup-Probe fuer Expiry und 30-Tage-Hard-Delete wurde erfolgreich
+  ausgefuehrt und entfernt;
+- taegliche Custom-Format-Backups laufen um 02:30 Uhr `Europe/Berlin` mit 14 Tagen Aufbewahrung;
+- ein isolierter Restore-Probelauf in einem temporaeren Docker-Volume wurde erfolgreich ausgefuehrt;
+- die verschluesselte Google-Drive-Offsite-Kopie ist per rclone vorbereitet, aber bis zur einmaligen
+  OAuth-Konfiguration noch nicht aktiv.
+
 ## Nicht Enthalten
 
-- oeffentliche oder nicht verlinkte Detailroute fuer gespeicherte Analysen;
-- Cleanup-Workflow in n8n;
-- Remote-Projekt- oder Regionsentscheidung;
-- produktive Profil-Evidence.
+- produktive Analyseerzeugung mit echter Profil-Evidence;
+- oeffentlich verlinkte oder indexierbare Detailrouten;
+- dauerhafte Analyse-Links ohne TTL;
+- Browser-Direktzugriff auf PostgreSQL.
 
 ## Naechste Implementierungseinheit
 
-- nicht verlinkte Detailansicht auf Basis des tokenisierten Get-Endpunkts vorbereiten;
-- abgelaufene Analysen ueber `expireDue` kontrolliert markieren und den Nichtfund testen;
-- spaeteren Cleanup-Job als signierten internen n8n- oder Plattform-Cron-Ablauf konzipieren.
+- produktionsgeeignete Analyseerzeugung getrennt vom synthetischen Analyzer planen;
+- echte Profil-Evidence erst nach fachlicher Freigabe und RLS-Pruefung anbinden;
+- Google-Drive-rclone-OAuth abschliessen, Offsite-Timer aktivieren und ersten Offsite-Lauf pruefen.

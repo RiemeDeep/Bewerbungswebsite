@@ -65,6 +65,9 @@ async function createService() {
         async expireDue() {
           return 0;
         },
+        async hardDeleteExpired() {
+          return 0;
+        },
         async deleteByAnalysisId() {
           return false;
         },

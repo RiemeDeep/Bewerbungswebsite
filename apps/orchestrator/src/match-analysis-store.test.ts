@@ -167,21 +167,28 @@ describe("createPostgresMatchAnalysisStore", () => {
     await expect(store.getByAccessToken(accessToken)).resolves.toBeNull();
   });
 
-  it("expires due records and soft-deletes individual analyses", async () => {
+  it("expires due records, hard-deletes old expired records and soft-deletes individual analyses", async () => {
     const calls: Array<{ text: string; values: unknown[] }> = [];
     const store = createPostgresMatchAnalysisStore({
       async query(text, values) {
         calls.push({ text, values });
-        return { rows: [], rowCount: text.includes("status = 'expired'") ? 3 : 1 };
+        const rowCount = text.includes("status = 'expired'")
+          ? 3
+          : text.includes("delete from public.match_analyses")
+            ? 2
+            : 1;
+        return { rows: [], rowCount };
       },
     });
 
     await expect(store.expireDue("2026-07-31T12:00:00.000Z")).resolves.toBe(3);
+    await expect(store.hardDeleteExpired("2026-08-30T12:00:00.000Z")).resolves.toBe(2);
     await expect(
       store.deleteByAnalysisId(accessMetadata.analysisId, "2026-07-29T12:00:00.000Z"),
     ).resolves.toBe(true);
     expect(calls[0]?.text).toContain("expires_at <= $1::timestamptz");
-    expect(calls[1]?.text).toContain("status = 'deleted'");
+    expect(calls[1]?.text).toContain("status in ('expired', 'deleted')");
+    expect(calls[2]?.text).toContain("status = 'deleted'");
   });
 });
 

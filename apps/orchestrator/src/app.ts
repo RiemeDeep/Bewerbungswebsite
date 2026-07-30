@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 
 import {
   apiErrorResponseSchema,
@@ -8,6 +8,7 @@ import {
   jobContextInputSchema,
   jobContextSchema,
   matchAnalysisCreationResponseSchema,
+  matchAnalysisCleanupResponseSchema,
   matchAnalysisSchema,
   matchAssistantMessageRequestSchema,
   matchAssistantResponseSchema,
@@ -33,6 +34,7 @@ export type AppDependencies = {
   matchAnalyzer?: MatchAnalyzer;
   matchAnalysisStore?: MatchAnalysisStore;
   matchAssistant?: MatchAssistantService;
+  now?: () => Date;
 };
 
 function createErrorResponse(input: {
@@ -54,8 +56,25 @@ function createJobProviderErrorResponse(requestId: string) {
   });
 }
 
+function safelyEquals(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left, "utf8");
+  const rightBuffer = Buffer.from(right, "utf8");
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function isAuthorizedInternalRequest(authorizationHeader: string | undefined, secret: string) {
+  if (!authorizationHeader?.startsWith("Bearer ")) {
+    return false;
+  }
+
+  return safelyEquals(authorizationHeader.slice("Bearer ".length), secret);
+}
+
+const matchAnalysisHardDeleteAfterMs = 30 * 24 * 60 * 60 * 1_000;
+
 export function createApp(dependencies: AppDependencies = {}): Express {
   const app = express();
+  const now = dependencies.now ?? (() => new Date());
 
   app.disable("x-powered-by");
   app.use(express.json({ limit: "64kb" }));
@@ -284,6 +303,62 @@ export function createApp(dependencies: AppDependencies = {}): Express {
             message: "Die Match-Analyse ist nicht vorhanden oder abgelaufen.",
             requestId,
             retryable: false,
+          }),
+        );
+      }
+    });
+
+    app.post("/api/internal/match/analyses/expire-due", async (request, response) => {
+      const requestId = randomUUID();
+      const internalSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
+
+      if (!internalSecret || internalSecret === "replace-me") {
+        response.status(503).json(
+          createErrorResponse({
+            code: "ASSISTANT_INTERNAL_ERROR",
+            message: "Der interne Cleanup-Endpunkt ist nicht konfiguriert.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      if (!isAuthorizedInternalRequest(request.get("authorization"), internalSecret)) {
+        response.status(401).json(
+          createErrorResponse({
+            code: "INVALID_REQUEST",
+            message: "Die Anfrage ist ungueltig.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
+      const expiredAt = now().toISOString();
+      const hardDeleteBefore = new Date(
+        new Date(expiredAt).getTime() - matchAnalysisHardDeleteAfterMs,
+      ).toISOString();
+
+      try {
+        const expiredCount = await matchAnalysisStore.expireDue(expiredAt);
+        const deletedCount = await matchAnalysisStore.hardDeleteExpired(hardDeleteBefore);
+
+        response.set("cache-control", "private, no-store, max-age=0").status(200).json(
+          matchAnalysisCleanupResponseSchema.parse({
+            expiredCount,
+            deletedCount,
+            expiredAt,
+          }),
+        );
+      } catch {
+        response.status(500).json(
+          createErrorResponse({
+            code: "ASSISTANT_INTERNAL_ERROR",
+            message: "Der interne Cleanup-Lauf konnte nicht verarbeitet werden.",
+            requestId,
+            retryable: true,
           }),
         );
       }

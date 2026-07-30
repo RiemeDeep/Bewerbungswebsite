@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg16
+    container_name: bewerbungswebsite-postgres
+    restart: unless-stopped
+    env_file:
+      - .env.database
+    environment:
+      POSTGRES_DB: bewerbungswebsite
+      POSTGRES_USER: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../supabase/migrations:/migrations/supabase:ro
+      - ../postgres/migrations:/migrations/self-hosted:ro
+      - ../../supabase/tests:/migrations/tests:ro
+    networks:
+      - backend
+    shm_size: 256mb
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U postgres -d bewerbungswebsite
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  orchestrator:
+    build:
+      context: ../..
+      dockerfile: apps/orchestrator/Dockerfile
+    image: bewerbungswebsite-orchestrator:local
+    container_name: bewerbungswebsite-orchestrator
+    restart: unless-stopped
+    env_file:
+      - path: .env.orchestrator
+        required: false
+    environment:
+      PORT: 4000
+    networks:
+      - n8n
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:4000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  n8n:
+    external: true
+    name: n8n_default
+  backend:
+    internal: true
+
+volumes:
+  postgres_data:
+    name: bewerbungswebsite_postgres_data

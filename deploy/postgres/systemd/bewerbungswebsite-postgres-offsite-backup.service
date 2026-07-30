@@ -1,0 +1,11 @@
+[Unit]
+Description=Copy Bewerbungswebsite PostgreSQL backups to encrypted offsite storage
+Requires=docker.service
+After=docker.service bewerbungswebsite-postgres-backup.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/opt/bewerbungswebsite/deploy/postgres/offsite.env
+ExecStart=/opt/bewerbungswebsite/deploy/postgres/offsite-backup.sh
+User=root
+Group=root

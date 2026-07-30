@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily backup for Bewerbungswebsite PostgreSQL database
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 Europe/Berlin
+Persistent=true
+RandomizedDelaySec=5m
+Unit=bewerbungswebsite-postgres-backup.service
+
+[Install]
+WantedBy=timers.target

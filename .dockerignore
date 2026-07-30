@@ -1,0 +1,13 @@
+.git
+.github
+.next
+.env
+.env.*
+!.env.example
+**/dist
+**/node_modules
+docs
+n8n
+supabase
+tests
+apps/web

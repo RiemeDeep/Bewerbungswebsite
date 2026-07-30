@@ -76,6 +76,14 @@ export const matchAnalysisCreationResponseSchema = z
   })
   .strict();
 
+export const matchAnalysisCleanupResponseSchema = z
+  .object({
+    expiredCount: z.number().int().min(0),
+    deletedCount: z.number().int().min(0),
+    expiredAt: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
 export function createMatchAnalysisExpiresAt(createdAt: string, ttlHours: number): string {
   const parsedPolicy = matchAnalysisAccessPolicySchema.parse({ ttlHours });
   const parsedCreatedAt = z.string().datetime({ offset: true }).parse(createdAt);
@@ -108,3 +116,4 @@ export type StoredMatchAnalysisAccess = z.infer<typeof storedMatchAnalysisAccess
 export type MatchAnalysisStorageRecord = z.infer<typeof matchAnalysisStorageRecordSchema>;
 export type AccessibleMatchAnalysis = z.infer<typeof accessibleMatchAnalysisSchema>;
 export type MatchAnalysisCreationResponse = z.infer<typeof matchAnalysisCreationResponseSchema>;
+export type MatchAnalysisCleanupResponse = z.infer<typeof matchAnalysisCleanupResponseSchema>;
