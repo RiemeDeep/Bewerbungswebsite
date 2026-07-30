@@ -120,6 +120,8 @@ Fehlerausgaben enthalten weder Profilinhalt noch Dateipfad oder Datenbankwert.
   Evidence-Inhalte in Logs oder Doku auszugeben.
 - synthetischer Rueckzugstest remote in Rollback-Transaktion erfolgreich: Runtime-Sichtbarkeit fiel von
   1 Claim/1 Evidence vor Rueckzug auf 0/0 nach Rueckzug; keine Testdaten persistiert.
+- interne Review-Stichprobenansicht remote deployed: nur mit `ORCHESTRATOR_REQUEST_SECRET`, `no-store`,
+  `noindex,nofollow`, 13 Claims/14 Evidence sichtbar, keine Source-Titel oder Storage-Pfade im Payload.
 
 ## Remote-Migration
 
@@ -135,7 +137,7 @@ geloescht. Der Import erfolgte mit administrativer Einmalverbindung; die Runtime
 
 ## Gates vor Runtime-Aktivierung
 
-1. fachliche Stichproben direkt in der Anwendung oder ueber sichere Admin-Ansicht pruefen.
+1. fachliche Stichproben ueber den internen Review-Endpunkt tatsaechlich inhaltlich abnehmen.
 2. UI-/BFF-Pfade fuer echte Profilbasis separat freigeben.
 3. Datenschutz- und Rechtscheck vor oeffentlicher Auslieferung abschliessen.
 4. Echte Runtime-Flags erst in einem separaten Go-live-Gate aktivieren.

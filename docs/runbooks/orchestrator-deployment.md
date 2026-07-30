@@ -159,6 +159,24 @@ pnpm --filter @bewerbungswebsite/orchestrator profile:import
 ausgefuehrt. Die Runtime-Verbindung aus `.env.orchestrator` besitzt absichtlich keine Schreibrechte und
 darf nicht fuer Imports erweitert werden.
 
+Interne fachliche Profilstichprobe ohne oeffentliche Aktivierung:
+
+```bash
+docker exec bewerbungswebsite-orchestrator node --input-type=module
+```
+
+Im Node-Prozess darf der interne Endpunkt nur mit `ORCHESTRATOR_REQUEST_SECRET` aufgerufen werden:
+
+```js
+await fetch("http://127.0.0.1:4000/api/internal/profile/review-sample?limit=25", {
+  headers: { authorization: `Bearer ${process.env.ORCHESTRATOR_REQUEST_SECRET}` },
+});
+```
+
+Der Endpunkt setzt `cache-control: private, no-store, max-age=0`, `x-robots-tag: noindex,nofollow` und
+liefert nur Runtime-zulaessige Profilspalten. Source-Titel, Speicherpfade und Chunks sind nicht Teil des
+Payloads.
+
 Authentisierten Cleanup mit dem n8n-Credential testen:
 
 ```bash
