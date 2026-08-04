@@ -39,5 +39,10 @@ TODO_NEXT_STEP
 ## motai-rag
 
 - Gespeichert: TODO_YES_NO
+- Project-ID: bewerbungswebsite-michael-flatau
+- Project-Slug: bewerbungswebsite
+- Project-Name: Bewerbungswebsite Michael Flatau
+- Memory-Scope: project
 - Session-ID: TODO_SESSION_ID
+- Save-Event-ID: TODO_SAVE_EVENT_ID
 - Tags: TODO_TAGS
