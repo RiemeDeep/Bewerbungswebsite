@@ -1,13 +1,54 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
-export function proxy() {
-  const response = NextResponse.next();
+import { hasValidBasicCredentials } from "./lib/profile-preview-auth";
+
+function withPrivatePreviewHeaders(response: NextResponse) {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
   response.headers.set("Referrer-Policy", "no-referrer");
   response.headers.set("X-Robots-Tag", "noindex,nofollow");
   return response;
 }
 
+function hasValidProfilePreviewCredentials(
+  request: NextRequest,
+  username: string,
+  password: string,
+) {
+  return hasValidBasicCredentials(request.headers.get("authorization"), username, password);
+}
+
+export function proxy(request?: NextRequest) {
+  const isInternalProfilePreview = request?.nextUrl.pathname.startsWith("/internal/profilvorschau");
+
+  if (isInternalProfilePreview && process.env.ENABLE_INTERNAL_PROFILE_PREVIEW !== "1") {
+    return withPrivatePreviewHeaders(new NextResponse("Not Found", { status: 404 }));
+  }
+
+  if (request && isInternalProfilePreview && process.env.ENABLE_INTERNAL_PROFILE_PREVIEW === "1") {
+    const username = process.env.INTERNAL_PROFILE_PREVIEW_USERNAME;
+    const password = process.env.INTERNAL_PROFILE_PREVIEW_PASSWORD;
+
+    if (!username || !password || username === "replace-me" || password === "replace-me") {
+      return withPrivatePreviewHeaders(
+        new NextResponse("Die interne Profilvorschau ist nicht vollstaendig konfiguriert.", {
+          status: 503,
+        }),
+      );
+    }
+
+    if (!hasValidProfilePreviewCredentials(request, username, password)) {
+      const response = new NextResponse("Anmeldung erforderlich.", { status: 401 });
+      response.headers.set(
+        "WWW-Authenticate",
+        'Basic realm="Interne Profilvorschau", charset="UTF-8"',
+      );
+      return withPrivatePreviewHeaders(response);
+    }
+  }
+
+  return withPrivatePreviewHeaders(NextResponse.next());
+}
+
 export const config = {
-  matcher: "/match/preview/:path*",
+  matcher: ["/match/preview/:path*", "/internal/profilvorschau/:path*"],
 };

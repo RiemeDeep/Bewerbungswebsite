@@ -5,9 +5,9 @@
 .env.*
 !.env.example
 **/dist
+**/.next
 **/node_modules
 docs
 n8n
 supabase
 tests
-apps/web

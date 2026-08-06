@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
-import type { AccessibleMatchAnalysis } from "@bewerbungswebsite/contracts";
+import type { AccessibleMatchAnalysis, ProfileReviewClaim } from "@bewerbungswebsite/contracts";
 
 import { createApp } from "./app.js";
 import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
@@ -94,7 +94,7 @@ function createTestMatchAnalysisStore(): MatchAnalysisStore {
 function createTestProfileReviewRepository(): ProfileReviewRepository {
   return {
     async listReviewClaims(limit) {
-      return [
+      const claims: ProfileReviewClaim[] = [
         {
           claimId: "11111111-1111-4111-8111-111111111111",
           claimType: "project_fact",
@@ -111,7 +111,9 @@ function createTestProfileReviewRepository(): ProfileReviewRepository {
             },
           ],
         },
-      ].slice(0, limit);
+      ];
+
+      return claims.slice(0, limit);
     },
   };
 }
@@ -738,11 +740,16 @@ describe("GET /api/internal/profile/review-sample", () => {
     try {
       const app = createApp({ profileReviewRepository: createTestProfileReviewRepository() });
 
-      await request(app).get("/api/internal/profile/review-sample").expect(401);
+      const anonymousResponse = await request(app)
+        .get("/api/internal/profile/review-sample")
+        .expect(401);
       await request(app)
         .get("/api/internal/profile/review-sample")
         .set("authorization", "Bearer wrong-secret")
         .expect(401);
+
+      expect(anonymousResponse.headers["cache-control"]).toBe("private, no-store, max-age=0");
+      expect(anonymousResponse.headers["x-robots-tag"]).toBe("noindex,nofollow");
     } finally {
       restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
     }

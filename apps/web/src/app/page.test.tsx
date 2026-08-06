@@ -90,18 +90,22 @@ describe("phase 1 pages", () => {
     expect(text).not.toMatch(/\+\d{2,}/u);
   });
 
-  it("renders the career release state without chronology claims", () => {
+  it("renders the released career timeline without sensitive private details", () => {
     const { container } = render(<WerdegangPage />);
     const text = container.textContent ?? "";
 
     expect(
       screen.getByRole("heading", { level: 1, name: profileContent.careerOverview.title }),
     ).toBeTruthy();
+    for (const item of profileContent.careerItems) {
+      expect(screen.getByRole("heading", { level: 3, name: item.title })).toBeTruthy();
+    }
     expect(
-      screen.getByRole("heading", { level: 3, name: "Zurückgestellt bis zur Freigabe" }),
+      screen.getByRole("heading", { level: 3, name: "Bewusst nicht veroeffentlicht" }),
     ).toBeTruthy();
-    expect(text).not.toMatch(/\b(19|20)\d{2}\b/u);
     expect(text).not.toMatch(/[\w.-]+@[\w.-]+\.[a-z]{2,}/iu);
+    expect(text).not.toMatch(/IBAN|St\.Nr\.|UStId/u);
+    expect(text).not.toMatch(/100\.000|Einhunderttausend/u);
   });
 
   it("renders the project page without external project links", () => {

@@ -11,13 +11,34 @@ const sectionCopySchema = z
   })
   .strict();
 
+const publicCareerItemSchema = z
+  .object({
+    id: stableIdSchema,
+    period: nonEmptyTextSchema,
+    title: nonEmptyTextSchema,
+    role: nonEmptyTextSchema,
+    summary: nonEmptyTextSchema,
+    highlights: z.array(nonEmptyTextSchema).min(1),
+    evidenceNote: nonEmptyTextSchema,
+  })
+  .strict();
+
+const publicCredentialGroupSchema = z
+  .object({
+    id: stableIdSchema,
+    title: nonEmptyTextSchema,
+    summary: nonEmptyTextSchema,
+    credentials: z.array(nonEmptyTextSchema).min(1),
+  })
+  .strict();
+
 export const profileContentSchema = z
   .object({
     meta: z
       .object({
         schemaVersion: z.literal("1.0"),
         language: z.literal("de"),
-        editorialStatus: z.literal("phase-1-draft"),
+        editorialStatus: z.literal("approved-public-draft"),
         notice: nonEmptyTextSchema,
       })
       .strict(),
@@ -71,12 +92,14 @@ export const profileContentSchema = z
       )
       .min(1),
     careerOverview: sectionCopySchema.extend({
-      status: z.literal("awaiting-verified-timeline"),
+      status: z.literal("released-timeline"),
       visibleFields: z.array(nonEmptyTextSchema).min(1),
       withheldFields: z.array(nonEmptyTextSchema).min(1),
     }),
+    careerItems: z.array(publicCareerItemSchema).min(1),
+    credentialGroups: z.array(publicCredentialGroupSchema).min(1),
     projectsOverview: sectionCopySchema.extend({
-      status: z.literal("kernel-only"),
+      status: z.literal("released-project-summaries"),
     }),
     contactOverview: sectionCopySchema.extend({
       status: z.literal("withheld-until-release"),

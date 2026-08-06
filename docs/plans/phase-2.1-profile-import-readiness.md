@@ -137,7 +137,9 @@ geloescht. Der Import erfolgte mit administrativer Einmalverbindung; die Runtime
 
 ## Gates vor Runtime-Aktivierung
 
-1. fachliche Stichproben ueber den internen Review-Endpunkt tatsaechlich inhaltlich abnehmen.
-2. UI-/BFF-Pfade fuer echte Profilbasis separat freigeben.
+1. Fachliche Stichprobe am 2026-08-04 durch Michael abgenommen: alle 13 Aussagen ohne Korrekturen
+   freigegeben.
+2. Geschuetzter UI-/BFF-Pfad umgesetzt, automatisiert geprueft und intern auf dem VPS deployed;
+   visuelle Abnahme bleibt offen.
 3. Datenschutz- und Rechtscheck vor oeffentlicher Auslieferung abschliessen.
 4. Echte Runtime-Flags erst in einem separaten Go-live-Gate aktivieren.

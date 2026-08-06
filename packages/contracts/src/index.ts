@@ -71,6 +71,20 @@ export {
 export type { NormalizedJobRequirement } from "./match-requirements.js";
 export { profileContentSchema } from "./profile-content.js";
 export type { ProfileContent } from "./profile-content.js";
+export {
+  profileEvidenceBasisSchema,
+  profileReviewClaimSchema,
+  profileReviewEvidenceSchema,
+  profileReviewResponseSchema,
+  profileUsageContextSchema,
+} from "./profile-review.js";
+export type {
+  ProfileEvidenceBasis,
+  ProfileReviewClaim,
+  ProfileReviewEvidence,
+  ProfileReviewResponse,
+  ProfileUsageContext,
+} from "./profile-review.js";
 
 export const healthResponseSchema = z.object({
   status: z.literal("ok"),

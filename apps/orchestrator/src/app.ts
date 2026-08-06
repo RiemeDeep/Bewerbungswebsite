@@ -12,6 +12,7 @@ import {
   matchAnalysisSchema,
   matchAssistantMessageRequestSchema,
   matchAssistantResponseSchema,
+  profileReviewResponseSchema,
   type ApiErrorResponse,
   type AssistantErrorCode,
 } from "@bewerbungswebsite/contracts";
@@ -373,6 +374,11 @@ export function createApp(dependencies: AppDependencies = {}): Express {
       const requestId = randomUUID();
       const internalSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
 
+      response
+        .set("cache-control", "private, no-store, max-age=0")
+        .set("referrer-policy", "no-referrer")
+        .set("x-robots-tag", "noindex,nofollow");
+
       if (!internalSecret || internalSecret === "replace-me") {
         response.status(503).json(
           createErrorResponse({
@@ -401,16 +407,13 @@ export function createApp(dependencies: AppDependencies = {}): Express {
       const limit = Number.isInteger(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 25) : 25;
 
       try {
-        response
-          .set("cache-control", "private, no-store, max-age=0")
-          .set("referrer-policy", "no-referrer")
-          .set("x-robots-tag", "noindex,nofollow")
-          .status(200)
-          .json({
+        response.status(200).json(
+          profileReviewResponseSchema.parse({
             schemaVersion: "1.0",
             generatedAt: now().toISOString(),
             claims: await profileReviewRepository.listReviewClaims(limit),
-          });
+          }),
+        );
       } catch {
         response.status(500).json(
           createErrorResponse({

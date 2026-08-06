@@ -2,8 +2,8 @@ import { SectionNote } from "../../components/section-note";
 import { profileContent } from "../../content/profile-content";
 
 const classificationLabels = {
-  "direct-core": "Direkter Profilkern, Evidence folgt",
-  "transferable-core": "Übertragbarer Profilkern, Evidence folgt",
+  "direct-core": "Direkt belegter Profilkern",
+  "transferable-core": "Übertragbarer Profilkern",
   "to-be-evidenced": "Noch redaktionell zu belegen",
 } as const;
 
@@ -16,19 +16,21 @@ export default function ProfilePage() {
           Technische Grundlagen, unternehmerische Verantwortung und operative Umsetzung
         </h1>
         <p>
-          Mein beruflicher Weg verbindet technische Grundlagen, unternehmerische Verantwortung und
-          operative Umsetzung. Dadurch passt das Profil nicht nur in eine einzelne Schublade.
-          Entscheidend ist, welche Kombination für eine konkrete Aufgabe gebraucht wird.
+          Mein beruflicher Weg verbindet technische Grundlagen, unternehmerische Verantwortung,
+          operative Leitung, Fitness-/Gesundheitskontext und Digitalisierung. Dadurch passt das
+          Profil nicht nur in eine einzelne Schublade. Entscheidend ist, welche Kombination für eine
+          konkrete Aufgabe gebraucht wird.
         </p>
       </section>
       <SectionNote>
-        Diese Seite zeigt vorsichtige Phase-1-Kerne. Konkrete Stationen, Zeiträume, Arbeitgeber,
-        Zahlen und Belege folgen erst nach redaktioneller Freigabe.
+        Die Inhalte sind freigegeben fuer die oeffentliche Vorbereitung. Sensible Details wie
+        private Namen, exakte Kaufpreise, Steuerdaten und interne Zeugnisformulierungen bleiben
+        bewusst ausgeblendet.
       </SectionNote>
       <section className="content-section" aria-labelledby="competencies-title">
         <div className="section-heading">
           <p className="eyebrow">Kompetenzfelder</p>
-          <h2 id="competencies-title">Was bereits als Profilrichtung strukturiert ist</h2>
+          <h2 id="competencies-title">Was die Stationen miteinander verbindet</h2>
         </div>
         <div className="card-grid">
           {profileContent.competencies.map((competency) => (

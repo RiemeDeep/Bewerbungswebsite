@@ -55,11 +55,11 @@ test("profile detail routes remain reachable from the footer", async ({ page }) 
 
   await page.getByRole("link", { name: "Werdegang" }).first().click();
   await expect(page).toHaveURL(/\/werdegang$/u);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Chronologie folgt");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Freigegebene Stationen");
 
   await page.getByRole("link", { name: "Projekte" }).first().click();
   await expect(page).toHaveURL(/\/projekte$/u);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Projektkerne");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Freigegebene Projektkerne");
 
   await page.getByRole("link", { name: "Kontakt" }).first().click();
   await expect(page).toHaveURL(/\/kontakt$/u);
@@ -90,21 +90,26 @@ test("contact route does not expose a live form or contact data", async ({ page 
   await expect(page.getByText(/\+\d{2,}/u)).toHaveCount(0);
 });
 
-test("core routes stay usable at phase-1 breakpoints", async ({ page }) => {
+test("public routes stay usable at release breakpoints", async ({ page }) => {
   for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/");
+    for (const route of routes) {
+      await page.goto(route);
 
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    );
-    expect(overflow).toBe(false);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(
-      page.getByRole("textbox", { name: "Welche Frage möchten Sie klären?" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Warum sollten wir Michael nicht einstellen?" }),
-    ).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+      expect(overflow, `${route} overflows at ${width}px`).toBe(false);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+      if (route === "/") {
+        await expect(
+          page.getByRole("textbox", { name: "Welche Frage möchten Sie klären?" }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: "Warum sollten wir Michael nicht einstellen?" }),
+        ).toBeVisible();
+      }
+    }
   }
 });

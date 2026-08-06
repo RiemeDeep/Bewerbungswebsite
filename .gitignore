@@ -2,6 +2,7 @@
 .env.local
 .env.*
 !.env.example
+!deploy/orchestrator/.env.web.example
 
 node_modules/
 .next/

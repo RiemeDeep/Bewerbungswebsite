@@ -1,7 +1,24 @@
 # Implementierungsplan
 
-Stand: 2026-07-28. Die fachliche Source of Truth bleibt
+Stand: 2026-08-06. Die fachliche Source of Truth bleibt
 `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`.
+
+Aktuelle priorisierte Roadmap:
+`docs/plans/public-mvp-release-roadmap.md`.
+
+## Aktueller Gesamtstatus
+
+- Architektur und technische Prototypen: ca. 75 %.
+- Oeffentliche Profil-, Werdegangs- und Projektinhalte: ca. 85 %.
+- Wissensbasis, Import und Review: ca. 70 %.
+- Gesamt bis zum interaktiven oeffentlichen MVP: ca. 60 %.
+- Die Prozentwerte sind Planungsschaetzungen, keine automatisierten Messwerte.
+- Der aktuelle Webstand bleibt Staging/Abnahme und global `noindex,nofollow`.
+- Die private Werdegangs-Checkliste wurde am 2026-08-06 fuer die oeffentliche Vorbereitung
+  freigegeben. Die bereinigte oeffentliche Arbeitsfassung ist statisch umgesetzt.
+- PostgreSQL/Supabase bleibt die fachliche Source of Truth. Der vollstaendige freigegebene Bestand
+  muss noch als Claims/Evidence importiert und in einen kontrollierten Publish-Prozess ueberfuehrt
+  werden.
 
 ## Arbeitsregeln
 
@@ -60,7 +77,8 @@ Nicht enthalten:
 
 ## Phase 1: Statische Profilbasis
 
-Status: freigegeben fuer die erste UI-Einheit durch `docs/phase-1-decisions.md`
+Status: technische Basis abgeschlossen; freigegebene oeffentliche Arbeitsfassung fuer Profil,
+Werdegang, Projekte und Qualifikationen am 2026-08-06 vorbereitet; redaktionelles Release-Gate offen
 
 Detailplan fuer die erste Einheit:
 `docs/plans/phase-1.1-static-profile-foundation.md`
@@ -90,6 +108,12 @@ Frageinteraktion zeigt transparent nur die spaetere Antwortstruktur und fuehrt k
 Evidenzklassen, Profilperspektiven, Match-Ablauf, Erfahrungsraeume und Kontaktabschluss sind in der
 zentralen Seite zusammengefuehrt.
 
+Inhaltsfortschritt 2026-08-06: Nach privater Dokumentpruefung und Nutzerfreigabe wurden die
+oeffentlichen Profilkerne, Karriere-Stationen, Projektbeschreibungen und Qualifikationsgruppen in die
+validierte statische Content-Fixture uebernommen. Sensible Namen, Bank-/Steuerdaten, Telefonnummern,
+exakte sensible Kaufpreise, Noten und interne Zeugnisformulierungen bleiben ausgeschlossen. Diese
+Fixture ist bis zur datenbankgestuetzten Publish-Pipeline eine kontrollierte Uebergangsloesung.
+
 Umsetzungseinheiten:
 
 1. Inhaltsvertrag und typisierte lokale Fixture mit vorsichtigen Spezifikationskernen.
@@ -112,7 +136,7 @@ Abnahme:
 ## Phase 2: Strukturierte Wissensbasis
 
 Status: Phase 2.0.1 abgeschlossen; erster Pilotfall fachlich freigegeben und remote importiert;
-Runtime-Aktivierung offen
+vollstaendige Normalisierung/importierter Bestand und Runtime-Aktivierung offen
 
 Detailplan fuer Wissensarchitektur und Profil-Workshop:
 `docs/plans/phase-2.0-knowledge-architecture.md`
@@ -129,8 +153,8 @@ Vor der ersten Migration:
    und Evidence Labels sind fachlich freigegeben.
    `subject_verified` durch Michael und die Belegbasis `subject_attestation` bleiben von
    Dokumentbelegen und dokumentierter Planung getrennt. Schema-, Import-, RLS- und
-   Datenschutzpruefung sind lokal abgeschlossen; die private Importdatei ist als `published`
-   vorbereitet, aber nicht angewendet.
+   Datenschutzpruefung sind lokal abgeschlossen; der erste freigegebene Pilotfall wurde remote
+   importiert und am 2026-08-04 von Michael inhaltlich ohne Korrekturen abgenommen.
 3. Quellen nur als Metadaten inventarisieren; keine privaten Dokumente in Git ablegen. Lebenslauf,
    Arbeitszeugnisse, Zertifikate/Lizenzen sowie Unternehmens- und Projektunterlagen sind als erste
    Quellengruppen bestaetigt.
@@ -141,17 +165,27 @@ Umsetzungseinheiten ab Phase 2.1:
 
 1. Datenmodell als Supabase-Migration mit Enums, Constraints und Indizes. Lokal und remote angewendet
    mit getrenntem `subject_review_status` und `evidence_basis`; erster Pilotfall importiert.
-2. Restriktive RLS-Policies und anonyme Negativtests. Lokal fuer `anon`, `authenticated` und die
-   spaltenbegrenzte read-only Self-Hosted-Runtime-Rolle nachgewiesen; Remote-Verifikation offen.
+2. Restriktive RLS-Policies und anonyme Negativtests. Lokal und remote fuer `anon`, `authenticated`
+   und die spaltenbegrenzte read-only Self-Hosted-Runtime-Rolle nachgewiesen.
 3. Trennung privater Dokumente, oeffentlicher Auszuege und Claims. Im Runtime-Grant und privaten
    Pilot-Importvertrag umgesetzt; Dokumenttitel, Pfade, Locator und Chunks bleiben gesperrt.
 4. Freigegebener Seed-/Importpfad und serverseitige Profilabfrage. Atomarer validate-by-default
    Importer, synthetischer Apply-Test sowie Defense-in-depth-Filter in Profil- und Match-Repositories
    umgesetzt; erster echter Pilotimport erfolgt.
-5. Rueckzug und Re-Indexierungsereignisse.
+5. Geschuetzte interne Profilvorschau. Lokal mit Shared Contract, `public_profile`-Filter,
+   serverseitigem Loader, Feature-Flag, separater Basic-Authentifizierung und Privacy-Headern
+   umgesetzt und intern auf dem VPS deployed; visuelle Abnahme offen.
+6. Rueckzug und Re-Indexierungsereignisse. Rueckzug remote synthetisch nachgewiesen;
+   Re-Indexierungsereignisse offen.
+7. Vollstaendiger freigegebener Werdegang. Private Checkliste am 2026-08-06 freigegeben und als
+   bereinigte statische Arbeitsfassung umgesetzt; Normalisierung, Import und kontrollierter
+   Publish-Export aus `public_profile`-Claims offen.
 
 Phase-2.1-Readiness-Plan:
 `docs/plans/phase-2.1-profile-import-readiness.md`
+
+Phase-2.2-Plan fuer die interne Profilvorschau:
+`docs/plans/phase-2.2-internal-profile-preview.md`
 
 Abnahme:
 
@@ -385,6 +419,22 @@ Abnahme:
 
 ## Aktuelle kleine Umsetzungseinheit
 
+Release-Baseline gemaess `docs/plans/public-mvp-release-roadmap.md`:
+
+1. abgeschlossen: beabsichtigte Aenderungen und unversionierte Dateien im aktuellen Arbeitsbaum
+   fachlich abgegrenzt;
+2. abgeschlossen: Content-Statuswerte an die freigegebene oeffentliche Arbeitsfassung angepasst;
+3. abgeschlossen: veraltete Unit-/E2E-Erwartungen auf die freigegebene Timeline aktualisiert;
+4. abgeschlossen: Formatierung, Linting, TypeScript, Tests, SQL-Sicherheitspruefungen, Playwright und
+   Produktionsbuild sind erfolgreich;
+5. technisch vorbereitet: Fuer den reproduzierbaren Release-Kandidaten fehlt nur der ausdruecklich
+   beauftragte definierte Git-Commit.
+
+Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
+Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.
+
+## Bisherige technische Umsetzungseinheit
+
 Phase-5.0 Match-Analyse:
 
 1. `MatchAnalysis`-Contract mit Evidence-/Requirement-Invarianten umgesetzt;
@@ -428,12 +478,17 @@ Phase-5.0 Match-Analyse:
 22. technische Retrieval-Stichproben ohne Inhaltslogging und synthetischer Rueckzugstest remote
     erfolgreich;
 23. interne secret-geschuetzte Review-Stichprobenansicht remote deployed und mit Zaehlern geprueft;
-    Runtime-Aktivierung bleibt ein separates Go-live-Gate.
+    Runtime-Aktivierung bleibt ein separates Go-live-Gate;
+24. alle 13 Aussagen am 2026-08-04 durch Michael fachlich ohne Korrekturen abgenommen und eine
+    geschuetzte interne Web-Profilvorschau lokal umgesetzt. Shared Contract, `public_profile`-Filter,
+    serverseitiger `no-store`-Loader, Feature-Flag, separate Basic-Authentifizierung, Privacy-Header
+    sowie synthetische Tests verhindern eine unbeabsichtigte oeffentliche Aktivierung.
 
-Explizit nicht enthalten: echte Profilimporte, produktives Crawling, Kontaktversand und produktive
-Nutzung mit echten Profilinhalten. Der reale LLM-Pfad ist technisch vorbereitet, aber nur
-feature-flag-geschuetzt und ohne produktive Profilfreigabe nutzbar. Der aktive n8n-Einsatz ist auf den
-deterministischen Retention-Cleanup begrenzt.
+Explizit nicht enthalten waren in dieser historischen Umsetzungseinheit: weitere echte
+Profilimporte, produktives Crawling, Kontaktversand und produktive Nutzung mit echten
+Profilinhalten. Die interne Profilvorschau wurde danach in Phase 2.2 intern deployed. Der reale
+LLM-Pfad ist technisch vorbereitet, aber nur feature-flag-geschuetzt und ohne separates Go-live-Gate
+nutzbar. Der aktive n8n-Einsatz ist auf den deterministischen Retention-Cleanup begrenzt.
 
 ## Phasenuebergreifende Gates
 

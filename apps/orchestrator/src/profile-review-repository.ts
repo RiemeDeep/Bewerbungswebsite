@@ -1,3 +1,10 @@
+import {
+  profileReviewClaimSchema,
+  profileReviewEvidenceSchema,
+  profileUsageContextSchema,
+  type ProfileReviewClaim,
+  type ProfileReviewEvidence,
+} from "@bewerbungswebsite/contracts";
 import { Pool } from "pg";
 import { z } from "zod";
 
@@ -9,33 +16,16 @@ const reviewRowSchema = z
   .object({
     claim_id: z.string().uuid(),
     statement: z.string().trim().min(1),
-    claim_type: z.string().trim().min(1),
-    claim_contexts: z.array(z.string().trim().min(1)),
+    claim_type: profileReviewClaimSchema.shape.claimType,
+    claim_contexts: z.array(profileUsageContextSchema),
     evidence_id: z.string().uuid(),
     public_label: z.string().trim().min(1),
     public_excerpt: z.string().trim().min(1).nullable(),
-    evidence_basis: z.string().trim().min(1),
-    evidence_contexts: z.array(z.string().trim().min(1)),
+    evidence_basis: profileReviewEvidenceSchema.shape.evidenceBasis,
+    evidence_contexts: z.array(profileUsageContextSchema),
     source_type: z.string().trim().min(1),
   })
   .strict();
-
-export type ProfileReviewEvidence = {
-  evidenceId: string;
-  publicLabel: string;
-  publicExcerpt: string | null;
-  evidenceBasis: string;
-  allowedContexts: string[];
-  sourceType: string;
-};
-
-export type ProfileReviewClaim = {
-  claimId: string;
-  claimType: string;
-  statement: string;
-  allowedContexts: string[];
-  evidence: ProfileReviewEvidence[];
-};
 
 export interface ProfileReviewRepository {
   listReviewClaims(limit: number): Promise<ProfileReviewClaim[]>;
@@ -55,6 +45,7 @@ const listReviewClaimsSql = `
       and c.publication_status = 'published'
       and c.visibility <> 'private'
       and c.subject_review_status = 'subject_verified'
+      and 'public_profile' = any(c.allowed_contexts)
     order by c.id
     limit $1
   )
@@ -75,6 +66,7 @@ const listReviewClaimsSql = `
   where e.publication_status = 'published'
     and e.visibility in ('public_excerpt', 'public')
     and e.evidence_basis <> 'uncertain'
+    and 'public_profile' = any(e.allowed_contexts)
     and sd.publication_status = 'published'
   order by c.id, e.id
 `;

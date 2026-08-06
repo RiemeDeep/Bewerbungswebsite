@@ -6,8 +6,8 @@ const validContent = {
   meta: {
     schemaVersion: "1.0",
     language: "de",
-    editorialStatus: "phase-1-draft",
-    notice: "Phase-1-Arbeitsfassung ohne produktive Evidence-Freigabe.",
+    editorialStatus: "approved-public-draft",
+    notice: "Freigegebene Arbeitsfassung fuer die oeffentliche Vorbereitung.",
   },
   assistantEntry: {
     eyebrow: "Interaktives Kandidatenprofil",
@@ -43,24 +43,43 @@ const validContent = {
       id: "motai",
       name: "MotAI",
       category: "KI- und Digitalisierungsprojekt",
-      note: "Keine Verlinkung in Phase 1.",
+      note: "Freigegebene Projektzusammenfassung ohne externe Verlinkung.",
     },
   ],
   careerOverview: {
     eyebrow: "Werdegang",
-    title: "Chronologie folgt später.",
-    intro: "Keine Zeiträume werden rekonstruiert.",
-    releaseNote: "Freigabe folgt nach geprüftem Lebenslauf.",
-    status: "awaiting-verified-timeline",
+    title: "Freigegebene Stationen.",
+    intro: "Geprüfte Zeiträume werden kontrolliert veröffentlicht.",
+    releaseNote: "Die öffentliche Arbeitsfassung ist freigegeben.",
+    status: "released-timeline",
     visibleFields: ["technischer Profilkern"],
     withheldFields: ["Zeiträume", "Arbeitgebernamen"],
   },
+  careerItems: [
+    {
+      id: "technischer-einstieg",
+      period: "1997 - 2008",
+      title: "Technischer Einstieg und Maschinenbau",
+      role: "Industriemechaniker und Diplom-Ingenieur (FH)",
+      summary: "Technische Grundlagen mit belegten Abschlüssen.",
+      highlights: ["Ausbildung", "Studium"],
+      evidenceNote: "Zeugnisse liegen vor.",
+    },
+  ],
+  credentialGroups: [
+    {
+      id: "digitalisierung",
+      title: "Digitalisierung",
+      summary: "Weiterbildungen mit Zertifikat.",
+      credentials: ["Digital Business Innovator"],
+    },
+  ],
   projectsOverview: {
     eyebrow: "Projekte",
-    title: "Projektkerne ohne Details.",
+    title: "Freigegebene Projektzusammenfassungen.",
     intro: "Keine Ergebnisse werden erfunden.",
-    releaseNote: "Fallstudien folgen nach Belegfreigabe.",
-    status: "kernel-only",
+    releaseNote: "Sensible Rohdaten bleiben ausgeblendet.",
+    status: "released-project-summaries",
   },
   contactOverview: {
     eyebrow: "Kontakt",
@@ -79,7 +98,7 @@ const validContent = {
 };
 
 describe("profileContentSchema", () => {
-  it("accepts a valid phase-1 profile content fixture", () => {
+  it("accepts a valid approved public profile content fixture", () => {
     expect(profileContentSchema.parse(validContent).meta.schemaVersion).toBe("1.0");
   });
 
@@ -107,11 +126,14 @@ describe("profileContentSchema", () => {
     ).toThrow();
   });
 
-  it("rejects career overview states that imply a verified timeline", () => {
+  it("rejects career overview states outside the released timeline", () => {
     expect(() =>
       profileContentSchema.parse({
         ...validContent,
-        careerOverview: { ...validContent.careerOverview, status: "published" },
+        careerOverview: {
+          ...validContent.careerOverview,
+          status: "awaiting-verified-timeline",
+        },
       }),
     ).toThrow();
   });

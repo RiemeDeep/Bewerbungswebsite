@@ -1,53 +1,139 @@
 # Gap-Analyse
 
-Stand: 2026-07-23 nach technischer Phase-0-Initialisierung.
+Stand: 2026-08-06 nach Freigabe der privaten Werdegangs-Checkliste und Vorbereitung der ersten
+oeffentlichen Werdegangsfassung.
+
+Die fachliche Source of Truth bleibt `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`. Die
+priorisierte Umsetzung steht in `docs/plans/public-mvp-release-roadmap.md`.
 
 ## Zusammenfassung
 
-Die fachliche Spezifikation ist sehr weit ausgearbeitet. Das Repository hatte vor dieser
-Initialisierung jedoch noch keine Anwendung. Phase 0 schafft eine lauffaehige, getestete
-Grundstruktur; alle fachlichen MVP-Funktionen bleiben planmaessig offen.
+Das Projekt ist kein leeres Grundgeruest mehr. Architektur, statische Seiten, Datenmodell,
+Profilimport, interne Review-Grenzen, technische Assistant-/JobContext-/Match-Pfade sowie wesentliche
+Betriebsbausteine sind vorhanden.
 
-## Bereits vorhanden
+Der Abstand zum oeffentlichen interaktiven MVP liegt heute vor allem in vier Bereichen:
 
-| Bereich                   | Stand                                                            |
-| ------------------------- | ---------------------------------------------------------------- |
-| Fachliche Source of Truth | Vollstaendige Projektspezifikation vorhanden                     |
-| Git und Remote            | Repository auf `main` mit GitHub-Remote                          |
-| Session-Kontinuitaet      | Handover-Struktur, motai-rag und Slash-Commands vorhanden        |
-| OpenCode MCP              | Supabase, Notion, n8n und motai-rag konfiguriert                 |
-| Phase-0-Anwendung         | Next.js- und Express-Shell nach dieser Initialisierung vorhanden |
-| Gemeinsame Contracts      | Erstes laufzeitvalidiertes Health-Schema vorhanden               |
-| Qualitaet                 | Formatierung, ESLint, TypeScript, Vitest, Build und CI definiert |
+1. reproduzierbarer Release-Stand und vollstaendiges Qualitaetsgate;
+2. eine eindeutige Profil-Source-of-Truth statt paralleler statischer und datenbankbasierter Inhalte;
+3. produktive oeffentliche Integration der bereits technisch vorbereiteten interaktiven Flows;
+4. Kontakt, Recht, Monitoring, Security und Go-live-Abnahme.
+
+Geschaetzter Gesamtstand bis zum interaktiven oeffentlichen MVP: **ca. 60 %**.
+
+## Aktueller Stand
+
+| Bereich           | Vorhanden                                                                            | Geschaetzter Stand |
+| ----------------- | ------------------------------------------------------------------------------------ | -----------------: |
+| Architektur       | pnpm-Workspace, Next.js, Orchestrator, Contracts, Migrationen, Docker-/VPS-Bausteine |               75 % |
+| Statische Website | Start, Profil, Werdegang, Projekte, Kontakt- und Rechtsrouten                        | 85 % inhaltlich/UI |
+| Profilinhalte     | freigegebene bereinigte Arbeitsfassung mit Stationen, Projekten und Zertifikaten     |  85 % redaktionell |
+| Wissensbasis      | Claims/Evidence-Schema, RLS, Importer, Pilotimport, Review-Repository                |               70 % |
+| Profilassistent   | Contracts, Retrieval, Allowlist, Provider und Test-UI                                |     50 % produktiv |
+| Stellenkontext    | URL-Schutz, Crawl-Adapter, Extraktion und Test-Preview                               |     65 % technisch |
+| Match-Analyse     | Analyzer, Evidence-Grenzen, Persistenz, TTL, Preview und Cleanup                     |       75 % Backend |
+| Kontakt und Recht | statische Platzhalter, noch kein Versand und keine finalen Rechtstexte               |               25 % |
+| Betrieb           | internes Deployment, Backup/Restore und Cleanup; Monitoring/CI-Go-live offen         |               55 % |
+
+Die Prozentwerte sind Planungsschaetzungen, keine automatisierten Messwerte.
 
 ## Kritische Luecken zum MVP
 
-| Bereich              | Gap                                                                  |    Geplante Phase |
-| -------------------- | -------------------------------------------------------------------- | ----------------: |
-| Freigegebene Inhalte | Keine redaktionell freigegebene Claim-/Evidence-Fixture              |               1-2 |
-| Oeffentliche Seiten  | Start, Profil, Werdegang, Projekte, Kontakt und Recht noch offen     |                 1 |
-| Accessibility        | Noch keine Axe-, Tastatur- oder Screenreader-Pruefung                | 1 und fortlaufend |
-| E2E                  | Playwright-Grundlage und Kernflows fehlen                            | 1 und fortlaufend |
-| Wissensbasis         | Kein Supabase-Schema, keine RLS-Policies, keine Migrationen          |                 2 |
-| Profilassistent      | Kein Retrieval, Modellprovider, Antwortschema oder Evidence-Check    |                 3 |
-| Stellenkontext       | Keine URL-Pruefung, kein SSRF-Schutz, Crawl-Adapter oder Preview     |                 4 |
-| Match-Analyse        | Kein Match-Schema, keine Matrix, Luecken- oder 90-Tage-Logik         |                 5 |
-| Kontakt              | Kein Formular, keine Speicherung, kein n8n-Benachrichtigungsworkflow |                 6 |
-| Datenschutz          | TTLs, Loeschjobs und finale Rechtstexte fehlen                       |               2-6 |
-| Sicherheit           | CSP, Rate-Limits, CSRF, interne Signaturen und Security-Tests fehlen |               2-6 |
-| Betrieb              | Monitoring, Deployment, Backup, Restore und Rollback fehlen          |                 6 |
+| Prioritaet | Bereich                         | Gap                                                                                       | Geplantes Paket |
+| ---------- | ------------------------------- | ----------------------------------------------------------------------------------------- | --------------- |
+| P0         | Release-Baseline                | technisch abgenommen; Dirty Worktree muss noch als definierter Commit konsolidiert werden | Paket 1         |
+| P0         | Profil-Source-of-Truth          | oeffentliche Fixture und Datenbankclaims koennen auseinanderlaufen                        | Paket 2         |
+| P0         | Vollstaendiger Profilbestand    | nur Pilotfall vollstaendig strukturiert importiert                                        | Paket 3         |
+| P0         | Redaktioneller Release-Kandidat | Timeline, Projektfallstudien, SEO und finale mobile Abnahme offen                         | Paket 4         |
+| P0         | Recht und Kontakt               | Impressum/Datenschutz Platzhalter; kein produktiver Kontaktweg                            | Paket 4 und 8   |
+| P0         | Security/Go-live                | globales `noindex`, CSP, Monitoring und finales Release-Gate offen                        | Paket 4 und 8   |
+| P1         | Profilassistent                 | produktive BFF/UI, Rate-Limits, echte Evaluation und Runtime fehlen                       | Paket 5         |
+| P1         | Stellenkontext                  | Testnamespace, Post-Crawl-URL-Pruefung, Retention und Providerfreigabe offen              | Paket 6         |
+| P1         | Match-Flow                      | oeffentliche Erzeugungsroute und produktiver Match-Assistent fehlen                       | Paket 7         |
+| P0         | Betrieb                         | CI, Alerting, automatisierte Release-Smokes und regelmaessiger Restore-Nachweis fehlen    | Paket 8         |
 
-## Abweichungen und Annahmen
+## Wichtigste technische Inkonsistenzen
 
-- Der in der Spezifikation als vorhanden bezeichnete Node/Express-Orchestrator war im
-  Repository nicht vorhanden. Deshalb wurde nur eine minimale neue Shell angelegt.
-- Ein Monorepo ist bei einem leeren Repository sinnvoll, wird aber ohne Turbo oder Nx umgesetzt.
-- Tailwind wurde nicht vorzeitig eingefuehrt. Phase 0 nutzt kleine globale CSS-Grundlagen.
-- Die Phase-0-Webseite ist absichtlich `noindex` und klar als nicht produktiv gekennzeichnet.
-- Supabase und n8n sind erreichbar beziehungsweise konfiguriert, wurden aber noch nicht
-  fachlich veraendert.
+### 1. Parallele Inhaltsquellen
 
-## Naechster Gate
+`apps/web/src/content/profile-content.ts` enthaelt die aktuelle oeffentliche Arbeitsfassung. Die
+Datenbank ist laut ADR jedoch Source of Truth und enthaelt bislang nur den ersten vollstaendigen
+Pilotfall.
 
-Phase 1 beginnt erst nach Pruefung der Entscheidungen in `docs/phase-1-decisions.md`. Die erste
-Umsetzungseinheit ist in `docs/implementation-plan.md` definiert.
+Folge:
+
+- sichtbare Inhalte koennen der strukturierten Claim-/Evidence-Freigabe vorauseilen;
+- Rueckzug wirkt nicht automatisch auf die statische Fixture;
+- Website, Profilassistent und Match-Analyse koennen unterschiedliche Wissensstaende verwenden.
+
+Ziel:
+
+- vollstaendiger Claim-/Evidence-Import;
+- validiertes statisches Publish-Artefakt aus `public_profile`-Claims;
+- Drift- und Withdrawal-Tests.
+
+### 2. Bereinigte historische Statuswerte
+
+Die Statuswerte `phase-1-draft`, `awaiting-verified-timeline` und `kernel-only` wurden am 2026-08-06
+durch explizite Freigabezustaende fuer die oeffentliche Arbeitsfassung ersetzt. Unit- und E2E-Tests
+erwarten jetzt die freigegebene Timeline und die freigegebenen Projektzusammenfassungen.
+
+Verbleibendes Ziel:
+
+- beim datenbankgestuetzten Publish-Prozess die spaetere Trennung von Staging und produktiver
+  Publikation beibehalten.
+
+### 3. Test-/Preview-Pfade statt Besucherflows
+
+Profilassistent, JobContext und Match-Erzeugung sind technisch vorbereitet, aber ueberwiegend unter
+`/test`, `/api/test` oder Feature-Flags erreichbar.
+
+Ziel:
+
+- produktive BFF-/UI-Grenzen;
+- Rate-/Kostenlimits;
+- echte Evaluation;
+- vollstaendiger End-to-End-Flow mit freigegebenem Profilbestand.
+
+### 4. Go-live-Blocker
+
+- globales `noindex,nofollow`;
+- Impressum und Datenschutz nicht final;
+- kein produktiver Kontaktweg;
+- keine vollstaendig versionierte CI-Pipeline;
+- Monitoring/Alerting und finales Security-/Performance-Gate offen.
+
+## Sicherheits- und Datenschutzluecken
+
+- Firecrawl-Rueckgabe-URL nach dem Crawl erneut gegen die URL-Sicherheitsregeln pruefen.
+- Rate-Limits fuer Profilassistent, JobContext, Analyseerzeugung und Match-Assistent einfuehren.
+- Persistierte JobContext-Auszüge weiter minimieren.
+- Provider, Speicherregionen, Caching und Auftragsverarbeitung final dokumentieren.
+- CSP und produktive Security Header vervollstaendigen.
+- Kontaktaufbewahrung, Einwilligung und Loeschung festlegen.
+- Keine privaten Profilquellen, vollstaendigen Prompts oder Stelleninhalte in Standardlogs.
+
+## Betriebs- und Release-Luecken
+
+- Beabsichtigte unversionierte Deployment-/Preview-Dateien konsolidieren.
+- CI fuer `pnpm check`, Playwright, SQL-Tests, Dockerbuild und Scans versionieren.
+- Release-Smoke und Rollback automatisieren.
+- Monitoring fuer Web, Orchestrator, Datenbank, Cleanup, Backup und Providerfehler einfuehren.
+- Backup-/Restore-Nachweis regelmaessig protokollieren.
+- Produktions-E2E fuer alle Kernflows ausfuehren.
+
+## Naechstes Gate
+
+Das naechste Gate ist **Umsetzungspaket 1: Release-Baseline herstellen** aus
+`docs/plans/public-mvp-release-roadmap.md`.
+
+Es aktiviert keine produktiven KI-, Crawl-, Match- oder Kontaktfunktionen und entfernt nicht das
+globale `noindex,nofollow`.
+
+Abnahme:
+
+- Dokumentation und Code beschreiben denselben Stand;
+- veraltete Tests sind aktualisiert;
+- alle beabsichtigten Dateien sind bewusst versioniert oder ignoriert;
+- Formatierung, Linting, TypeScript, Tests, SQL-Gates, Playwright und Build sind erfolgreich;
+- ein reproduzierbarer Release-Kandidat kann gebildet werden.

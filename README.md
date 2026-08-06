@@ -1,6 +1,6 @@
 # Bewerbungswebsite Michael Flatau
 
-Interaktive, beleggestuetzte Bewerbungswebsite mit kuratiertem Profil, spaeterem
+Interaktive, beleggestuetzte Bewerbungswebsite mit kuratiertem Profil, technisch vorbereitetem
 Profilassistenten und transparenter Stellenanalyse.
 
 Die fachliche Source of Truth ist
@@ -8,9 +8,30 @@ Die fachliche Source of Truth ist
 
 ## Status
 
-Phase 0 ist technisch initialisiert. Die vorhandenen Anwendungen sind bewusst nur
-Entwicklungs-Shells. Es wurden noch keine Profilinhalte, KI-Funktionen, Datenbanktabellen,
-Crawling-Funktionen oder produktiven Kontaktwege implementiert.
+Das Projekt befindet sich im Staging-/Abnahmestand auf dem Weg zu einem interaktiven oeffentlichen
+MVP.
+
+Vorhanden sind unter anderem:
+
+- responsive statische Seiten fuer Start, Profil, Werdegang, Projekte, Kontakt und Recht;
+- eine freigegebene oeffentliche Arbeitsfassung von Profil, Werdegang und Projektkernen;
+- ein PostgreSQL/Supabase-Modell fuer Claims, Evidence, Provenienz, RLS und kurzlebige Analysen;
+- kontrollierter Profilimport, erster echter Pilotfall und geschuetzte interne Profilvorschau;
+- technische Test-/Preview-Pfade fuer Profilassistent, Stellenextraktion und Match-Analyse;
+- Match-Persistenz mit Token-Hash, TTL, internem Cleanup sowie Backup-/Restore-Bausteinen;
+- Docker-, Release- und Rollback-Vorbereitung fuer den internen VPS-Betrieb.
+
+Noch nicht produktionsbereit sind insbesondere:
+
+- vollstaendiger Import aller freigegebenen Profilclaims;
+- oeffentlicher Profilassistent sowie oeffentliche Stellen- und Match-Flows;
+- Kontaktversand;
+- finales Impressum und finale Datenschutzerklaerung;
+- vollstaendiges Monitoring, CI-Release-Gate und Go-live-Abnahme.
+
+Die Website bleibt global `noindex,nofollow` und wird vor dem finalen technischen, rechtlichen und
+betrieblichen Gate nicht aktiv beworben. Der aktuelle Umsetzungsplan steht in
+`docs/plans/public-mvp-release-roadmap.md`.
 
 ## Voraussetzungen
 
@@ -78,12 +99,12 @@ pnpm check
 ## Struktur
 
 ```text
-apps/web/              Next.js App Router, UI und spaetere BFF-Schicht
-apps/orchestrator/     Express-Shell fuer Retrieval, Modell- und Analyse-Routing
+apps/web/              Next.js App Router, UI und BFF-Schicht
+apps/orchestrator/     Express-Orchestrator fuer Retrieval, Modell- und Analyse-Routing
 packages/contracts/    Gemeinsame, laufzeitvalidierte Zod-Vertraege
-packages/prompts/      Spaetere versionierte Prompt-Templates
-supabase/              Spaetere versionierte Migrationen und Datenbanktests
-n8n/                   Dokumentation und spaetere Workflow-Exporte ohne Credentials
+packages/prompts/      Versionierte Prompt-Templates und Providergrenzen
+supabase/              Versionierte Migrationen, Seeds und Datenbanktests
+n8n/                   Workflow-Exporte ohne Credentials, aktuell Retention-Cleanup
 docs/                  Architektur, Entscheidungen, Plaene und Handovers
 tests/fixtures/         Nicht produktive, rechtlich zulaessige Test-Fixtures
 ```
@@ -104,4 +125,5 @@ tests/fixtures/         Nicht produktive, rechtlich zulaessige Test-Fixtures
   persistierte MatchAnalysis- oder Evidence-Daten.
 
 Details stehen in `docs/architecture/component-boundaries.md` und
-`docs/implementation-plan.md`.
+`docs/implementation-plan.md`. Die priorisierte Roadmap bis zum oeffentlichen MVP steht in
+`docs/plans/public-mvp-release-roadmap.md`.

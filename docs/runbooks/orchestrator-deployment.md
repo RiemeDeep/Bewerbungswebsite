@@ -26,6 +26,18 @@ PostgreSQL laeuft im selben Compose-Projekt:
 - Profil-Schema, Provenienz-Migration und read-only Runtime-Policies sind auf dem VPS angewendet;
   der erste freigegebene Pilotfall ist importiert, Runtime-Aktivierung bleibt gesperrt
 
+Die Web-App ist als zusaetzlicher Compose-Dienst vorbereitet, aber fuer die interne Profilvorschau nur
+an `127.0.0.1:3100` gebunden. Dadurch ist sie nicht direkt aus dem Internet erreichbar und kann fuer
+die Abnahme per SSH-Tunnel genutzt werden.
+
+- Container: `bewerbungswebsite-web`
+- Image: `bewerbungswebsite-web:<UTC timestamp>`
+- internes Netzwerk: `n8n_default`
+- Orchestrator-Basis-URL im Container: `http://bewerbungswebsite-orchestrator:4000`
+- Host-Port: nur `127.0.0.1:3100`
+- Route fuer die interne Profilvorschau: `/internal/profilvorschau`
+- Neustartverhalten: `unless-stopped`
+
 Synthetische Runtime-Flags sind nicht gesetzt. `MATCH_DATABASE_URL` aktiviert nur den
 produktionsgeeigneten Match-Store. Ein gleichzeitiger synthetischer Match-Modus wird vom Startschema
 abgelehnt.
@@ -50,6 +62,20 @@ Orchestrator mit diesem Image. Rollback auf das vorherige lokal vorhandene Image
 Der Pfad ist auf dem VPS getestet: Release, Healthcheck, Rollback, erneutes Release und Healthcheck
 waren erfolgreich. `.env.release` ist `0600 root:root`.
 
+Web-App-Release fuer die interne Vorschau:
+
+```bash
+sh /opt/bewerbungswebsite/deploy/web/release.sh
+```
+
+Das Skript baut ein timestamp-getaggtes Image `bewerbungswebsite-web:<UTC timestamp>`, schreibt das
+aktuelle und vorherige Image root-only nach `deploy/web/.env.release` und startet nur den Web-Service.
+Rollback auf das vorherige lokal vorhandene Web-Image:
+
+```bash
+sh /opt/bewerbungswebsite/deploy/web/rollback.sh
+```
+
 Manueller Compose-Build ohne Release-Tag bleibt fuer Debugging moeglich:
 
 ```bash
@@ -63,6 +89,7 @@ Status und Logs:
 docker compose -f /opt/bewerbungswebsite/deploy/orchestrator/compose.yml ps
 docker logs --tail 100 bewerbungswebsite-orchestrator
 docker logs --tail 100 bewerbungswebsite-postgres
+docker logs --tail 100 bewerbungswebsite-web
 ```
 
 Interner Healthcheck aus dem n8n-Container:
@@ -98,6 +125,59 @@ Rotation beider Seiten ohne Ausgabe des Klartextwerts:
 Vor einer Rotation wird das bestehende n8n-Credential verschluesselt unter
 `/opt/bewerbungswebsite/backups/n8n-credentials` gesichert. Die temporaere entschluesselte Datei
 wird nach Import entfernt.
+
+## Interne Profilvorschau
+
+Die echten Zugangsdaten fuer die interne Profilvorschau liegen auf dem VPS in:
+
+```text
+/opt/bewerbungswebsite/deploy/orchestrator/.env.web
+```
+
+Diese Datei wird nicht versioniert und muss root-only sein:
+
+```bash
+install -m 600 /opt/bewerbungswebsite/deploy/orchestrator/.env.web.example \
+  /opt/bewerbungswebsite/deploy/orchestrator/.env.web
+```
+
+Danach die Platzhalter in `.env.web` setzen:
+
+```dotenv
+ENABLE_INTERNAL_PROFILE_PREVIEW=1
+INTERNAL_PROFILE_PREVIEW_USERNAME=<review-benutzername>
+INTERNAL_PROFILE_PREVIEW_PASSWORD=<starkes-passwort>
+ORCHESTRATOR_REQUEST_SECRET=<bestehendes-internes-orchestrator-secret>
+```
+
+Hinweise:
+
+- `INTERNAL_PROFILE_PREVIEW_PASSWORD` ist das Login-Passwort fuer den Browser.
+- `ORCHESTRATOR_REQUEST_SECRET` ist ein internes Maschinen-Secret und darf nicht als Browser-Passwort
+  genutzt werden.
+- Alle Werte bleiben serverseitig; keine Variable darf mit `NEXT_PUBLIC_` beginnen.
+- Wenn die Vorschau nicht gebraucht wird, `ENABLE_INTERNAL_PROFILE_PREVIEW=0` setzen und den
+  Web-Service neu starten.
+
+Nach Aenderungen an `.env.web` den Web-Service neu starten:
+
+```bash
+docker compose -f /opt/bewerbungswebsite/deploy/orchestrator/compose.yml up -d web
+```
+
+Lokaler Zugriff von deinem Rechner per SSH-Tunnel:
+
+```powershell
+ssh -L 3100:127.0.0.1:3100 motai
+```
+
+Solange der Tunnel offen ist, im Browser oeffnen:
+
+```text
+http://127.0.0.1:3100/internal/profilvorschau
+```
+
+Der Browser fragt dann nach Benutzername und Passwort aus `.env.web`.
 
 ## Migration und Verifikation
 
