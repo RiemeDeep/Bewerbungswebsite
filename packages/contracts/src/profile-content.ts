@@ -18,7 +18,7 @@ const publicCareerItemSchema = z
     title: nonEmptyTextSchema,
     role: nonEmptyTextSchema,
     summary: nonEmptyTextSchema,
-    highlights: z.array(nonEmptyTextSchema).min(1),
+    highlights: z.array(nonEmptyTextSchema),
     evidenceNote: nonEmptyTextSchema,
   })
   .strict();
@@ -66,7 +66,8 @@ export const profileContentSchema = z
           })
           .strict(),
       )
-      .length(3),
+      .min(1)
+      .max(3),
     competencies: z
       .array(
         z

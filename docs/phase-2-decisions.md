@@ -1,8 +1,8 @@
 # Offene Entscheidungen fuer Phase 2
 
-Stand: 2026-07-30
-Status: Workshop-Leitplanken, technisches Machbarkeits-Gate und lokale Phase-2.1-Import-Readiness
-entschieden; Pilotfall fachlich freigegeben, produktive Migration und echter Import weiter offen
+Stand: 2026-08-06
+Status: Profilmodell, Remote-Import, read-only Runtime-Grenze und kontrollierte
+Public-Profile-Publish-Pipeline entschieden und umgesetzt; produktive Assistenten-Runtime bleibt offen
 
 ## Arbeitsreihenfolge ab 2026-07-27
 
@@ -101,6 +101,13 @@ Trennung von `subject_review_status` und `evidence_basis` ausgeloest. Migration,
 Self-Hosted-Runtime-Zugriff und validate-by-default Importpfad sind lokal mit synthetischen Daten
 nachgewiesen. Remote-Migration, echter Import, Dokument-Storage und Runtime-Aktivierung bleiben
 separate Gates.
+
+Ergaenzung am 2026-08-06: Der freigegebene oeffentliche Bestand wurde auf 65 Claims und 66 Evidence
+Items erweitert. Ein kanonischer read-only Export erzeugt 60 `public_profile`-Claims in einem strikt
+validierten Artefakt. Fuenf sensible, nicht gerenderte Pilotclaims wurden aus dem oeffentlichen Kontext
+entfernt. Die Website verwendet das Artefakt plus eine rein claim-referenzierende Layoutzuordnung;
+PostgreSQL bleibt die fachliche Profilautoritaet. Kontextfreigaben fuer Profilassistent und
+Stellenanalyse bleiben je Claim separat.
 
 ## Vor Dokument-Upload und Embeddings
 

@@ -12,14 +12,10 @@ export default function ProfilePage() {
     <main className="page-shell narrow" id="main-content" tabIndex={-1}>
       <section className="page-intro" aria-labelledby="page-title">
         <p className="eyebrow">Profil</p>
-        <h1 id="page-title">
-          Technische Grundlagen, unternehmerische Verantwortung und operative Umsetzung
-        </h1>
+        <h1 id="page-title">Freigegebene Kompetenzfelder mit nachvollziehbarer Belegbasis</h1>
         <p>
-          Mein beruflicher Weg verbindet technische Grundlagen, unternehmerische Verantwortung,
-          operative Leitung, Fitness-/Gesundheitskontext und Digitalisierung. Dadurch passt das
-          Profil nicht nur in eine einzelne Schublade. Entscheidend ist, welche Kombination für eine
-          konkrete Aufgabe gebraucht wird.
+          Die folgenden Felder ordnen freigegebene Claims thematisch. Die Beschreibungen stammen aus
+          dem kontrollierten Public-Profile-Artefakt.
         </p>
       </section>
       <SectionNote>

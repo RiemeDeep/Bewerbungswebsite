@@ -1,24 +1,24 @@
 # Implementierungsplan
 
-Stand: 2026-08-06. Die fachliche Source of Truth bleibt
-`OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`.
+Stand: 2026-08-06. `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md` bleibt Source of Truth fuer
+Produktanforderungen und Leitplanken. PostgreSQL ist Source of Truth fuer freigegebene Profilfakten.
 
 Aktuelle priorisierte Roadmap:
 `docs/plans/public-mvp-release-roadmap.md`.
 
 ## Aktueller Gesamtstatus
 
-- Architektur und technische Prototypen: ca. 75 %.
-- Oeffentliche Profil-, Werdegangs- und Projektinhalte: ca. 85 %.
-- Wissensbasis, Import und Review: ca. 70 %.
-- Gesamt bis zum interaktiven oeffentlichen MVP: ca. 60 %.
+- Architektur und technische Prototypen: ca. 80 %.
+- Oeffentliche Profil-, Werdegangs- und Projektinhalte: ca. 90 %.
+- Wissensbasis, Import und Review: ca. 90 %.
+- Gesamt bis zum interaktiven oeffentlichen MVP: ca. 65 %.
 - Die Prozentwerte sind Planungsschaetzungen, keine automatisierten Messwerte.
 - Der aktuelle Webstand bleibt Staging/Abnahme und global `noindex,nofollow`.
 - Die private Werdegangs-Checkliste wurde am 2026-08-06 fuer die oeffentliche Vorbereitung
   freigegeben. Die bereinigte oeffentliche Arbeitsfassung ist statisch umgesetzt.
 - PostgreSQL/Supabase bleibt die fachliche Source of Truth. Der vollstaendige freigegebene Bestand
-  muss noch als Claims/Evidence importiert und in einen kontrollierten Publish-Prozess ueberfuehrt
-  werden.
+  wurde als Claims/Evidence importiert und in einen kontrollierten Publish-Prozess ueberfuehrt. Das
+  commitbare Artefakt enthaelt 17 Entitaeten und 60 `public_profile`-Claims.
 
 ## Arbeitsregeln
 
@@ -135,8 +135,9 @@ Abnahme:
 
 ## Phase 2: Strukturierte Wissensbasis
 
-Status: Phase 2.0.1 abgeschlossen; erster Pilotfall fachlich freigegeben und remote importiert;
-vollstaendige Normalisierung/importierter Bestand und Runtime-Aktivierung offen
+Status: freigegebener oeffentlicher Bestand normalisiert und remote importiert; kontrolliertes
+Publish-Artefakt und Web-Umschaltung abgeschlossen; weitere Evidence Stories, Kontextreviews und
+Runtime-Aktivierung offen
 
 Detailplan fuer Wissensarchitektur und Profil-Workshop:
 `docs/plans/phase-2.0-knowledge-architecture.md`
@@ -154,7 +155,8 @@ Vor der ersten Migration:
    `subject_verified` durch Michael und die Belegbasis `subject_attestation` bleiben von
    Dokumentbelegen und dokumentierter Planung getrennt. Schema-, Import-, RLS- und
    Datenschutzpruefung sind lokal abgeschlossen; der erste freigegebene Pilotfall wurde remote
-   importiert und am 2026-08-04 von Michael inhaltlich ohne Korrekturen abgenommen.
+   importiert und am 2026-08-04 von Michael inhaltlich abgenommen. Ein spaeterer Teamgroessenabgleich
+   wurde am 2026-08-06 kontrolliert korrigiert.
 3. Quellen nur als Metadaten inventarisieren; keine privaten Dokumente in Git ablegen. Lebenslauf,
    Arbeitszeugnisse, Zertifikate/Lizenzen sowie Unternehmens- und Projektunterlagen sind als erste
    Quellengruppen bestaetigt.
@@ -177,15 +179,18 @@ Umsetzungseinheiten ab Phase 2.1:
    umgesetzt und intern auf dem VPS deployed; visuelle Abnahme offen.
 6. Rueckzug und Re-Indexierungsereignisse. Rueckzug remote synthetisch nachgewiesen;
    Re-Indexierungsereignisse offen.
-7. Vollstaendiger freigegebener Werdegang. Private Checkliste am 2026-08-06 freigegeben und als
-   bereinigte statische Arbeitsfassung umgesetzt; Normalisierung, Import und kontrollierter
-   Publish-Export aus `public_profile`-Claims offen.
+7. Vollstaendiger freigegebener Werdegang. Private Checkliste am 2026-08-06 freigegeben; 52 weitere
+   Claims/Evidence remote importiert, 60 oeffentliche Claims kanonisch exportiert und die Website auf
+   Artefakt plus Claim-Layout umgestellt.
 
 Phase-2.1-Readiness-Plan:
 `docs/plans/phase-2.1-profile-import-readiness.md`
 
 Phase-2.2-Plan fuer die interne Profilvorschau:
 `docs/plans/phase-2.2-internal-profile-preview.md`
+
+Phase-2.3-Plan fuer die Public-Profile-Publish-Pipeline:
+`docs/plans/phase-2.3-public-profile-publish-pipeline.md`
 
 Abnahme:
 
@@ -419,16 +424,20 @@ Abnahme:
 
 ## Aktuelle kleine Umsetzungseinheit
 
-Release-Baseline gemaess `docs/plans/public-mvp-release-roadmap.md`:
+Public-Profile-Publish-Pipeline gemaess
+`docs/plans/phase-2.3-public-profile-publish-pipeline.md`:
 
-1. abgeschlossen: beabsichtigte Aenderungen und unversionierte Dateien im aktuellen Arbeitsbaum
-   fachlich abgegrenzt;
-2. abgeschlossen: Content-Statuswerte an die freigegebene oeffentliche Arbeitsfassung angepasst;
-3. abgeschlossen: veraltete Unit-/E2E-Erwartungen auf die freigegebene Timeline aktualisiert;
-4. abgeschlossen: Formatierung, Linting, TypeScript, Tests, SQL-Sicherheitspruefungen, Playwright und
-   Produktionsbuild sind erfolgreich;
-5. technisch vorbereitet: Fuer den reproduzierbaren Release-Kandidaten fehlt nur der ausdruecklich
-   beauftragte definierte Git-Commit.
+1. abgeschlossen: strikter Public-Artifact-Contract ohne private Source-Felder;
+2. abgeschlossen: vollstaendige read-only `public_profile`-Datenbankprojektion ohne Sample-Limit;
+3. abgeschlossen: kanonische Serialisierung, atomisches Schreiben sowie Validate-/Check-/Write-CLI;
+4. abgeschlossen: Drift-, Privacy-Canary- und lokaler Withdrawal-Test unter Runtime-Rolle;
+5. abgeschlossen: 52 weitere Claims/Evidence atomar importiert und sensible nicht gerenderte
+   Pilotclaims aus `public_profile` entfernt;
+6. abgeschlossen: kanonisches Artefakt erzeugt, bytegenau geprueft und Website auf Artefakt plus
+   Claim-Layout umgestellt.
+
+Naechste kleine Einheit: Umsetzungspaket 3 mit visueller Vorschauabnahme, weiterer
+Evidence-Story-Strukturierung und Operationalisierung von Withdrawal-/Publish-Ereignissen.
 
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.

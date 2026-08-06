@@ -26,11 +26,13 @@ export default function WerdegangPage() {
                 <strong>{item.role}</strong>
               </p>
               <p>{item.summary}</p>
-              <ul className="plain-list">
-                {item.highlights.map((highlight) => (
-                  <li key={highlight}>{highlight}</li>
-                ))}
-              </ul>
+              {item.highlights.length > 0 ? (
+                <ul className="plain-list">
+                  {item.highlights.map((highlight) => (
+                    <li key={highlight}>{highlight}</li>
+                  ))}
+                </ul>
+              ) : null}
               <p className="card-note">{item.evidenceNote}</p>
             </article>
           ))}

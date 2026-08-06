@@ -3,8 +3,9 @@
 Stand: 2026-08-06 nach Freigabe der privaten Werdegangs-Checkliste und Vorbereitung der ersten
 oeffentlichen Werdegangsfassung.
 
-Die fachliche Source of Truth bleibt `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`. Die
-priorisierte Umsetzung steht in `docs/plans/public-mvp-release-roadmap.md`.
+`OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md` bleibt Source of Truth fuer Produktanforderungen und
+Leitplanken. PostgreSQL ist Source of Truth fuer freigegebene Profilfakten. Die priorisierte Umsetzung
+steht in `docs/plans/public-mvp-release-roadmap.md`.
 
 ## Zusammenfassung
 
@@ -12,23 +13,22 @@ Das Projekt ist kein leeres Grundgeruest mehr. Architektur, statische Seiten, Da
 Profilimport, interne Review-Grenzen, technische Assistant-/JobContext-/Match-Pfade sowie wesentliche
 Betriebsbausteine sind vorhanden.
 
-Der Abstand zum oeffentlichen interaktiven MVP liegt heute vor allem in vier Bereichen:
+Der Abstand zum oeffentlichen interaktiven MVP liegt heute vor allem in drei Bereichen:
 
-1. reproduzierbarer Release-Stand und vollstaendiges Qualitaetsgate;
-2. eine eindeutige Profil-Source-of-Truth statt paralleler statischer und datenbankbasierter Inhalte;
-3. produktive oeffentliche Integration der bereits technisch vorbereiteten interaktiven Flows;
-4. Kontakt, Recht, Monitoring, Security und Go-live-Abnahme.
+1. weitere Evidence-Story-/Kontextreviews und operationalisierte Withdrawal-/Publish-Ereignisse;
+2. produktive oeffentliche Integration der bereits technisch vorbereiteten interaktiven Flows;
+3. Kontakt, Recht, Monitoring, Security und Go-live-Abnahme.
 
-Geschaetzter Gesamtstand bis zum interaktiven oeffentlichen MVP: **ca. 60 %**.
+Geschaetzter Gesamtstand bis zum interaktiven oeffentlichen MVP: **ca. 65 %**.
 
 ## Aktueller Stand
 
 | Bereich           | Vorhanden                                                                            | Geschaetzter Stand |
 | ----------------- | ------------------------------------------------------------------------------------ | -----------------: |
-| Architektur       | pnpm-Workspace, Next.js, Orchestrator, Contracts, Migrationen, Docker-/VPS-Bausteine |               75 % |
+| Architektur       | pnpm-Workspace, Next.js, Orchestrator, Contracts, Migrationen, Docker-/VPS-Bausteine |               80 % |
 | Statische Website | Start, Profil, Werdegang, Projekte, Kontakt- und Rechtsrouten                        | 85 % inhaltlich/UI |
-| Profilinhalte     | freigegebene bereinigte Arbeitsfassung mit Stationen, Projekten und Zertifikaten     |  85 % redaktionell |
-| Wissensbasis      | Claims/Evidence-Schema, RLS, Importer, Pilotimport, Review-Repository                |               70 % |
+| Profilinhalte     | datenbankgestuetztes Artefakt mit Stationen, Projekten und Zertifikaten              |  90 % redaktionell |
+| Wissensbasis      | 65 Claims, Evidence, RLS, Publish-Pipeline, Drift- und Withdrawal-Gates              |               90 % |
 | Profilassistent   | Contracts, Retrieval, Allowlist, Provider und Test-UI                                |     50 % produktiv |
 | Stellenkontext    | URL-Schutz, Crawl-Adapter, Extraktion und Test-Preview                               |     65 % technisch |
 | Match-Analyse     | Analyzer, Evidence-Grenzen, Persistenz, TTL, Preview und Cleanup                     |       75 % Backend |
@@ -39,38 +39,36 @@ Die Prozentwerte sind Planungsschaetzungen, keine automatisierten Messwerte.
 
 ## Kritische Luecken zum MVP
 
-| Prioritaet | Bereich                         | Gap                                                                                       | Geplantes Paket |
-| ---------- | ------------------------------- | ----------------------------------------------------------------------------------------- | --------------- |
-| P0         | Release-Baseline                | technisch abgenommen; Dirty Worktree muss noch als definierter Commit konsolidiert werden | Paket 1         |
-| P0         | Profil-Source-of-Truth          | oeffentliche Fixture und Datenbankclaims koennen auseinanderlaufen                        | Paket 2         |
-| P0         | Vollstaendiger Profilbestand    | nur Pilotfall vollstaendig strukturiert importiert                                        | Paket 3         |
-| P0         | Redaktioneller Release-Kandidat | Timeline, Projektfallstudien, SEO und finale mobile Abnahme offen                         | Paket 4         |
-| P0         | Recht und Kontakt               | Impressum/Datenschutz Platzhalter; kein produktiver Kontaktweg                            | Paket 4 und 8   |
-| P0         | Security/Go-live                | globales `noindex`, CSP, Monitoring und finales Release-Gate offen                        | Paket 4 und 8   |
-| P1         | Profilassistent                 | produktive BFF/UI, Rate-Limits, echte Evaluation und Runtime fehlen                       | Paket 5         |
-| P1         | Stellenkontext                  | Testnamespace, Post-Crawl-URL-Pruefung, Retention und Providerfreigabe offen              | Paket 6         |
-| P1         | Match-Flow                      | oeffentliche Erzeugungsroute und produktiver Match-Assistent fehlen                       | Paket 7         |
-| P0         | Betrieb                         | CI, Alerting, automatisierte Release-Smokes und regelmaessiger Restore-Nachweis fehlen    | Paket 8         |
+| Prioritaet | Bereich                         | Gap                                                                                    | Geplantes Paket |
+| ---------- | ------------------------------- | -------------------------------------------------------------------------------------- | --------------- |
+| P0         | Evidence-/Withdrawal-Betrieb    | weitere Stories, Kontextreviews und automatisierte Publish-Ereignisse offen            | Paket 3         |
+| P0         | Redaktioneller Release-Kandidat | Timeline, Projektfallstudien, SEO und finale mobile Abnahme offen                      | Paket 4         |
+| P0         | Recht und Kontakt               | Impressum/Datenschutz Platzhalter; kein produktiver Kontaktweg                         | Paket 4 und 8   |
+| P0         | Security/Go-live                | globales `noindex`, CSP, Monitoring und finales Release-Gate offen                     | Paket 4 und 8   |
+| P1         | Profilassistent                 | produktive BFF/UI, Rate-Limits, echte Evaluation und Runtime fehlen                    | Paket 5         |
+| P1         | Stellenkontext                  | Testnamespace, Post-Crawl-URL-Pruefung, Retention und Providerfreigabe offen           | Paket 6         |
+| P1         | Match-Flow                      | oeffentliche Erzeugungsroute und produktiver Match-Assistent fehlen                    | Paket 7         |
+| P0         | Betrieb                         | CI, Alerting, automatisierte Release-Smokes und regelmaessiger Restore-Nachweis fehlen | Paket 8         |
 
 ## Wichtigste technische Inkonsistenzen
 
 ### 1. Parallele Inhaltsquellen
 
-`apps/web/src/content/profile-content.ts` enthaelt die aktuelle oeffentliche Arbeitsfassung. Die
-Datenbank ist laut ADR jedoch Source of Truth und enthaelt bislang nur den ersten vollstaendigen
-Pilotfall.
+Die fruehere parallele Faktenpflege wurde am 2026-08-06 beseitigt. PostgreSQL ist die fachliche
+Source of Truth; das Web verwendet ein kanonisches Artefakt plus claim-referenzierendes Layout.
 
-Folge:
+Umgesetzte Sicherungen:
 
-- sichtbare Inhalte koennen der strukturierten Claim-/Evidence-Freigabe vorauseilen;
-- Rueckzug wirkt nicht automatisch auf die statische Fixture;
-- Website, Profilassistent und Match-Analyse koennen unterschiedliche Wissensstaende verwenden.
+- vollstaendige read-only `public_profile`-Projektion;
+- bytegenaues Drift-Gate gegen die Remote-Datenbank;
+- deterministische Entfernung zurueckgezogener Referenzen und Buildfehler bei neuen nicht
+  zugeordneten Artifact-Claims;
+- keine unabhaengige biografische Prosa in der Layoutdatei.
 
-Ziel:
+Verbleibendes Ziel:
 
-- vollstaendiger Claim-/Evidence-Import;
-- validiertes statisches Publish-Artefakt aus `public_profile`-Claims;
-- Drift- und Withdrawal-Tests.
+- automatisiertes Publish-/Rebuild-Ereignis nach Aenderung oder Rueckzug;
+- kontextspezifisches Review, bevor weitere Claims fuer Profilassistent oder Match genutzt werden.
 
 ### 2. Bereinigte historische Statuswerte
 

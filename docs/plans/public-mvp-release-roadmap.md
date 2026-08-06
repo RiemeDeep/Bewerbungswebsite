@@ -37,33 +37,33 @@ Deshalb gilt:
 
 Die Prozentwerte sind Planungsschaetzungen und keine automatisierten Messwerte.
 
-| Bereich                                              |                Geschaetzter Stand | Einordnung                                                                                 |
-| ---------------------------------------------------- | --------------------------------: | ------------------------------------------------------------------------------------------ |
-| Architektur und technische Prototypen                |                              75 % | Kernpfade und Sicherheitsgrenzen weit vorbereitet                                          |
-| Oeffentliche Profil-, Werdegangs- und Projektinhalte |                              85 % | freigegebene Arbeitsfassung vorhanden, redaktionelles Release-Gate offen                   |
-| Wissensbasis, Import und Review                      |                              70 % | Schema und Pilotfall vorhanden, vollstaendiger freigegebener Bestand noch nicht importiert |
-| Produktiver Profilassistent                          |                              50 % | Technikpfad vorhanden, oeffentliche Runtime und Evaluation offen                           |
-| Stellenkontext und Crawling                          | 65 % technisch / 30 % oeffentlich | Preview vorhanden, produktiver Flow und Providerfreigabe offen                             |
-| Match-Analyse                                        |  75 % Backend / 40 % Besucherflow | Persistenz und Analyzer weit vorbereitet, oeffentlicher End-to-End-Flow offen              |
-| Kontakt, Recht und oeffentlicher Betrieb             |                              25 % | Platzhalter und Betriebsbausteine vorhanden, Go-live-Paket offen                           |
-| Gesamt bis zum interaktiven oeffentlichen MVP        |                          ca. 60 % | groesste Luecken liegen in Integration, Recht und Betrieb                                  |
+| Bereich                                              |                Geschaetzter Stand | Einordnung                                                                      |
+| ---------------------------------------------------- | --------------------------------: | ------------------------------------------------------------------------------- |
+| Architektur und technische Prototypen                |                              80 % | Kernpfade und Sicherheitsgrenzen weit vorbereitet                               |
+| Oeffentliche Profil-, Werdegangs- und Projektinhalte |                              90 % | datenbankgestuetzte Arbeitsfassung vorhanden, redaktionelles Release-Gate offen |
+| Wissensbasis, Import und Review                      |                              90 % | freigegebener Bestand importiert und kontrolliertes Publish-Artefakt aktiv      |
+| Produktiver Profilassistent                          |                              50 % | Technikpfad vorhanden, oeffentliche Runtime und Evaluation offen                |
+| Stellenkontext und Crawling                          | 65 % technisch / 30 % oeffentlich | Preview vorhanden, produktiver Flow und Providerfreigabe offen                  |
+| Match-Analyse                                        |  75 % Backend / 40 % Besucherflow | Persistenz und Analyzer weit vorbereitet, oeffentlicher End-to-End-Flow offen   |
+| Kontakt, Recht und oeffentlicher Betrieb             |                              25 % | Platzhalter und Betriebsbausteine vorhanden, Go-live-Paket offen                |
+| Gesamt bis zum interaktiven oeffentlichen MVP        |                          ca. 65 % | groesste Luecken liegen in interaktiver Integration, Recht und Betrieb          |
 
 ## Zentrale Befunde
 
-1. Die oeffentlichen Profilinhalte werden derzeit aus
-   `apps/web/src/content/profile-content.ts` geladen.
-2. Die strukturierte Wissensbasis enthaelt bislang nur den ersten vollstaendig normalisierten
-   Pilotfall. Die neu freigegebenen Stationen und Zertifikate sind noch nicht vollstaendig als
-   Claims/Evidence importiert.
-3. Dadurch bestehen voruebergehend zwei Inhaltsquellen: statischer Web-Content und Datenbank-Claims.
+1. PostgreSQL ist die fachliche Profilautoritaet. Der Web-Build verwendet einen kanonischen,
+   validierten Snapshot mit 17 Entitaeten und 60 `public_profile`-Claims.
+2. Die Layoutdatei enthaelt nur Claim-Referenzen, Gruppierung, Reihenfolge und redaktionelle Rubriken;
+   sichtbare biografische Aussagen stammen aus dem Artefakt.
+3. Drift zur Remote-Datenbank wird bytegenau erkannt; private Source-Felder sind im Contract
+   unzulaessig und werden nicht selektiert.
 4. Die historischen Content-Statuswerte wurden am 2026-08-06 durch explizite Freigabezustaende fuer
    die oeffentliche Arbeitsfassung ersetzt.
 5. Die Website ist global `noindex,nofollow`; Impressum, Datenschutz und Kontakt sind nicht
    produktionsbereit.
 6. Profilassistent, Stellenkontext und Match-Erzeugung sind ueberwiegend als Test-, Preview- oder
    Feature-Flag-Pfade vorhanden, nicht als oeffentliche Besucherflows.
-7. Der aktuelle Arbeitsbaum enthaelt viele noch nicht konsolidierte Aenderungen. Ein reproduzierbarer
-   Release-Kandidat ist deshalb das naechste technische Gate.
+7. Umsetzungspaket 1 ist als Commit `2067979` konsolidiert. Die Aenderungen aus Paket 2 bilden den
+   naechsten zu konsolidierenden Stand.
 
 ## Umsetzungspaket 1: Release-Baseline herstellen
 
@@ -136,6 +136,30 @@ Aufgaben:
 5. Drift zwischen Datenbank und statischem Publish-Artefakt im Test erkennen.
 6. Rueckzug pruefen: Ein zurueckgezogener Claim verschwindet aus Website, Profilassistent und
    Match-Retrieval.
+
+Fortschritt am 2026-08-06:
+
+- Public-Artifact-Contract, vollstaendige read-only Datenbankprojektion, kanonische Serialisierung,
+  atomisches Schreiben und Validate-/Check-/Write-CLI sind umgesetzt.
+- Export und Contract enthalten keine privaten Source-Titel, Pfade, Locator, Chunks, internen
+  Nutzungskontexte oder Review-Metadaten.
+- Drift-, Privacy-Canary- und lokaler Withdrawal-Test unter der eingeschraenkten Runtime-Rolle sind
+  erfolgreich.
+- Der veraltete remote Pilotclaim zur Tiny-State-Games-Teamgroesse wurde nach Backup und Restore-Test
+  auf den freigegebenen Stand von sieben weiteren Teammitgliedern korrigiert.
+- Der vollstaendige freigegebene Bestand ist importiert und die Web-Umschaltung auf Artefakt plus
+  claim-referenzierende Layoutzuordnung abgeschlossen.
+- Detailplan: `docs/plans/phase-2.3-public-profile-publish-pipeline.md`.
+
+Abschluss am 2026-08-06:
+
+- 52 weitere Claims/Evidence remote importiert; oeffentlicher Gesamtbestand 60 Claims in 17
+  Entitaeten.
+- Fuenf sensible, nicht gerenderte Pilotclaims wurden aus `public_profile` entfernt.
+- Das Artefakt ist bytegenau zur Remote-Projektion und enthaelt keine privaten Source-Felder.
+- Die manuelle Faktenfixture wurde durch Artefakt plus Claim-ID-basiertes Layout ersetzt.
+- Jeder Artifact-Claim ist im Layout referenziert; zurueckgezogene Referenzen verschwinden beim
+  erneuten Publish aus der Website, neue nicht zugeordnete Claims brechen den Build fail-closed ab.
 
 Abnahme:
 

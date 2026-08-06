@@ -1,0 +1,1137 @@
+{
+  "schemaVersion": "1.0",
+  "language": "de",
+  "entities": [
+    {
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "entityType": "project",
+      "canonicalName": "Tiny State Games GmbH und BARTS",
+      "slug": "tiny-state-games-barts"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000001",
+      "entityType": "education",
+      "canonicalName": "Ausbildung Industriemechaniker",
+      "slug": "ausbildung-industriemechaniker"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000002",
+      "entityType": "education",
+      "canonicalName": "Fachhochschulreife Ingenieurwesen",
+      "slug": "fachhochschulreife-ingenieurwesen"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000003",
+      "entityType": "education",
+      "canonicalName": "Maschinenbaustudium HTW Saarland",
+      "slug": "maschinenbau-htw-saarland"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000004",
+      "entityType": "education",
+      "canonicalName": "Praxissemester James Madison University",
+      "slug": "praxissemester-james-madison-university"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000005",
+      "entityType": "career_station",
+      "canonicalName": "RRC power solutions",
+      "slug": "rrc-power-solutions"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000006",
+      "entityType": "career_station",
+      "canonicalName": "Loomis Products",
+      "slug": "loomis-products"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000007",
+      "entityType": "career_station",
+      "canonicalName": "Randstad Professionals",
+      "slug": "randstad-professionals"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000008",
+      "entityType": "career_station",
+      "canonicalName": "FUN FOREST Abenteuerpark Homburg",
+      "slug": "fun-forest-abenteuerpark-homburg"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000009",
+      "entityType": "project",
+      "canonicalName": "Exit Adventures",
+      "slug": "exit-adventures"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000010",
+      "entityType": "project",
+      "canonicalName": "Legga Food",
+      "slug": "legga-food"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000011",
+      "entityType": "career_station",
+      "canonicalName": "Fitness First Saarlouis",
+      "slug": "fitness-first-saarlouis"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000012",
+      "entityType": "project",
+      "canonicalName": "MotAI",
+      "slug": "motai"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "entityType": "qualification_group",
+      "canonicalName": "BSA-Akademie Qualifikationen",
+      "slug": "bsa-akademie-qualifikationen"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000014",
+      "entityType": "qualification",
+      "canonicalName": "C Lizenz Trainer",
+      "slug": "c-lizenz-trainer"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000015",
+      "entityType": "qualification_group",
+      "canonicalName": "TUEV SUED Weiterbildungen",
+      "slug": "tuev-sued-weiterbildungen"
+    },
+    {
+      "entityId": "32000000-0000-4000-8000-000000000016",
+      "entityType": "qualification_group",
+      "canonicalName": "karriere tutor Weiterbildungen",
+      "slug": "karriere-tutor-weiterbildungen"
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "21000000-0000-4000-8000-000000000201",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "project_fact",
+      "statement": "Michael Flatau gruendete die Tiny State Games GmbH als alleiniger Gesellschafter und wurde zum ersten Geschaeftsfuehrer bestellt.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000301",
+          "publicLabel": "Gruendungsunterlagen der Tiny State Games GmbH",
+          "publicExcerpt": "Dokumentiert alleinigen Gesellschafter und Bestellung zum ersten Geschaeftsfuehrer.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "21000000-0000-4000-8000-000000000202",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "project_fact",
+      "statement": "Die Projektskizze beschreibt BARTS als geplantes Multiplayer-Spiel und dokumentiert Team-, Arbeits- und Finanzierungsplanung.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000302",
+          "publicLabel": "Projektskizze BARTS: dokumentierte Planung",
+          "publicExcerpt": "Beschreibt BARTS und die geplante Team-, Arbeits- und Finanzierungsstruktur.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "documented_plan"
+        }
+      ]
+    },
+    {
+      "claimId": "21000000-0000-4000-8000-000000000203",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "project_fact",
+      "statement": "Die Projektskizze ordnete Michael Verantwortung fuer Geschaeftsfuehrung, Gruendung, Finanzierung, Strategie, Teile des Game Designs, Marketing, Vertrieb, Networking und Personalmanagement zu.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000303",
+          "publicLabel": "Projektskizze BARTS: geplante Verantwortungsbereiche",
+          "publicExcerpt": "Ordnet Michael die aufgefuehrten unternehmerischen und organisatorischen Verantwortungsbereiche zu.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "documented_plan"
+        }
+      ]
+    },
+    {
+      "claimId": "21000000-0000-4000-8000-000000000204",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "project_fact",
+      "statement": "Michael bestaetigt, ein Team mit sieben weiteren freiwillig und unentgeltlich arbeitenden Mitgliedern aufgebaut zu haben.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000304",
+          "publicLabel": "Persoenliche Bestaetigung: Teamaufbau",
+          "publicExcerpt": "Michael bestaetigt den Aufbau eines Teams mit sieben weiteren freiwillig und unentgeltlich arbeitenden Mitgliedern.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        },
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000305",
+          "publicLabel": "Projektskizze BARTS: dokumentierte Teamplanung",
+          "publicExcerpt": "Die Projektskizze listet Michael und zehn weitere geplante Teamrollen.",
+          "evidenceStrength": "supporting",
+          "evidenceBasis": "supporting_document"
+        }
+      ]
+    },
+    {
+      "claimId": "21000000-0000-4000-8000-000000000205",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "capability",
+      "statement": "Michael bestaetigt, woechentliche Teammeetings geleitet und das Projektmanagement verantwortet zu haben.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000306",
+          "publicLabel": "Persoenliche Bestaetigung: Teamleitung und Projektmanagement",
+          "publicExcerpt": "Michael bestaetigt die Leitung woechentlicher Meetings und seine Projektmanagementverantwortung.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "21000000-0000-4000-8000-000000000206",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "project_fact",
+      "statement": "Nach Michaels Bestaetigung entstanden spielbare Teilfunktionen und technische Komponenten, aber keine marktreife Gesamtfassung.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000307",
+          "publicLabel": "Persoenliche Bestaetigung: Entwicklungsstand BARTS",
+          "publicExcerpt": "Michael bestaetigt spielbare Teilfunktionen ohne marktreife Gesamtfassung.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "21000000-0000-4000-8000-000000000212",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "limitation",
+      "statement": "Nach Michaels Bestaetigung wurde weder BARTS noch die Mobile-Neuausrichtung veroeffentlicht; produktbezogene Umsaetze entstanden nicht.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000313",
+          "publicLabel": "Persoenliche Bestaetigung: kein Release und keine Produktumsaetze",
+          "publicExcerpt": "Michael bestaetigt, dass kein Release und keine produktbezogenen Umsaetze entstanden.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "21000000-0000-4000-8000-000000000213",
+      "entityId": "21000000-0000-4000-8000-000000000001",
+      "claimType": "project_fact",
+      "statement": "Die Tiny State Games GmbH wurde am 19. August 2020 aufgeloest und Michael Flatau zum Liquidator bestellt.",
+      "validFrom": "2020-08-19",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "21000000-0000-4000-8000-000000000314",
+          "publicLabel": "Aufloesungsbeschluss der Tiny State Games GmbH",
+          "publicExcerpt": "Dokumentiert die Aufloesung und Michaels Bestellung zum Liquidator.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200001",
+      "entityId": "32000000-0000-4000-8000-000000000001",
+      "claimType": "qualification",
+      "statement": "Michael absolvierte von August 1997 bis Anfang 2001 bei Robert Bosch in Homburg eine Ausbildung zum Industriemechaniker in der Fachrichtung Maschinen- und Systemtechnik.",
+      "validFrom": "1997-08-25",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300001",
+          "publicLabel": "Ausbildungs- und IHK-Unterlagen",
+          "publicExcerpt": "Dokumentieren Ausbildung, Fachrichtung und erfolgreichen Abschluss.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200002",
+      "entityId": "32000000-0000-4000-8000-000000000002",
+      "claimType": "qualification",
+      "statement": "Michael erwarb 2002 die Fachhochschulreife im Fachbereich Ingenieurwesen mit Fachrichtung Metalltechnik.",
+      "validFrom": "2002-06-20",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300002",
+          "publicLabel": "Zeugnis der Fachhochschulreife",
+          "publicExcerpt": "Dokumentiert Zeitraum, Fachbereich und Fachrichtung ohne Notenangabe.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200003",
+      "entityId": "32000000-0000-4000-8000-000000000003",
+      "claimType": "qualification",
+      "statement": "Michael schloss 2008 ein Maschinenbaustudium in der Studienrichtung Konstruktionstechnik als Diplom-Ingenieur (FH) ab.",
+      "validFrom": "2008-08-31",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300003",
+          "publicLabel": "Diplomunterlagen Maschinenbau",
+          "publicExcerpt": "Dokumentieren Abschluss, Fachrichtung und Abschlussdatum ohne Notenangabe.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200004",
+      "entityId": "32000000-0000-4000-8000-000000000003",
+      "claimType": "qualification",
+      "statement": "Seine Diplomarbeit behandelte die Optimierung und teilweise Neukonstruktion eines Systems zur Fest-Fluessig-Trennung von Abwasser.",
+      "validFrom": "2008-08-31",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300004",
+          "publicLabel": "Diplomunterlagen: Diplomarbeit",
+          "publicExcerpt": "Dokumentieren das freigegebene Thema der Diplomarbeit.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200005",
+      "entityId": "32000000-0000-4000-8000-000000000004",
+      "claimType": "qualification",
+      "statement": "Michael absolvierte von Oktober 2006 bis Maerz 2007 ein Praxissemester an der James Madison University mit Automotive- und SAE-Bezug.",
+      "validFrom": "2006-10-01",
+      "validTo": "2007-03-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300005",
+          "publicLabel": "Unterlagen zum Praxissemester",
+          "publicExcerpt": "Dokumentieren Zeitraum und Automotive-/SAE-Bezug.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200006",
+      "entityId": "32000000-0000-4000-8000-000000000005",
+      "claimType": "career_fact",
+      "statement": "Michael war von Oktober 2008 bis Juni 2010 als Mechanical Development Engineer bei RRC power solutions taetig.",
+      "validFrom": "2008-10-01",
+      "validTo": "2010-06-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300006",
+          "publicLabel": "Arbeitszeugnis RRC power solutions",
+          "publicExcerpt": "Dokumentiert Rolle und Beschaeftigungszeitraum.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200007",
+      "entityId": "32000000-0000-4000-8000-000000000005",
+      "claimType": "career_fact",
+      "statement": "Zu seinen belegten Aufgaben gehoerten die Abstimmung von Produktanforderungen und die Entwicklung mechanischer und elektromechanischer Komponenten und Baugruppen.",
+      "validFrom": "2008-10-01",
+      "validTo": "2010-06-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300007",
+          "publicLabel": "Arbeitszeugnis RRC: Entwicklung",
+          "publicExcerpt": "Dokumentiert Produktanforderungen sowie mechanische und elektromechanische Entwicklung.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200008",
+      "entityId": "32000000-0000-4000-8000-000000000005",
+      "claimType": "career_fact",
+      "statement": "Michael erstellte Entwicklungs- und Fertigungsdokumentationen und unterstuetzte den Transfer des Produktdesigns in die Produktion.",
+      "validFrom": "2008-10-01",
+      "validTo": "2010-06-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300008",
+          "publicLabel": "Arbeitszeugnis RRC: Dokumentation",
+          "publicExcerpt": "Dokumentiert Entwicklungs- und Fertigungsdokumentation sowie Produktionstransfer.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200009",
+      "entityId": "32000000-0000-4000-8000-000000000006",
+      "claimType": "career_fact",
+      "statement": "Michael arbeitete ab September 2010 bei Loomis Products in Maschinenbau, Werkstatt, Service, Installation und technischem Zeichnen.",
+      "validFrom": "2010-09-15",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300009",
+          "publicLabel": "Arbeitszeugnis Loomis Products",
+          "publicExcerpt": "Dokumentiert die freigegebenen technischen Einsatzbereiche.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200010",
+      "entityId": "32000000-0000-4000-8000-000000000006",
+      "claimType": "career_fact",
+      "statement": "Zu seinen belegten Aufgaben gehoerten Anlagenzusammenbau, Angebotsauswertung, Bestellungen sowie Service und Installation von Anlagen.",
+      "validFrom": "2010-09-15",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300010",
+          "publicLabel": "Arbeitszeugnis Loomis: Aufgaben",
+          "publicExcerpt": "Dokumentiert Anlagenzusammenbau, Beschaffung, Service und Installation.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200011",
+      "entityId": "32000000-0000-4000-8000-000000000007",
+      "claimType": "career_fact",
+      "statement": "Michael war von Oktober 2011 bis September 2012 als Sales & Team Manager bei Randstad Professionals taetig.",
+      "validFrom": "2011-10-01",
+      "validTo": "2012-09-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300011",
+          "publicLabel": "Arbeitszeugnis Randstad Professionals",
+          "publicExcerpt": "Dokumentiert Rolle und Beschaeftigungszeitraum.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200012",
+      "entityId": "32000000-0000-4000-8000-000000000007",
+      "claimType": "career_fact",
+      "statement": "Seine Aufgaben umfassten Kundenbetreuung und Akquise, Angebote und Vertragsvorbereitung sowie Bewerberauswahl, Mitarbeiterentwicklung und Teamkoordination.",
+      "validFrom": "2011-10-01",
+      "validTo": "2012-09-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300012",
+          "publicLabel": "Arbeitszeugnis Randstad: Aufgaben",
+          "publicExcerpt": "Dokumentiert Kunden-, Vertriebs-, Bewerber- und Fuehrungsaufgaben.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200013",
+      "entityId": "32000000-0000-4000-8000-000000000008",
+      "claimType": "career_fact",
+      "statement": "Michael war von Maerz 2013 bis Oktober 2014 bei FUN FOREST als Leiter Bau und Team-Trainer mit stellvertretender Managementfunktion taetig.",
+      "validFrom": "2013-03-01",
+      "validTo": "2014-10-12",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300013",
+          "publicLabel": "Arbeitszeugnis FUN FOREST",
+          "publicExcerpt": "Dokumentiert Rolle und Beschaeftigungszeitraum im Abenteuerpark.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200014",
+      "entityId": "32000000-0000-4000-8000-000000000008",
+      "claimType": "career_fact",
+      "statement": "Seine Aufgaben umfassten Teambuilding, Kundenbetreuung, Personalplanung, Sicherheit, Wartung und Instandhaltung, Parcours-Design sowie lokale Marketingmassnahmen.",
+      "validFrom": "2013-03-01",
+      "validTo": "2014-10-12",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300014",
+          "publicLabel": "Arbeitszeugnis FUN FOREST: Aufgaben",
+          "publicExcerpt": "Dokumentiert operative, sicherheitsbezogene, personelle und kundenbezogene Aufgaben.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200015",
+      "entityId": "32000000-0000-4000-8000-000000000009",
+      "claimType": "project_fact",
+      "statement": "Michael gruendete und betrieb mit Exit Adventures ein Live-Escape-Games-Unternehmen.",
+      "validFrom": "2015-06-15",
+      "validTo": "2018-12-31",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300015",
+          "publicLabel": "Betriebs- und Gewerbeunterlagen Exit Adventures",
+          "publicExcerpt": "Dokumentieren Gruendung und Betrieb des Live-Escape-Games-Unternehmens.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200016",
+      "entityId": "32000000-0000-4000-8000-000000000009",
+      "claimType": "project_fact",
+      "statement": "Exit Adventures wurde von einem Standort in Kaiserslautern um einen zweiten Standort in Saarbruecken erweitert.",
+      "validFrom": "2015-06-15",
+      "validTo": "2018-12-31",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300016",
+          "publicLabel": "Gewerbeunterlagen: zwei Standorte",
+          "publicExcerpt": "Dokumentieren den Betrieb in Kaiserslautern und die spaetere Erweiterung nach Saarbruecken.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200017",
+      "entityId": "32000000-0000-4000-8000-000000000009",
+      "claimType": "project_fact",
+      "statement": "Exit Adventures bot neben Freizeitbesuchen auch Teambuilding- und Firmenevent-Formate an.",
+      "validFrom": "2015-06-15",
+      "validTo": "2018-12-31",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300017",
+          "publicLabel": "Angebotsunterlagen Exit Adventures",
+          "publicExcerpt": "Dokumentieren Teambuilding- und Firmenevent-Angebote.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200018",
+      "entityId": "32000000-0000-4000-8000-000000000009",
+      "claimType": "project_fact",
+      "statement": "Zum Verkaufszeitpunkt waren 14 Mitarbeitende beziehungsweise Vertragsverhaeltnisse in den Unterlagen aufgefuehrt; der gesamte Geschaeftsbetrieb wurde zu einem niedrigen sechsstelligen Betrag verkauft.",
+      "validFrom": null,
+      "validTo": "2019-01-01",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300018",
+          "publicLabel": "Unternehmenskaufunterlagen Exit Adventures",
+          "publicExcerpt": "Dokumentieren die aggregierte Personalzahl und den Verkauf; der exakte Kaufpreis bleibt ausgeblendet.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200019",
+      "entityId": "32000000-0000-4000-8000-000000000010",
+      "claimType": "project_fact",
+      "statement": "Michael baute mit Legga Food ein Kochbox-Vorhaben auf und betrieb es von Oktober 2021 bis Sommer 2022 als Einzelperson.",
+      "validFrom": "2021-10-01",
+      "validTo": "2022-07-31",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300019",
+          "publicLabel": "Gewerbeunterlagen Legga Food",
+          "publicExcerpt": "Dokumentieren Kochbox-Taetigkeit und Zeitraum; der Einzelbetrieb ist persoenlich bestaetigt.",
+          "evidenceStrength": "supporting",
+          "evidenceBasis": "supporting_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200020",
+      "entityId": "32000000-0000-4000-8000-000000000010",
+      "claimType": "project_fact",
+      "statement": "Das dokumentierte Konzept sah frische, passend portionierte Lebensmittel mit Kochanleitung, abofreie Bestellung, Mehrweg-Verpackungen und Abholstationen vor.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300020",
+          "publicLabel": "Konzeptunterlagen Legga Food",
+          "publicExcerpt": "Beschreiben den freigegebenen Produktkern und die geplanten Angebotsmerkmale.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "documented_plan"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200021",
+      "entityId": "32000000-0000-4000-8000-000000000010",
+      "claimType": "project_fact",
+      "statement": "Michael bestaetigt den Betrieb einer kleinen Produktionsstaette, die eigene Produktion und Verteilung an lokale Abholstationen sowie Kundenkommunikation ueber einen WhatsApp-Business-Kanal.",
+      "validFrom": "2021-10-01",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300021",
+          "publicLabel": "Persoenliche Bestaetigung: operativer Betrieb Legga Food",
+          "publicExcerpt": "Michael bestaetigt Produktion, Verteilung und den genutzten Kundenkanal.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200022",
+      "entityId": "32000000-0000-4000-8000-000000000010",
+      "claimType": "project_fact",
+      "statement": "Michael bestaetigt erste Umsaetze und durchschnittlich etwa 50 Bestellungen pro Monat.",
+      "validFrom": "2021-10-01",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300022",
+          "publicLabel": "Persoenliche Bestaetigung: Bestellungen Legga Food",
+          "publicExcerpt": "Michael bestaetigt erste Umsaetze und die aggregierte durchschnittliche Bestellzahl.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200023",
+      "entityId": "32000000-0000-4000-8000-000000000010",
+      "claimType": "limitation",
+      "statement": "Legga Food wurde wegen zu langsamen Wachstums und stark steigender Einkaufspreise nicht fortgefuehrt; die Abmeldeunterlagen nennen ein nicht tragfaehiges Geschaeftsmodell.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300023",
+          "publicLabel": "Persoenliche Bestaetigung mit Gewerbeabmeldung",
+          "publicExcerpt": "Michael bestaetigt die Gruende; die Abmeldung dokumentiert das nicht tragfaehige Geschaeftsmodell.",
+          "evidenceStrength": "supporting",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200024",
+      "entityId": "32000000-0000-4000-8000-000000000011",
+      "claimType": "career_fact",
+      "statement": "Michael war von Dezember 2024 bis November 2025 als Club General Manager im Fitness-First-Club Saarlouis taetig.",
+      "validFrom": "2024-12-01",
+      "validTo": "2025-11-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300024",
+          "publicLabel": "Arbeitszeugnis Fitness First",
+          "publicExcerpt": "Dokumentiert Rolle und Beschaeftigungszeitraum.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200025",
+      "entityId": "32000000-0000-4000-8000-000000000011",
+      "claimType": "career_fact",
+      "statement": "Seine Aufgaben umfassten Personalauswahl, Onboarding, Teamfuehrung, Feedbackgespraeche und Dienstplanung.",
+      "validFrom": "2024-12-01",
+      "validTo": "2025-11-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300025",
+          "publicLabel": "Arbeitszeugnis Fitness First: Team",
+          "publicExcerpt": "Dokumentiert Personalauswahl, Onboarding, Fuehrung und Planung.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200026",
+      "entityId": "32000000-0000-4000-8000-000000000011",
+      "claimType": "career_fact",
+      "statement": "Michael verantwortete Mitgliederbetreuung und -bindung, Verkaufsgespraeche, Qualitaets- und Hygienestandards, Facility Management, Kundendatenanalyse und lokale Aktionen.",
+      "validFrom": "2024-12-01",
+      "validTo": "2025-11-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300026",
+          "publicLabel": "Arbeitszeugnis Fitness First: Clubbetrieb",
+          "publicExcerpt": "Dokumentiert Mitglieder-, Vertriebs-, Qualitaets-, Facility- und Analyseaufgaben.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200027",
+      "entityId": "32000000-0000-4000-8000-000000000012",
+      "claimType": "project_fact",
+      "statement": "MotAI ist als KI-gestuetzter digitaler Alltagscoach fuer Motivation, Bewegung und gesunde Routinen konzipiert.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300027",
+          "publicLabel": "Konzeptunterlagen MotAI",
+          "publicExcerpt": "Beschreiben MotAI als geplanten KI-gestuetzten Alltagscoach ohne Wirkversprechen.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "documented_plan"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200028",
+      "entityId": "32000000-0000-4000-8000-000000000012",
+      "claimType": "project_fact",
+      "statement": "Das dokumentierte Konzept setzt auf Messenger-Dienste, taegliche Check-ins, Motivationsimpulse, Erinnerungen und kleine alltagstaugliche Handlungsschritte.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300028",
+          "publicLabel": "Produktplanung MotAI",
+          "publicExcerpt": "Beschreibt Messenger-Nutzung, Check-ins, Impulse, Erinnerungen und kleine Handlungsschritte.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "documented_plan"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200029",
+      "entityId": "32000000-0000-4000-8000-000000000012",
+      "claimType": "project_fact",
+      "statement": "Die technische Planung nennt Supabase, n8n, Hosting beziehungsweise VPS und Messenger-Integrationen; Website- und Deployment-Artefakte verwenden Next.js, Docker und Nginx.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300029",
+          "publicLabel": "Technische Planung und Artefakte MotAI",
+          "publicExcerpt": "Dokumentieren die freigegebenen Infrastruktur- und Webtechnologien.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "supporting_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200030",
+      "entityId": "32000000-0000-4000-8000-000000000012",
+      "claimType": "project_fact",
+      "statement": "Michael bestaetigt eine erste Testphase mit fuenf Test-Usern.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300030",
+          "publicLabel": "Persoenliche Bestaetigung: Testphase MotAI",
+          "publicExcerpt": "Michael bestaetigt die erste Testphase mit fuenf Test-Usern.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200031",
+      "entityId": "32000000-0000-4000-8000-000000000012",
+      "claimType": "limitation",
+      "statement": "MotAI hat noch keine zahlenden Nutzer; nach der ersten Testphase wurde das Projekt wegen noch nicht ausreichender Produktqualitaet vorerst nicht weiter beworben.",
+      "validFrom": null,
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300031",
+          "publicLabel": "Persoenliche Bestaetigung: Grenzen MotAI",
+          "publicExcerpt": "Michael bestaetigt fehlende zahlende Nutzer und die noch nicht ausreichende Produktqualitaet.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200032",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im April 2024 die Fitnesstrainer/in-B-Lizenz der BSA-Akademie.",
+      "validFrom": "2024-04-25",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300032",
+          "publicLabel": "BSA-Urkunde: Fitnesstrainer/in-B-Lizenz",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum ohne Note.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200033",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im April 2024 den Abschluss Trainer/in fuer geraetegestuetztes Krafttraining der BSA-Akademie.",
+      "validFrom": "2024-04-07",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300033",
+          "publicLabel": "BSA-Urkunde: geraetegestuetztes Krafttraining",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200034",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im Mai 2024 den Abschluss Gesundheitstrainer/in der BSA-Akademie.",
+      "validFrom": "2024-05-12",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300034",
+          "publicLabel": "BSA-Urkunde: Gesundheitstrainer/in",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum ohne Wirkversprechen.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200035",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im Juni 2024 den Abschluss Trainer/in fuer Sportrehabilitation der BSA-Akademie; daraus wird keine medizinische oder therapeutische Wirkung abgeleitet.",
+      "validFrom": "2024-06-16",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300035",
+          "publicLabel": "BSA-Urkunde: Sportrehabilitation",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum ohne Therapie- oder Heilversprechen.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200036",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im Juli 2024 den Abschluss Trainer/in fuer Cardiofitness der BSA-Akademie.",
+      "validFrom": "2024-07-21",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300036",
+          "publicLabel": "BSA-Urkunde: Cardiofitness",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200037",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im September 2024 den Abschluss Leistungssport Body-Trainer/in der BSA-Akademie.",
+      "validFrom": "2024-09-15",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300037",
+          "publicLabel": "BSA-Urkunde: Leistungssport Body-Trainer/in",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200038",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im Oktober 2024 die Ernaehrungstrainer/in-B-Lizenz der BSA-Akademie; daraus wird keine medizinische oder therapeutische Wirkung abgeleitet.",
+      "validFrom": "2024-10-20",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300038",
+          "publicLabel": "BSA-Urkunde: Ernaehrungstrainer/in-B-Lizenz",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum ohne medizinische Aussage.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200039",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im November 2024 die Fitnesstrainer/in A-Lizenz der BSA-Akademie.",
+      "validFrom": "2024-11-07",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300039",
+          "publicLabel": "BSA-Urkunde: Fitnesstrainer/in A-Lizenz",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum ohne Note.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200040",
+      "entityId": "32000000-0000-4000-8000-000000000013",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im November 2024 den Abschluss Lehrer/in fuer Fitness der BSA-Akademie.",
+      "validFrom": "2024-11-07",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300040",
+          "publicLabel": "BSA-Urkunde: Lehrer/in fuer Fitness",
+          "publicExcerpt": "Dokumentiert Qualifikation und Erwerbsdatum ohne Notenangabe.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200041",
+      "entityId": "32000000-0000-4000-8000-000000000014",
+      "claimType": "qualification",
+      "statement": "Michael legte 2024 erfolgreich die Pruefung zum C Lizenz Trainer im Fussballkontext ab.",
+      "validFrom": "2024-08-23",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300041",
+          "publicLabel": "Urkunde: C Lizenz Trainer",
+          "publicExcerpt": "Dokumentiert Lehrgang und erfolgreich abgelegte Pruefung ohne private Personendaten.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200042",
+      "entityId": "32000000-0000-4000-8000-000000000015",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im Oktober 2012 den historischen Abschluss Qualitaetsmanagement-Fachkraft QMF-TUEV; eine heutige Gueltigkeit wird nicht behauptet.",
+      "validFrom": "2012-10-26",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300042",
+          "publicLabel": "TUEV-SUED-Zertifikat: QMF",
+          "publicExcerpt": "Dokumentiert den historischen Abschluss und Erwerbszeitpunkt.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200043",
+      "entityId": "32000000-0000-4000-8000-000000000015",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im November 2012 den historischen Abschluss Qualitaetsmanagement-Beauftragter QMB-TUEV; eine heutige Gueltigkeit wird nicht behauptet.",
+      "validFrom": "2012-11-02",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300043",
+          "publicLabel": "TUEV-SUED-Zertifikat: QMB",
+          "publicExcerpt": "Dokumentiert den historischen Abschluss und Erwerbszeitpunkt.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200044",
+      "entityId": "32000000-0000-4000-8000-000000000015",
+      "claimType": "qualification",
+      "statement": "Michael erwarb im November 2012 den historischen Abschluss Qualitaetsmanagement-Auditor QMA-TUEV; eine heutige Gueltigkeit wird nicht behauptet.",
+      "validFrom": "2012-11-09",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300044",
+          "publicLabel": "TUEV-SUED-Zertifikat: QMA",
+          "publicExcerpt": "Dokumentiert den historischen Abschluss und Erwerbszeitpunkt.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200045",
+      "entityId": "32000000-0000-4000-8000-000000000015",
+      "claimType": "qualification",
+      "statement": "Michael nahm im November 2012 an der TUEV-SUED-Weiterbildung Projektmanagement - Grundlagen teil.",
+      "validFrom": "2012-11-12",
+      "validTo": "2012-11-16",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300045",
+          "publicLabel": "TUEV-SUED-Teilnahmebescheinigung: Projektmanagement",
+          "publicExcerpt": "Dokumentiert Teilnahme und Zeitraum der Grundlagenweiterbildung.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200046",
+      "entityId": "32000000-0000-4000-8000-000000000016",
+      "claimType": "qualification",
+      "statement": "Michael absolvierte 2022 die Weiterbildung Einfuehrung in die Digitalisierung bei karriere tutor.",
+      "validFrom": "2022-09-12",
+      "validTo": "2022-10-21",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300046",
+          "publicLabel": "Zertifikat: Einfuehrung in die Digitalisierung",
+          "publicExcerpt": "Dokumentiert Weiterbildung und Zeitraum ohne Notenangabe.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200047",
+      "entityId": "32000000-0000-4000-8000-000000000016",
+      "claimType": "qualification",
+      "statement": "Michael absolvierte 2022 die Weiterbildung Digital Business Innovator bei karriere tutor.",
+      "validFrom": "2022-10-24",
+      "validTo": "2022-11-11",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300047",
+          "publicLabel": "Zertifikat: Digital Business Innovator",
+          "publicExcerpt": "Dokumentiert Weiterbildung und Zeitraum ohne Notenangabe.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200048",
+      "entityId": "32000000-0000-4000-8000-000000000016",
+      "claimType": "qualification",
+      "statement": "Michael nahm von November 2022 bis Januar 2023 an der Weiterbildung Change Management bei karriere tutor teil.",
+      "validFrom": "2022-11-14",
+      "validTo": "2023-01-13",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300048",
+          "publicLabel": "Teilnahmebescheinigung: Change Management",
+          "publicExcerpt": "Dokumentiert Teilnahme und Zeitraum; sie wird nicht als Pruefungszertifikat bezeichnet.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200049",
+      "entityId": "32000000-0000-4000-8000-000000000005",
+      "claimType": "career_fact",
+      "statement": "Michael leistete bei RRC power solutions technische Unterstuetzung bei der Angebotserstellung.",
+      "validFrom": "2008-10-01",
+      "validTo": "2010-06-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300049",
+          "publicLabel": "Arbeitszeugnis RRC: Angebotsunterstuetzung",
+          "publicExcerpt": "Dokumentiert technische Unterstuetzung bei der Angebotserstellung.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200050",
+      "entityId": "32000000-0000-4000-8000-000000000010",
+      "claimType": "project_fact",
+      "statement": "Michael bestaetigt fuer Legga Food ein lokales Kooperationsnetzwerk mit Partnern und Abholstationen.",
+      "validFrom": "2021-10-01",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300050",
+          "publicLabel": "Persoenliche Bestaetigung: Partnernetzwerk Legga Food",
+          "publicExcerpt": "Michael bestaetigt das lokale Netzwerk in aggregierter Form; Partnernamen bleiben ausgeblendet.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "subject_attestation"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200051",
+      "entityId": "32000000-0000-4000-8000-000000000011",
+      "claimType": "career_fact",
+      "statement": "Michael organisierte und leitete Kleingruppentrainings, plante Trainingsangebote und baute lokale Kooperationen auf.",
+      "validFrom": "2024-12-01",
+      "validTo": "2025-11-30",
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300051",
+          "publicLabel": "Arbeitszeugnis Fitness First: Training und Kooperationen",
+          "publicExcerpt": "Dokumentiert Kleingruppentraining, Trainingsplanung und lokale Kooperationen.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    },
+    {
+      "claimId": "32000000-0000-4000-8000-000000200052",
+      "entityId": "32000000-0000-4000-8000-000000000012",
+      "claimType": "project_fact",
+      "statement": "Die angemeldete Taetigkeit von MotAI begann am 16. Dezember 2025 und umfasst einen KI-gestuetzten Coachingdienst ueber Messenger-Dienste.",
+      "validFrom": "2025-12-16",
+      "validTo": null,
+      "evidence": [
+        {
+          "evidenceId": "32000000-0000-4000-8000-000000300052",
+          "publicLabel": "Gewerbeanmeldung MotAI",
+          "publicExcerpt": "Dokumentiert Beginn und Art der angemeldeten Taetigkeit ohne Kontakt- oder Adressdaten.",
+          "evidenceStrength": "direct",
+          "evidenceBasis": "direct_document"
+        }
+      ]
+    }
+  ]
+}

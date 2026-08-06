@@ -59,6 +59,9 @@ oder Secrets in Git, Logs oder Dokumentation zu uebernehmen.
 - Fachliche Inhaltsabnahme erfolgt ueber einen internen, secret-geschuetzten Review-Endpunkt und private,
   ignorierte Snapshot-Dateien, nicht ueber Git oder oeffentliche Routen.
 - Michael hat am 2026-08-04 alle 13 Aussagen fachlich ohne Korrekturen freigegeben.
+- Spaeterer Abgleich am 2026-08-06 korrigierte den Teamclaim kontrolliert von zehn geplanten auf
+  sieben weitere tatsaechliche Teammitglieder; Claim und oeffentliches Evidence-Excerpt wurden nach
+  Backup und Restore-Test remote aktualisiert.
 - Der bestehende lokale OpenAI-Key wird nach bewusster Risikoakzeptanz weiterverwendet.
 - `opencode.jsonc` bleibt eine lokale, nicht zu committende Aenderung.
 

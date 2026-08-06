@@ -2,6 +2,13 @@
 
 set -eu
 
+: "${PUBLIC_PROFILE_DRIFT_VERIFIED:?Run profile:publish:check and set PUBLIC_PROFILE_DRIFT_VERIFIED=1}"
+
+if [ "${PUBLIC_PROFILE_DRIFT_VERIFIED}" != "1" ]; then
+  printf '%s\n' 'PUBLIC_PROFILE_DRIFT_VERIFIED must equal 1.' >&2
+  exit 1
+fi
+
 deployment_root="${DEPLOYMENT_ROOT:-/opt/bewerbungswebsite}"
 compose_file="${deployment_root}/deploy/orchestrator/compose.yml"
 release_env="${deployment_root}/deploy/web/.env.release"

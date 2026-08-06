@@ -24,7 +24,7 @@ PostgreSQL laeuft im selben Compose-Projekt:
 - nur isoliertes Backend-Netzwerk, keine Portfreigabe an Host oder n8n
 - RLS fuer `public.match_analyses`, keine direkten Rechte fuer `anon` oder `authenticated`
 - Profil-Schema, Provenienz-Migration und read-only Runtime-Policies sind auf dem VPS angewendet;
-  der erste freigegebene Pilotfall ist importiert, Runtime-Aktivierung bleibt gesperrt
+  65 freigegebene Claims und 66 Evidence Items sind importiert, Runtime-Aktivierung bleibt gesperrt
 
 Die Web-App ist als zusaetzlicher Compose-Dienst vorbereitet, aber fuer die interne Profilvorschau nur
 an `127.0.0.1:3100` gebunden. Dadurch ist sie nicht direkt aus dem Internet erreichbar und kann fuer
@@ -239,6 +239,31 @@ pnpm --filter @bewerbungswebsite/orchestrator profile:import
 ausgefuehrt. Die Runtime-Verbindung aus `.env.orchestrator` besitzt absichtlich keine Schreibrechte und
 darf nicht fuer Imports erweitert werden.
 
+## Public-Profile-Artefakt
+
+Das commitbare Web-Artefakt wird ausschliesslich ueber die read-only App-Rolle erzeugt. Die Datenbank
+ist nicht aus dem Internet erreichbar; fuer lokale Publish-Laufzeit wird ein temporaerer SSH-Tunnel
+zum isolierten Datenbankcontainer verwendet. Zugangsdaten duerfen weder ausgegeben noch in Dateien im
+Repository geschrieben werden.
+
+```powershell
+$env:PROFILE_DATABASE_URL = '<read-only-runtime-url-via-tunnel>'
+pnpm profile:publish:validate
+pnpm profile:publish:check
+
+$env:PUBLIC_PROFILE_DRIFT_VERIFIED = '1'
+
+$env:PROFILE_PUBLISH_CONFIRM = 'PUBLISH_APPROVED_PROFILE'
+pnpm profile:publish:write
+```
+
+`write` erzeugt atomisch
+`apps/web/src/content/generated/public-profile.json`. Vor einem Release muss `check` bytegenau
+erfolgreich sein. `deploy/web/release.sh` startet nur mit der anschliessenden expliziten Bestaetigung
+`PUBLIC_PROFILE_DRIFT_VERIFIED=1`. Zurueckgezogene Claim-Referenzen verschwinden aus der assemblierten
+Website; ein neuer nicht zugeordneter Artifact-Claim bricht den Web-Build ab. Das Artefakt enthaelt
+keine Source-Titel, Pfade, Locator, Chunks oder internen Review-Metadaten.
+
 Interne fachliche Profilstichprobe ohne oeffentliche Aktivierung:
 
 ```bash
@@ -290,6 +315,16 @@ Der systemd-Timer `bewerbungswebsite-postgres-backup.timer` erstellt taeglich um
 
 Dateirechte sind `0600`, das Verzeichnis ist `0700`, die Aufbewahrung betraegt 14 Tage. Manueller
 Testlauf:
+
+Nach Dateiuebertragungen von einem Windows-Arbeitsplatz zuerst die Execute-Bits der versionierten
+Shellskripte wiederherstellen. Ein fehlendes Execute-Bit fuehrt im systemd-Service zu `203/EXEC`:
+
+```bash
+chmod 0750 \
+  /opt/bewerbungswebsite/deploy/postgres/backup.sh \
+  /opt/bewerbungswebsite/deploy/postgres/restore-test.sh \
+  /opt/bewerbungswebsite/deploy/postgres/offsite-backup.sh
+```
 
 ```bash
 systemctl start bewerbungswebsite-postgres-backup.service

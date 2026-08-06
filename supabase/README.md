@@ -20,6 +20,8 @@ Regeln:
   Retrieval-Filter.
 - `tests/profile_runtime_access.sql` prueft die spaltenbegrenzte Self-Hosted-Runtime-Rolle und die
   Parent-Entity-, Parent-Claim- und Source-Grenzen mit synthetischen Daten.
+- Die Public-Profile-Publish-Pipeline exportiert ueber dieselbe read-only Runtime-Rolle nur
+  freigegebene `public_profile`-Claims und oeffentliche Evidence-Felder.
 - `migrations/20260728225000_match_analysis_storage.sql` enthaelt die lokale kurzlebige
   MatchAnalysis-Persistenz mit Token-Hash, TTL, Status und restriktiver RLS.
 - `tests/match_analysis_storage.sql` prueft direkte Rollenrechte, RLS, fehlende Klartexttoken-Spalten,
@@ -35,7 +37,23 @@ $env:PGPASSWORD='postgres'; psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- supabase-profile-repository.test.ts
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- match-analysis-store.test.ts
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- match-storage-runtime.test.ts
+$env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- public-profile-artifact-repository.test.ts
 ```
+
+Der Public-Profile-Repositorytest richtet die Runtime-Rolle innerhalb seiner zurueckgerollten
+Testtransaktion mit `deploy/postgres/migrations/030_profile_runtime_access.sql` ein. Ein frischer
+`supabase db reset` benoetigt deshalb keine manuelle Rollenpraeparation.
+
+Publish-Projektion mit einer eingeschraenkten Runtime-Verbindung pruefen:
+
+```powershell
+$env:PROFILE_DATABASE_URL='<read-only-runtime-url>'
+pnpm profile:publish:validate
+pnpm profile:publish:check
+```
+
+`write` ist absichtlich nicht Teil des normalen Builds und erfordert zusaetzlich
+`PROFILE_PUBLISH_CONFIRM=PUBLISH_APPROVED_PROFILE`.
 
 Diese Artefakte sind nicht fuer Remote-Migrationen freigegeben. Als Ziel ist das bestehende
 Self-Hosted PostgreSQL auf dem Hostinger-VPS entschieden. Vor einer produktiven Nutzung muessen

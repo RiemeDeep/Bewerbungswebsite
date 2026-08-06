@@ -8,6 +8,9 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "dev": "tsx watch src/server.ts",
     "profile:import": "tsx src/profile-import-cli.ts",
+    "profile:publish:check": "tsx src/public-profile-publish-cli.ts check",
+    "profile:publish:validate": "tsx src/public-profile-publish-cli.ts validate",
+    "profile:publish:write": "tsx src/public-profile-publish-cli.ts write",
     "start": "node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
