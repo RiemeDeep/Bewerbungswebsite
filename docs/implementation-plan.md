@@ -458,6 +458,10 @@ wurde eine Abweichung entdeckt: 24 Manifest-Claims und 25 zugehoerige Evidence I
 nicht-inhaltliches Bestandsaudit dieser bereits gesetzten Kontexte erforderlich. Dieses Audit ist in
 `docs/content/profile-context-existing-context-audit.md` dokumentiert.
 
+Entscheidung 2026-08-08: Die bereits gesetzten Zielkontexte werden als gueltiger Bestandszustand
+akzeptiert (`docs/decisions/2026-08-08-accept-existing-profile-context-grants.md`). Ein spaeterer Apply
+darf nur die fehlenden Kontexte fuer 36 Claims und 36 Evidence Items ergaenzen.
+
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.
 

@@ -216,6 +216,8 @@ Planungsartefakt fuer die technische Freigabe:
 Remote-Dry-Run 2026-08-08: technisch erfolgreich mit `ROLLBACK`, aber der reale VPS-Bestand enthaelt
 bereits teilweise `profile_assistant`-/`job_analysis`-Kontexte fuer 24 Manifest-Claims und 25 Evidence
 Items. Vor einem echten Apply ist deshalb ein Bestandsaudit der bereits gesetzten Kontexte erforderlich.
+Entscheidung 2026-08-08: Die bereits gesetzten Kontexte werden akzeptiert; ein spaeterer Apply darf nur
+die fehlenden Kontexte fuer 36 Claims und 36 Evidence Items ergaenzen.
 
 Abnahme:
 

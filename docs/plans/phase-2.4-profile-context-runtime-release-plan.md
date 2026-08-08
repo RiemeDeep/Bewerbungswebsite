@@ -196,9 +196,12 @@ Wichtige Abweichung gegenueber der bisherigen Dokumentannahme:
 Folgerung:
 
 - Der Dry-Run ist technisch erfolgreich und idempotent.
-- Vor einem echten `commit` muss die Herkunft der bereits gesetzten Zielkontexte geklaert werden.
 - Das nicht-inhaltliche Bestandsaudit ist in
   `docs/content/profile-context-existing-context-audit.md` dokumentiert.
 - Die bereits gesetzten Zielkontexte konzentrieren sich auf `ES-PUBLIC-001`, `ES-PUBLIC-007`,
   `ES-PUBLIC-008` und `ES-PUBLIC-010` und stammen nach Datums-/ID-Muster aus dem Pilotimport bzw. dem
   vollstaendigen Public-Profile-Import vom 2026-08-06.
+- Gemaess ADR `docs/decisions/2026-08-08-accept-existing-profile-context-grants.md` werden diese bereits
+  gesetzten Kontexte als gueltiger Bestandszustand akzeptiert.
+- Ein spaeterer Apply darf nur die fehlenden Kontexte fuer 36 Claims und 36 Evidence Items idempotent
+  ergaenzen.

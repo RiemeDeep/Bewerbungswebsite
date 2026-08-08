@@ -54,7 +54,9 @@ Der Dry-Run selbst endete mit `ROLLBACK`. Es wurden keine zusaetzlichen Kontexte
 Vor einem echten Apply ist kein fachliches Neureview aller 60 Claims noetig, aber ein bewusstes
 technisches Normalisierungsgate:
 
-1. Die bereits gesetzten Kontexte werden als bestehender Zustand anerkannt oder explizit korrigiert.
+1. Die bereits gesetzten Kontexte werden gemaess ADR
+   `docs/decisions/2026-08-08-accept-existing-profile-context-grants.md` als gueltiger
+   Bestandszustand akzeptiert.
 2. Die restlichen 36 Claims und 36 Evidence Items werden nur nach erneuter Freigabe technisch ergaenzt.
 3. Der Apply bleibt idempotent und muss nach Backup/Restore-Test erneut zuerst als `ROLLBACK` laufen.
 4. Produktive Assistant-, Match- oder Retrieval-Runtime bleibt weiterhin deaktiviert, bis separate
