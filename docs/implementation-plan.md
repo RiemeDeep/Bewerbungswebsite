@@ -462,6 +462,10 @@ Entscheidung 2026-08-08: Die bereits gesetzten Zielkontexte werden als gueltiger
 akzeptiert (`docs/decisions/2026-08-08-accept-existing-profile-context-grants.md`). Ein spaeterer Apply
 darf nur die fehlenden Kontexte fuer 36 Claims und 36 Evidence Items ergaenzen.
 
+Missing-only Dry-Run 2026-08-08: nach erneutem Backup und Restore-Test erfolgreich mit `ROLLBACK`;
+ein Apply wuerde 36 Claims und 36 Evidence Items neu ergaenzen und die bereits vollstaendig
+freigegebenen 24 Claims und 25 Evidence Items nicht erneut schreiben.
+
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.
 

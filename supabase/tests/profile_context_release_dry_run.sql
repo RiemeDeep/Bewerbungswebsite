@@ -247,7 +247,11 @@ set allowed_contexts = (
     'job_analysis'::public.profile_usage_context
   ]) as context_value
 )
-where c.id in (select id from eligible_reviewed_claims);
+where c.id in (select id from eligible_reviewed_claims)
+  and not (
+    'profile_assistant' = any(c.allowed_contexts)
+    and 'job_analysis' = any(c.allowed_contexts)
+  );
 
 with eligible_reviewed_claims as (
   select c.id
@@ -273,7 +277,11 @@ where e.claim_id in (select id from eligible_reviewed_claims)
   and e.publication_status = 'published'
   and e.visibility in ('public_excerpt', 'public')
   and e.evidence_basis <> 'uncertain'
-  and 'public_profile' = any(e.allowed_contexts);
+  and 'public_profile' = any(e.allowed_contexts)
+  and not (
+    'profile_assistant' = any(e.allowed_contexts)
+    and 'job_analysis' = any(e.allowed_contexts)
+  );
 
 do $$
 declare

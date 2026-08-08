@@ -80,7 +80,11 @@ set allowed_contexts = (
     'job_analysis'::public.profile_usage_context
   ]) as context_value
 )
-where c.id in (select id from eligible_reviewed_claims);
+where c.id in (select id from eligible_reviewed_claims)
+  and not (
+    'profile_assistant' = any(c.allowed_contexts)
+    and 'job_analysis' = any(c.allowed_contexts)
+  );
 
 with eligible_reviewed_claims as (
   select c.id
@@ -106,7 +110,11 @@ where e.claim_id in (select id from eligible_reviewed_claims)
   and e.publication_status = 'published'
   and e.visibility in ('public_excerpt', 'public')
   and e.evidence_basis <> 'uncertain'
-  and 'public_profile' = any(e.allowed_contexts);
+  and 'public_profile' = any(e.allowed_contexts)
+  and not (
+    'profile_assistant' = any(e.allowed_contexts)
+    and 'job_analysis' = any(e.allowed_contexts)
+  );
 
 -- Erwartung: 60 Claims und die zugehoerigen Public-Profile-Evidence-Items sind technisch freigegeben.
 select count(*) as released_claims
@@ -204,4 +212,26 @@ Folgerung:
 - Gemaess ADR `docs/decisions/2026-08-08-accept-existing-profile-context-grants.md` werden diese bereits
   gesetzten Kontexte als gueltiger Bestandszustand akzeptiert.
 - Ein spaeterer Apply darf nur die fehlenden Kontexte fuer 36 Claims und 36 Evidence Items idempotent
-  ergaenzen.
+  ergaenzen; bereits vollstaendig freigegebene Datensaetze werden nicht erneut geschrieben.
+
+## Missing-Only-Dry-Run 2026-08-08
+
+Nach Annahme der bestehenden Kontextfreigaben wurde der VPS-Dry-Run erneut mit einem Filter ausgefuehrt,
+der bereits vollstaendig freigegebene Datensaetze nicht erneut schreibt. Vorher liefen erneut Backup und
+Restore-Test erfolgreich.
+
+Ergebnis:
+
+- 60 Manifest-Claims wurden als technisch eligible erkannt.
+- 61 Evidence Items wurden als technisch eligible erkannt.
+- 24 Claims und 25 Evidence Items waren bereits vollstaendig fuer `profile_assistant` und
+  `job_analysis` freigegeben.
+- Der missing-only Update-Dry-Run haette 36 Claims und 36 Evidence Items ergaenzt.
+- Nach dem Dry-Run waeren 60 Claims und 61 Evidence Items vollstaendig freigegeben gewesen.
+- Die Transaktion endete mit `ROLLBACK`; es wurden keine zusaetzlichen Kontexte persistiert.
+
+Folgerung:
+
+- Der naechste technische Apply kann als missing-only Apply vorbereitet werden.
+- Vor einem echten `COMMIT` sind erneut Backup, Restore-Test und missing-only `ROLLBACK` Pflicht.
+- Produktive Runtime-Aktivierung bleibt davon getrennt.

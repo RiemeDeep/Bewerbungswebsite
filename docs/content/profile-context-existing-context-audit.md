@@ -61,3 +61,16 @@ technisches Normalisierungsgate:
 3. Der Apply bleibt idempotent und muss nach Backup/Restore-Test erneut zuerst als `ROLLBACK` laufen.
 4. Produktive Assistant-, Match- oder Retrieval-Runtime bleibt weiterhin deaktiviert, bis separate
    Runtime- und Evaluationstests bestanden sind.
+
+## Missing-Only-Dry-Run
+
+Nach Annahme des bestehenden Zustands wurde am 2026-08-08 ein weiterer VPS-Dry-Run ausgefuehrt, der nur
+fehlende Zielkontexte ergaenzen wuerde. Der Dry-Run lief nach erneutem Backup und Restore-Test und endete
+mit `ROLLBACK`.
+
+Ergebnis:
+
+- 36 Claims wuerden neu ergaenzt.
+- 36 Evidence Items wuerden neu ergaenzt.
+- Bereits vollstaendig freigegebene 24 Claims und 25 Evidence Items wuerden nicht erneut geschrieben.
+- Nach einem spaeteren Apply waeren 60 Claims und 61 Evidence Items vollstaendig freigegeben.
