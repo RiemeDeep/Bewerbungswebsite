@@ -246,6 +246,23 @@ ist nicht aus dem Internet erreichbar; fuer lokale Publish-Laufzeit wird ein tem
 zum isolierten Datenbankcontainer verwendet. Zugangsdaten duerfen weder ausgegeben noch in Dateien im
 Repository geschrieben werden.
 
+Fuer lokale Operator-Sessions ist der VPS ueber den SSH-Alias `motai` erreichbar. Der relevante
+Postgres-Container heisst `bewerbungswebsite-postgres`, die Profil-Datenbank darin `bewerbungswebsite`.
+Profil-Tabellen liegen unter `public.profile_claims`, `public.evidence_items` und
+`public.profile_entities`. Nicht mit dem MotAI-Supabase-Projekt oder dem Supabase-MCP verwechseln.
+
+Vor administrativen Schreibzugriffen auf Profilclaims oder Evidence im VPS-Postgres muessen Backup und
+Restore-Test erfolgreich gelaufen sein:
+
+```bash
+/opt/bewerbungswebsite/deploy/postgres/backup.sh
+/opt/bewerbungswebsite/deploy/postgres/restore-test.sh
+```
+
+Fuer lokale Publish-Pruefungen gegen die VPS-DB darf ein temporaerer SSH-Tunnel zum internen
+Postgres-Container verwendet werden. Danach den Tunnel wieder schliessen und keine Connection Strings
+oder Passwoerter in Logs, Handover oder Chat ausgeben.
+
 ```powershell
 $env:PROFILE_DATABASE_URL = '<read-only-runtime-url-via-tunnel>'
 pnpm profile:publish:validate
@@ -273,7 +290,7 @@ docker exec bewerbungswebsite-orchestrator node --input-type=module
 Im Node-Prozess darf der interne Endpunkt nur mit `ORCHESTRATOR_REQUEST_SECRET` aufgerufen werden:
 
 ```js
-await fetch("http://127.0.0.1:4000/api/internal/profile/review-sample?limit=25", {
+await fetch("http://127.0.0.1:4000/api/internal/profile/review-sample?limit=1000", {
   headers: { authorization: `Bearer ${process.env.ORCHESTRATOR_REQUEST_SECRET}` },
 });
 ```
@@ -281,6 +298,9 @@ await fetch("http://127.0.0.1:4000/api/internal/profile/review-sample?limit=25",
 Der Endpunkt setzt `cache-control: private, no-store, max-age=0`, `x-robots-tag: noindex,nofollow` und
 liefert nur Runtime-zulaessige Profilspalten. Source-Titel, Speicherpfade und Chunks sind nicht Teil des
 Payloads.
+
+Der operative Ablauf fuer Public-Profile-Rueckzug, Driftcheck und erneutes Artefakt-Publish ist in
+`docs/runbooks/public-profile-publish-and-withdrawal.md` festgelegt.
 
 Authentisierten Cleanup mit dem n8n-Credential testen:
 

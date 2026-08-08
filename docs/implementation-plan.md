@@ -1,6 +1,6 @@
 # Implementierungsplan
 
-Stand: 2026-08-06. `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md` bleibt Source of Truth fuer
+Stand: 2026-08-07. `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md` bleibt Source of Truth fuer
 Produktanforderungen und Leitplanken. PostgreSQL ist Source of Truth fuer freigegebene Profilfakten.
 
 Aktuelle priorisierte Roadmap:
@@ -16,9 +16,10 @@ Aktuelle priorisierte Roadmap:
 - Der aktuelle Webstand bleibt Staging/Abnahme und global `noindex,nofollow`.
 - Die private Werdegangs-Checkliste wurde am 2026-08-06 fuer die oeffentliche Vorbereitung
   freigegeben. Die bereinigte oeffentliche Arbeitsfassung ist statisch umgesetzt.
-- PostgreSQL/Supabase bleibt die fachliche Source of Truth. Der vollstaendige freigegebene Bestand
-  wurde als Claims/Evidence importiert und in einen kontrollierten Publish-Prozess ueberfuehrt. Das
-  commitbare Artefakt enthaelt 17 Entitaeten und 60 `public_profile`-Claims.
+- Das Self-Hosted PostgreSQL auf dem Hostinger-VPS bleibt die fachliche Source of Truth. Der
+  vollstaendige freigegebene Bestand wurde als Claims/Evidence importiert und in einen kontrollierten
+  Publish-Prozess ueberfuehrt. Das commitbare Artefakt enthaelt 17 Entitaeten und 60
+  `public_profile`-Claims.
 
 ## Arbeitsregeln
 
@@ -436,8 +437,16 @@ Public-Profile-Publish-Pipeline gemaess
 6. abgeschlossen: kanonisches Artefakt erzeugt, bytegenau geprueft und Website auf Artefakt plus
    Claim-Layout umgestellt.
 
-Naechste kleine Einheit: Umsetzungspaket 3 mit visueller Vorschauabnahme, weiterer
-Evidence-Story-Strukturierung und Operationalisierung von Withdrawal-/Publish-Ereignissen.
+Paket 3 ist fachlich und dokumentarisch weitgehend umgesetzt: vollstaendige interne
+Public-Profile-Vorschau mit 1000-Claim-Grenze, Withdrawal-/Publish-Runbook, Evidence-Story-Matrix,
+Kontextreview-Vorlage und sieben Kontextreview-Batches fuer `ES-PUBLIC-001` bis `ES-PUBLIC-013`.
+Alle 60 Public-Profile-Claims sind fachlich fuer `profile_assistant` und `job_analysis` mit `approve`
+dokumentiert. Die technische Kontextfreigabe ueber `allowed_contexts`, Runtime-Filter und
+Rueckzugstests bleibt ein separates Gate.
+
+Naechste kleine Einheit: technische Freigabeplanung fuer `profile_assistant` und `job_analysis` aus den
+Review-Entscheidungen ableiten, inklusive SQL-Aenderungsplan, Rueckzugstest und Runtime-Tests ohne
+produktive Aktivierung.
 
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.

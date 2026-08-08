@@ -119,8 +119,8 @@ Prioritaet: P0
 
 Entscheidung fuer die weitere Umsetzung:
 
-- PostgreSQL/Supabase bleibt die fachliche Source of Truth fuer Profilentitaeten, Claims, Evidence
-  und Freigaben.
+- Das Self-Hosted PostgreSQL auf dem Hostinger-VPS bleibt die fachliche Source of Truth fuer
+  Profilentitaeten, Claims, Evidence und Freigaben.
 - Fuer den statischen Webauftritt wird daraus ein validiertes oeffentliches Publish-Artefakt erzeugt.
 - Die manuell gepflegte TypeScript-Fixture ist bis zur Umstellung nur eine kontrollierte
   Uebergangsloesung.
@@ -161,6 +161,13 @@ Abschluss am 2026-08-06:
 - Jeder Artifact-Claim ist im Layout referenziert; zurueckgezogene Referenzen verschwinden beim
   erneuten Publish aus der Website, neue nicht zugeordnete Claims brechen den Build fail-closed ab.
 
+Ergaenzung am 2026-08-07:
+
+- Freigegebene Diplomnoten wurden in PostgreSQL und Artefakt synchronisiert: Gesamtnote `gut (1,7)`
+  und Diplomarbeitsbeurteilung `sehr gut (1,0)`.
+- `profile:publish:validate` und `profile:publish:check` liefen nach der Synchronisierung erfolgreich
+  gegen die VPS-DB-Projektion mit 60 Claims.
+
 Abnahme:
 
 - Jede oeffentliche biografische Aussage besitzt eine nachvollziehbare Claim-/Evidence-Zuordnung.
@@ -181,6 +188,27 @@ Aufgaben:
 6. Authentifizierung, Privacy Header und Ausschluss privater Quellenfelder erneut pruefen.
 7. Einen echten freigegebenen Claim kontrolliert zurueckziehen und den gesamten Wirkpfad testen.
 8. Re-Indexierungs-/Publish-Ereignisse fuer Aenderung und Rueckzug definieren.
+
+Fortschritt am 2026-08-07:
+
+- Die interne Profilvorschau laedt den vollstaendigen Public-Profile-Bestand mit einer 1000-Claim-
+  Grenze.
+- Das Withdrawal-/Publish-Runbook und die ADR fuer den vorerst manuellen gate-geschuetzten
+  Betriebsweg sind erstellt.
+- `docs/content/evidence-story-matrix.md` gruppiert alle 60 Public-Profile-Claims in 13
+  Evidence-Story-Arbeitseinheiten.
+- `docs/content/context-review-template.md` und sieben Batch-Dokumente unter
+  `docs/content/context-reviews/` dokumentieren die fachlichen Entscheidungen fuer `ES-PUBLIC-001`
+  bis `ES-PUBLIC-013`.
+- Alle 60 Claims sind fachlich fuer `profile_assistant` und `job_analysis` mit `approve` bewertet;
+  `allowed_contexts` wurden fuer diese Kontexte noch nicht gesetzt.
+- Die Matrix-Artefakt-Abdeckung ist testgesichert.
+
+Noch offen:
+
+- Technischen SQL-Aenderungsplan fuer `profile_assistant` und `job_analysis` ableiten.
+- Runtime-Filter, Retrieval-/Assistant-Verhalten und Claim-Rueckzug nach Kontextfreigabe testen.
+- Visuelle Vorschauabnahme auf Desktop und Smartphone abschliessen.
 
 Abnahme:
 

@@ -79,16 +79,16 @@ Priorisierte Challenge-Fragen fuer den ersten Workshop-Durchlauf:
 
 ## Vor der ersten Migration
 
-| Entscheidung                                                            | Status      | Festgelegte Richtung                                                                     |
-| ----------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| Wie wird `analysis_only` technisch modelliert?                          | Entschieden | `allowed_contexts` getrennt von `visibility`                                             |
-| Benoetigen Evidence Stories eine eigene Tabelle?                        | Entschieden | redaktionelle Arbeitseinheit; Import als Entitaet plus Claims/Evidence                   |
-| Welche Claim-Typen werden als Enum festgeschrieben?                     | Teilweise   | bestehende fuenf Typen reichen fuer Pilotfall; Arbeitsweise/Praeferenzen spaeter pruefen |
-| Wie werden Reviewstatus und Belegbasis gespeichert?                     | Entschieden | getrennte typisierte Attribute gemaess ADR vom 2026-07-30                                |
-| Welches Supabase-Projekt und welche Region werden genutzt?              | Entschieden | kein zweites Supabase-Projekt; Self-Hosted PostgreSQL auf bestehendem Hostinger-VPS      |
-| Werden Tabellen im `public`-Schema oder in getrennten Schemas angelegt? | Entschieden | `public` ohne externe Data API; spaltenbegrenzte Grants und RLS fuer Runtime-Rolle       |
-| Welche Rollen duerfen Claims reviewen und publizieren?                  | Teilweise   | Michael verifiziert fachlich; Import nur administrativ, Runtime strikt read-only         |
-| Wie werden Rueckzug und Re-Indexierung transaktional gekoppelt?         | Offen       | vor Dokument-Ingestion als Invariante festlegen                                          |
+| Entscheidung                                                            | Status      | Festgelegte Richtung                                                                                                   |
+| ----------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Wie wird `analysis_only` technisch modelliert?                          | Entschieden | `allowed_contexts` getrennt von `visibility`                                                                           |
+| Benoetigen Evidence Stories eine eigene Tabelle?                        | Entschieden | redaktionelle Arbeitseinheit; Import als Entitaet plus Claims/Evidence                                                 |
+| Welche Claim-Typen werden als Enum festgeschrieben?                     | Teilweise   | bestehende fuenf Typen reichen fuer Pilotfall; Arbeitsweise/Praeferenzen spaeter pruefen                               |
+| Wie werden Reviewstatus und Belegbasis gespeichert?                     | Entschieden | getrennte typisierte Attribute gemaess ADR vom 2026-07-30                                                              |
+| Welches Supabase-Projekt und welche Region werden genutzt?              | Entschieden | kein zweites Supabase-Projekt; Self-Hosted PostgreSQL auf bestehendem Hostinger-VPS                                    |
+| Werden Tabellen im `public`-Schema oder in getrennten Schemas angelegt? | Entschieden | `public` ohne externe Data API; spaltenbegrenzte Grants und RLS fuer Runtime-Rolle                                     |
+| Welche Rollen duerfen Claims reviewen und publizieren?                  | Teilweise   | Michael verifiziert fachlich; Import nur administrativ, Runtime strikt read-only                                       |
+| Wie werden Rueckzug und Re-Indexierung transaktional gekoppelt?         | Teilweise   | Rueckzug/Public-Publish vorerst manueller Runbook-Pfad; automatische Re-Indexierung vor Dokument-Ingestion entscheiden |
 
 Ergaenzung am 2026-07-28: Fuer den lokalen technischen Machbarkeitsnachweis Stufe 2 sind die
 Migrationsentscheidungen in `docs/plans/migration-readiness-review-stage-2.md` reduziert entschieden.
@@ -108,6 +108,12 @@ validierten Artefakt. Fuenf sensible, nicht gerenderte Pilotclaims wurden aus de
 entfernt. Die Website verwendet das Artefakt plus eine rein claim-referenzierende Layoutzuordnung;
 PostgreSQL bleibt die fachliche Profilautoritaet. Kontextfreigaben fuer Profilassistent und
 Stellenanalyse bleiben je Claim separat.
+
+Ergaenzung am 2026-08-07: Rueckzug und erneutes Public-Profile-Publishen sind bis zur spaeteren
+Event-Automatisierung als manueller, gate-geschuetzter Betriebsweg entschieden. Siehe
+`docs/decisions/2026-08-07-public-profile-withdrawal-publish-path.md` und
+`docs/runbooks/public-profile-publish-and-withdrawal.md`. Eine automatische Re-Indexierung fuer
+Dokument-Ingestion, Embeddings, Profilassistent und Stellenanalyse bleibt ein separates Gate.
 
 ## Vor Dokument-Upload und Embeddings
 

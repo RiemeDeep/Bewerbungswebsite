@@ -39,7 +39,7 @@ describe("createPostgresProfileReviewRepository", () => {
       },
     });
 
-    await expect(repository.listReviewClaims(25)).resolves.toEqual([
+    await expect(repository.listReviewClaims(1000)).resolves.toEqual([
       {
         claimId: "11111111-1111-4111-8111-111111111111",
         claimType: "project_fact",
@@ -67,7 +67,7 @@ describe("createPostgresProfileReviewRepository", () => {
     ]);
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]?.values).toEqual([25]);
+    expect(calls[0]?.values).toEqual([1000]);
     expect(calls[0]?.text).toContain("'public_profile' = any(c.allowed_contexts)");
     expect(calls[0]?.text).toContain("'public_profile' = any(e.allowed_contexts)");
     expect(calls[0]?.text).toContain("c.subject_review_status = 'subject_verified'");

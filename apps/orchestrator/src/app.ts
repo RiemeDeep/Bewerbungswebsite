@@ -403,8 +403,8 @@ export function createApp(dependencies: AppDependencies = {}): Express {
         return;
       }
 
-      const parsedLimit = Number.parseInt(String(request.query.limit ?? "25"), 10);
-      const limit = Number.isInteger(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 25) : 25;
+      const parsedLimit = Number.parseInt(String(request.query.limit ?? "1000"), 10);
+      const limit = Number.isInteger(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 1000) : 1000;
 
       try {
         response.status(200).json(

@@ -287,14 +287,14 @@
       "claimId": "32000000-0000-4000-8000-000000200003",
       "entityId": "32000000-0000-4000-8000-000000000003",
       "claimType": "qualification",
-      "statement": "Michael schloss 2008 ein Maschinenbaustudium in der Studienrichtung Konstruktionstechnik als Diplom-Ingenieur (FH) ab.",
+      "statement": "Michael schloss 2008 ein Maschinenbaustudium in der Studienrichtung Konstruktionstechnik als Diplom-Ingenieur (FH) mit der Gesamtnote gut (1,7) ab.",
       "validFrom": "2008-08-31",
       "validTo": null,
       "evidence": [
         {
           "evidenceId": "32000000-0000-4000-8000-000000300003",
           "publicLabel": "Diplomunterlagen Maschinenbau",
-          "publicExcerpt": "Dokumentieren Abschluss, Fachrichtung und Abschlussdatum ohne Notenangabe.",
+          "publicExcerpt": "Dokumentieren Abschluss, Fachrichtung, Abschlussdatum und Gesamtnote gut (1,7).",
           "evidenceStrength": "direct",
           "evidenceBasis": "direct_document"
         }
@@ -304,14 +304,14 @@
       "claimId": "32000000-0000-4000-8000-000000200004",
       "entityId": "32000000-0000-4000-8000-000000000003",
       "claimType": "qualification",
-      "statement": "Seine Diplomarbeit behandelte die Optimierung und teilweise Neukonstruktion eines Systems zur Fest-Fluessig-Trennung von Abwasser.",
+      "statement": "Seine Diplomarbeit behandelte die Optimierung und teilweise Neukonstruktion eines Systems zur Fest-Fluessig-Trennung von Abwasser und wurde mit sehr gut (1,0) beurteilt.",
       "validFrom": "2008-08-31",
       "validTo": null,
       "evidence": [
         {
           "evidenceId": "32000000-0000-4000-8000-000000300004",
           "publicLabel": "Diplomunterlagen: Diplomarbeit",
-          "publicExcerpt": "Dokumentieren das freigegebene Thema der Diplomarbeit.",
+          "publicExcerpt": "Dokumentieren das freigegebene Thema der Diplomarbeit und die Beurteilung sehr gut (1,0).",
           "evidenceStrength": "direct",
           "evidenceBasis": "direct_document"
         }

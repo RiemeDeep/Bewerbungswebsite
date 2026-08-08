@@ -29,5 +29,7 @@ Beispiel:
 
 ## Aktuelle Entscheidungen
 
+- `2026-08-07-public-profile-withdrawal-publish-path.md`: Manueller, gate-geschuetzter
+  Rueckzug-/Publish-Pfad fuer das Public-Profile-Artefakt vor spaeterer Event-Automatisierung.
 - `2026-07-28-technical-completeness-before-public-promotion.md`: Technische Vollstaendigkeit,
   produktionsnaher Supabase-Nachweis und Token-Hash vor oeffentlicher Bewerbung.

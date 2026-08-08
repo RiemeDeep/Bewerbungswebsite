@@ -53,7 +53,7 @@ export const profileReviewResponseSchema = z
   .object({
     schemaVersion: z.literal("1.0"),
     generatedAt: z.string().datetime({ offset: true }),
-    claims: z.array(profileReviewClaimSchema).max(25),
+    claims: z.array(profileReviewClaimSchema).max(1_000),
   })
   .strict();
 

@@ -156,7 +156,7 @@ export function assemblePublicProfileContent(input: unknown): ProfileContent {
         "private Namen von Mitarbeitenden, Teammitgliedern und Ansprechpartnern",
         "Bankverbindungen, Steuerdaten, Telefonnummern und vollstaendige Partnerlisten",
         "exakter Exit-Adventures-Kaufpreis",
-        "Noten und interne Zeugnisformulierungen",
+        "interne Zeugnisformulierungen ausserhalb freigegebener Notenangaben",
         "Heil-, Therapie- oder Erfolgversprechen im Fitness-/Coachingkontext",
       ],
     },

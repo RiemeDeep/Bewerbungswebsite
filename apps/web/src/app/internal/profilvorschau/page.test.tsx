@@ -22,6 +22,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import InternalProfilePreviewPage from "./page";
+import { publicProfileArtifact } from "../../../content/public-profile-content";
 
 const previousFlag = process.env.ENABLE_INTERNAL_PROFILE_PREVIEW;
 const previousUsername = process.env.INTERNAL_PROFILE_PREVIEW_USERNAME;
@@ -128,5 +129,40 @@ describe("InternalProfilePreviewPage", () => {
     expect(screen.getByText("Direkter Dokumentbeleg")).toBeTruthy();
     expect(document.body.textContent).not.toContain("11111111-1111-4111-8111-111111111111");
     expect(document.body.textContent).not.toContain("synthetic_document");
+  });
+
+  it("renders the complete public profile artifact as the internal preview baseline", async () => {
+    process.env.ENABLE_INTERNAL_PROFILE_PREVIEW = "1";
+    loadProfileReviewMock.mockResolvedValue({
+      schemaVersion: "1.0",
+      generatedAt: "2026-08-06T19:28:49.000Z",
+      claims: publicProfileArtifact.claims.map((claim) => ({
+        claimId: claim.claimId,
+        claimType: claim.claimType,
+        statement: claim.statement,
+        allowedContexts: ["public_profile"],
+        evidence: claim.evidence.map((evidence) => ({
+          evidenceId: evidence.evidenceId,
+          publicLabel: evidence.publicLabel,
+          publicExcerpt: evidence.publicExcerpt,
+          evidenceBasis: evidence.evidenceBasis,
+          allowedContexts: ["public_profile"],
+          sourceType: "public_profile_artifact",
+        })),
+      })),
+    });
+
+    render(await InternalProfilePreviewPage());
+
+    expect(
+      screen.getByText(`${publicProfileArtifact.claims.length} freigegebene Aussagen`),
+    ).toBeTruthy();
+    for (const claim of publicProfileArtifact.claims) {
+      expect(screen.getByText(claim.statement)).toBeTruthy();
+    }
+    expect(document.body.textContent).not.toContain("public_profile_artifact");
+    expect(document.body.textContent).not.toMatch(
+      /sourceTitle|storagePath|sourceLocator|documentChunks/u,
+    );
   });
 });

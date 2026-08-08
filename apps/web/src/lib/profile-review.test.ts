@@ -52,7 +52,7 @@ describe("loadProfileReview", () => {
     ).resolves.toEqual(validResponse);
 
     expect(fetcher).toHaveBeenCalledWith(
-      "http://orchestrator:4000/api/internal/profile/review-sample?limit=25",
+      "http://orchestrator:4000/api/internal/profile/review-sample?limit=1000",
       {
         cache: "no-store",
         headers: {

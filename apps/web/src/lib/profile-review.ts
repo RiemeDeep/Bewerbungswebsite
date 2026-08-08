@@ -21,7 +21,7 @@ export async function loadProfileReview(
 
   try {
     const response = await (options.fetcher ?? fetch)(
-      new URL("/api/internal/profile/review-sample?limit=25", baseUrl).toString(),
+      new URL("/api/internal/profile/review-sample?limit=1000", baseUrl).toString(),
       {
         cache: "no-store",
         headers: {

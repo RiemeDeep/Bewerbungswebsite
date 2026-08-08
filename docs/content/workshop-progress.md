@@ -1,7 +1,8 @@
 # Profil-Workshop: Arbeitsstand
 
-Stand: 2026-07-30
-Status: erster Pilotfall fachlich freigegeben und lokal importbereit; Remote-Migration und Import offen
+Stand: 2026-08-07
+Status: Public-Profile-Artefakt, Evidence-Story-Matrix und Kontextreviews fachlich dokumentiert;
+technische Assistant-/Job-Kontextfreigabe offen
 
 ## Session 1
 
@@ -62,6 +63,7 @@ oder fuer Retrieval zulaessig.
 | private Pilot-Evidence-Story normalisieren                      | abgeschlossen          |
 | kleine Claim-Kandidaten aus dem Pilotfall ableiten              | abgeschlossen          |
 | oeffentliche Einzelformulierungen und Evidence Labels freigeben | fachlich abgeschlossen |
+| oeffentliche Claims in Evidence-Story-Matrix strukturieren      | abgeschlossen          |
 | weitere Projektfaelle chronologisch bearbeiten                  | offen                  |
 
 Der Pilotfall bleibt vollstaendig im ignorierten privaten Arbeitsbereich. Dokumentierte Planung,
@@ -99,3 +101,23 @@ Vor jedem weiteren Fall wird geprueft, ob eine konkrete Situation ausreichend ab
 welche Quellen nur
 Planung, tatsaechliche Umsetzung oder Ergebnis belegen. Die vorhandenen privaten Entwuerfe bleiben
 bis dahin unveraendert `draft` und nur fuer `admin_review` zulaessig.
+
+Ergaenzung am 2026-08-07: Die 60 Claims aus dem Public-Profile-Artefakt wurden in
+`docs/content/evidence-story-matrix.md` in 13 oeffentliche Arbeitseinheiten gruppiert. Die Matrix ist
+keine neue Profilquelle und gibt keine zusaetzlichen Nutzungskontexte frei; sie bereitet nur die
+spaeteren Reviews fuer `profile_assistant` und `job_analysis` vor.
+
+Ergaenzung am 2026-08-07: Fuer diese spaeteren Kontextreviews wurde
+`docs/content/context-review-template.md` angelegt. Die Vorlage dokumentiert Entscheidungen pro Claim
+und Kontext, setzt aber keine Datenbankfreigabe und fuegt keine Profilinhalte hinzu.
+
+Ergaenzung am 2026-08-07: Alle Kontextreview-Batches fuer `ES-PUBLIC-001` bis `ES-PUBLIC-013` liegen
+unter `docs/content/context-reviews/`. Alle 60 Public-Profile-Claims wurden fachlich fuer
+`profile_assistant` und `job_analysis` mit `approve` bewertet. Diese Review-Entscheidungen sind noch
+keine technische Datenbankfreigabe; `allowed_contexts` wurden fuer diese Kontexte nicht gesetzt.
+
+Ergaenzung am 2026-08-07: Die freigegebenen Diplomnoten wurden im Public-Profile-Artefakt und im
+Self-Hosted PostgreSQL auf dem Hostinger-VPS synchronisiert: Gesamtnote `gut (1,7)` und
+Diplomarbeitsbeurteilung `sehr gut (1,0)`. Vor der Remote-Aenderung liefen Backup und Restore-Test;
+anschliessend liefen `profile:publish:validate` und `profile:publish:check` erfolgreich gegen die
+VPS-DB-Projektion.
