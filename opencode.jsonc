@@ -13,15 +13,18 @@
     },
     "n8n-doc-mcp": {
       "type": "local",
-      "command": ["npx", "-y", "n8n-mcp@latest"],
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-Command",
+        "$envFile = Join-Path (Get-Location) '.env'; if (Test-Path -LiteralPath $envFile) { Get-Content -LiteralPath $envFile | ForEach-Object { if ($_ -match '^\\s*([^#][^=]+?)\\s*=\\s*(.*)\\s*$') { [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim(), 'Process') } } }; if ($env:N8N_BASE_URL) { $env:N8N_API_URL = $env:N8N_BASE_URL.TrimEnd('/') }; npx -y n8n-mcp@latest",
+      ],
       "enabled": true,
       "timeout": 60000,
       "environment": {
         "MCP_MODE": "stdio",
         "LOG_LEVEL": "error",
         "DISABLE_CONSOLE_OUTPUT": "true",
-        "N8N_API_URL": "{env:N8N_API_URL}",
-        "N8N_API_KEY": "{env:N8N_API_KEY}",
       },
     },
     "motai-rag": {
