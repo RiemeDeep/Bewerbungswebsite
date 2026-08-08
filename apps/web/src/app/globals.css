@@ -908,6 +908,59 @@ h3 {
   gap: 18px;
 }
 
+.career-timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: career-step;
+}
+
+.career-timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 18px;
+  counter-increment: career-step;
+}
+
+.career-timeline-item::before {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  color: var(--color-primary-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: rgb(132 221 209 / 26%);
+  border: 1px solid rgb(23 107 112 / 24%);
+  border-radius: 999px;
+  place-items: center;
+  content: counter(career-step, decimal-leading-zero);
+}
+
+.career-timeline-item::after {
+  position: absolute;
+  top: 52px;
+  bottom: 8px;
+  left: 21px;
+  width: 2px;
+  background: var(--color-border);
+  content: "";
+}
+
+.career-timeline-item:last-child::after {
+  display: none;
+}
+
+.career-timeline-item + .career-timeline-item {
+  margin-top: 18px;
+}
+
+.career-timeline .info-card {
+  min-width: 0;
+}
+
 .info-card {
   padding: 22px;
   overflow-wrap: anywhere;
@@ -1106,6 +1159,22 @@ h3 {
 
   .competency-index span {
     min-height: 0;
+  }
+
+  .career-timeline-item {
+    grid-template-columns: 38px 1fr;
+    gap: 12px;
+  }
+
+  .career-timeline-item::before {
+    width: 32px;
+    height: 32px;
+    font-size: 0.68rem;
+  }
+
+  .career-timeline-item::after {
+    top: 40px;
+    left: 15px;
   }
 
   .match-workspace {

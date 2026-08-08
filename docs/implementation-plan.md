@@ -529,6 +529,15 @@ statische CSP fuer den Release-Kandidaten sowie die vorhandenen Browser-Hardenin
 testgesichert. Die CSP bleibt bewusst auf Eigenressourcen begrenzt; externe Dienste muessen vor Go-live
 explizit bewertet und freigegeben werden.
 
+Paket 4 Structured-Data-Vorbereitung 2026-08-08: Die Startseite rendert jetzt minimales JSON-LD fuer
+`ProfilePage` und `Person` aus dem freigegebenen statischen Profilcontent. URL-Felder werden nur bei
+expliziter `NEXT_PUBLIC_SITE_URL` gesetzt; Tests sichern ab, dass keine Kontakt-, Steuer-, Bank- oder
+Kaufpreisdetails in die strukturierten Daten gelangen.
+
+Paket 4 mobile Timeline-Glättung 2026-08-08: Die Werdegangsseite rendert freigegebene Stationen jetzt als
+semantische, nummerierte Timeline statt als generisches Kartenraster. Die mobile Darstellung nutzt
+kompaktere Marker und bleibt testseitig an die Zahl der freigegebenen Career Items gekoppelt.
+
 ## Bisherige technische Umsetzungseinheit
 
 Phase-5.0 Match-Analyse:

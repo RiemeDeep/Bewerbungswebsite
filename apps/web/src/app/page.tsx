@@ -4,6 +4,7 @@ import { AssistantEntry } from "../components/assistant-entry";
 import { ProfilePerspectives } from "../components/profile-perspectives";
 import { ProjectKernelGrid } from "../components/project-kernel-grid";
 import { profileContent } from "../content/profile-content";
+import { ProfileStructuredData } from "../lib/structured-data";
 
 const evidenceStates = [
   {
@@ -27,6 +28,7 @@ const evidenceStates = [
 export default function HomePage() {
   return (
     <main className="home-shell" id="main-content" tabIndex={-1}>
+      <ProfileStructuredData content={profileContent} />
       <AssistantEntry content={profileContent.assistantEntry} />
 
       <section className="method-section" aria-labelledby="method-title">

@@ -11,6 +11,7 @@ import HomePage from "./page";
 import ProjektePage from "./projekte/page";
 import WerdegangPage from "./werdegang/page";
 import { profileContent } from "../content/profile-content";
+import { siteConfig } from "../lib/site-config";
 
 afterEach(() => cleanup());
 
@@ -43,6 +44,43 @@ describe("phase 1 pages", () => {
     for (const question of profileContent.assistantEntry.suggestedQuestions) {
       expect(screen.getByRole("button", { name: question })).toBeTruthy();
     }
+  });
+
+  it("renders minimal structured data without private profile details", () => {
+    const { container } = render(<HomePage />);
+    const structuredDataScript = container.querySelector('script[type="application/ld+json"]');
+
+    expect(structuredDataScript).toBeTruthy();
+    const structuredData = JSON.parse(structuredDataScript?.textContent ?? "{}");
+    const serialized = JSON.stringify(structuredData);
+
+    expect(structuredData).toMatchObject({ "@context": "https://schema.org" });
+    expect(structuredData["@graph"]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ "@type": "ProfilePage", inLanguage: "de" }),
+        expect.objectContaining({
+          "@type": "Person",
+          name: siteConfig.shortName,
+          knowsAbout: profileContent.competencies.map((competency) => competency.title),
+        }),
+      ]),
+    );
+    expect(serialized).not.toMatch(/[\w.-]+@[\w.-]+\.[a-z]{2,}/iu);
+    expect(serialized).not.toMatch(/IBAN|St\.Nr\.|UStId|100\.000|Einhunderttausend/u);
+  });
+
+  it("does not add structured data URLs before a canonical site URL is configured", () => {
+    if (siteConfig.siteUrl) return;
+
+    const { container } = render(<HomePage />);
+    const structuredData = JSON.parse(
+      container.querySelector('script[type="application/ld+json"]')?.textContent ?? "{}",
+    );
+    const graph = structuredData["@graph"] as Array<Record<string, unknown>>;
+
+    expect(graph.some((item) => item["@type"] === "WebSite")).toBe(false);
+    expect(JSON.stringify(structuredData)).not.toContain("http://");
+    expect(JSON.stringify(structuredData)).not.toContain("https://example.com");
   });
 
   it("prepares a suggested question without pretending to call an AI", () => {
@@ -123,6 +161,10 @@ describe("phase 1 pages", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: profileContent.careerOverview.title }),
     ).toBeTruthy();
+    const timeline = screen.getByRole("list", { name: "Freigegebene Werdegangsstationen" });
+    expect(timeline.querySelectorAll(":scope > .career-timeline-item")).toHaveLength(
+      profileContent.careerItems.length,
+    );
     for (const item of profileContent.careerItems) {
       expect(screen.getByRole("heading", { level: 3, name: item.title })).toBeTruthy();
     }

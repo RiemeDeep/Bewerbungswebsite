@@ -17,26 +17,28 @@ export default function WerdegangPage() {
           <p className="eyebrow">Freigegebene Stationen</p>
           <h2 id="timeline-title">Werdegang als belegte Aufbau- und Umsetzungslinie</h2>
         </div>
-        <div className="card-grid">
+        <ol className="career-timeline" aria-label="Freigegebene Werdegangsstationen">
           {profileContent.careerItems.map((item) => (
-            <article className="info-card" key={item.id}>
-              <p className="status-pill">{item.period}</p>
-              <h3>{item.title}</h3>
-              <p>
-                <strong>{item.role}</strong>
-              </p>
-              <p>{item.summary}</p>
-              {item.highlights.length > 0 ? (
-                <ul className="plain-list">
-                  {item.highlights.map((highlight) => (
-                    <li key={highlight}>{highlight}</li>
-                  ))}
-                </ul>
-              ) : null}
-              <p className="card-note">{item.evidenceNote}</p>
-            </article>
+            <li className="career-timeline-item" key={item.id}>
+              <article className="info-card">
+                <p className="status-pill">{item.period}</p>
+                <h3>{item.title}</h3>
+                <p>
+                  <strong>{item.role}</strong>
+                </p>
+                <p>{item.summary}</p>
+                {item.highlights.length > 0 ? (
+                  <ul className="plain-list">
+                    {item.highlights.map((highlight) => (
+                      <li key={highlight}>{highlight}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="card-note">{item.evidenceNote}</p>
+              </article>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
       <section className="content-section" aria-labelledby="credentials-title">
         <div className="section-heading">

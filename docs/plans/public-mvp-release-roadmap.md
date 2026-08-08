@@ -254,8 +254,14 @@ Fortschritt am 2026-08-08:
 - CSP und Browser-Hardening-Header sind global in `next.config.ts` vorbereitet und testgesichert. Die CSP
   erlaubt nur Eigenressourcen; externe Dienste bleiben bis zur finalen Betreiber-/Dienstfreigabe
   ausgeschlossen.
+- Strukturierte Daten wurden minimal vorbereitet: Die Startseite rendert `ProfilePage`-/`Person`-JSON-LD
+  aus freigegebenem Profilcontent, ohne URL-Felder vor gesetzter `NEXT_PUBLIC_SITE_URL` und ohne private
+  Kontakt-, Steuer-, Bank- oder Kaufpreisdetails.
+- Die Werdegangsseite nutzt jetzt eine semantische, nummerierte Timeline statt eines generischen
+  Kartenrasters; mobile Marker und Listensemantik sind testgesichert.
 
-1. Oeffentliche Texte redaktionell glatten:
+1. Oeffentliche Texte redaktionell glatten: weitgehend erledigt fuer sichtbare statische Copy und mobile
+   Werdegangsstruktur.
    - Umlaute statt technischer ASCII-Umschreibungen;
    - konsistente Datumsdarstellung;
    - einheitliche Rollenbezeichnungen;
@@ -267,7 +273,8 @@ Fortschritt am 2026-08-08:
    - Ergebnis;
    - Grenze/Lernpunkt;
    - Belegstatus.
-3. SEO-Metadaten, Open Graph, Canonical URL und strukturierte Daten vorbereiten.
+3. SEO-Metadaten, Open Graph, Canonical URL und strukturierte Daten vorbereiten. Erledigt fuer den
+   statischen Staging-Stand; finale URL-Felder folgen erst mit expliziter Domain-Konfiguration.
 4. Finale Betreiber- und Hostingangaben erheben.
 5. Impressum und Datenschutzerklaerung anhand der tatsaechlich aktivierten Dienste finalisieren.
 6. Kontaktentscheidung treffen:
