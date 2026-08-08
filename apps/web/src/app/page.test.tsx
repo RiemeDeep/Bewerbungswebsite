@@ -4,7 +4,9 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it } from "vitest";
 
 import DatenschutzPage from "./datenschutz/page";
+import ImpressumPage from "./impressum/page";
 import KontaktPage from "./kontakt/page";
+import { metadata } from "./layout";
 import HomePage from "./page";
 import ProjektePage from "./projekte/page";
 import WerdegangPage from "./werdegang/page";
@@ -13,6 +15,10 @@ import { profileContent } from "../content/profile-content";
 afterEach(() => cleanup());
 
 describe("phase 1 pages", () => {
+  it("keeps the static release candidate out of search indexes before go-live", () => {
+    expect(metadata.robots).toMatchObject({ index: false, follow: false });
+  });
+
   it("renders the profile assistant as the central entry", () => {
     render(<HomePage />);
 
@@ -80,6 +86,15 @@ describe("phase 1 pages", () => {
       screen.getByRole("heading", { level: 1, name: /Nicht produktiver Datenschutz-Platzhalter/i }),
     ).toBeTruthy();
     expect(screen.getByText(/Diese Angaben werden nicht erfunden/i)).toBeTruthy();
+  });
+
+  it("keeps the imprint blocked until operator details are explicitly released", () => {
+    render(<ImpressumPage />);
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: /Nicht produktiver Platzhalter/i }),
+    ).toBeTruthy();
+    expect(screen.getByText(/Betreiberangaben, Anschrift, Kontaktwege/i)).toBeTruthy();
   });
 
   it("does not render contact addresses or phone numbers", () => {

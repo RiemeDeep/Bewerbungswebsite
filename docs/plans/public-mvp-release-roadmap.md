@@ -220,6 +220,9 @@ Entscheidung 2026-08-08: Die bereits gesetzten Kontexte werden akzeptiert; ein s
 die fehlenden Kontexte fuer 36 Claims und 36 Evidence Items ergaenzen.
 Missing-only Dry-Run 2026-08-08: erfolgreich mit `ROLLBACK`; der spaetere Apply kann auf 36 Claims und
 36 Evidence Items begrenzt werden.
+Phase 2.4 Abschluss 2026-08-08: Kontextfreigabe wurde committed, Retrieval-Gates und
+Rueckzugs-/Invalidierungsgate wurden remote nachgewiesen. Produktive KI-, Crawl-, Match- und
+Kontakt-Runtime bleiben deaktiviert; ein Evaluations-/Logging-Grenzplan wird vor Paket 5+ behandelt.
 
 Abnahme:
 
@@ -233,6 +236,12 @@ Abnahme:
 Prioritaet: P0
 
 Aufgaben:
+
+Fortschritt am 2026-08-08:
+
+- Globales `noindex,nofollow` bleibt testgesichert bis zum finalen Go-live-Gate aktiv.
+- Impressum und Datenschutz sind als nicht-produktive Platzhalter testgesichert, bis Betreiber-, Dienst-
+  und Kontaktentscheidungen final freigegeben sind.
 
 1. Oeffentliche Texte redaktionell glatten:
    - Umlaute statt technischer ASCII-Umschreibungen;

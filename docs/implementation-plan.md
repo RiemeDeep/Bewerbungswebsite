@@ -444,8 +444,9 @@ Alle 60 Public-Profile-Claims sind fachlich fuer `profile_assistant` und `job_an
 dokumentiert. Die technische Kontextfreigabe ueber `allowed_contexts`, Runtime-Filter und
 Rueckzugstests bleibt ein separates Gate.
 
-Naechste kleine Einheit: Phase 2.4 auswerten und entscheiden, ob vor Paket 4 noch ein separater
-Evaluations-/Logging-Grenzplan fuer Profilassistent und Stellenanalyse benoetigt wird.
+Naechste kleine Einheit: Paket 4 fortsetzen und den statischen Release-Kandidaten redaktionell sowie
+rechtlich absichern. Produktive Assistenten-/Match-Runtime bleibt Paket 5+ und bekommt vor Go-live einen
+separaten Evaluations- und Logging-Grenzplan.
 
 Planungsdokument:
 `docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
@@ -497,6 +498,15 @@ deaktiviert.
 
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.
+
+Phase-2.4-Auswertung 2026-08-08: Fuer Paket 4 ist kein weiteres KI-Zwischenpaket erforderlich, weil
+Paket 4 ein statischer Release-Kandidat bleibt. Der Evaluations-/Logging-Grenzplan wird vor produktiver
+Assistenten- oder Match-Runtime in Paket 5+ behandelt.
+
+Paket 4 gestartet 2026-08-08: Das erste Release-Kandidaten-Gate sichert testseitig ab, dass globale
+Suchmaschinenindexierung vor Go-live deaktiviert bleibt und Impressum sowie Datenschutz weiterhin als
+nicht-produktive Platzhalter blockieren, bis Betreiber-, Dienst- und Kontaktentscheidungen final
+freigegeben sind.
 
 ## Bisherige technische Umsetzungseinheit
 
