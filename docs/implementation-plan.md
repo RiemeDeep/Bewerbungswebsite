@@ -444,9 +444,8 @@ Alle 60 Public-Profile-Claims sind fachlich fuer `profile_assistant` und `job_an
 dokumentiert. Die technische Kontextfreigabe ueber `allowed_contexts`, Runtime-Filter und
 Rueckzugstests bleibt ein separates Gate.
 
-Naechste kleine Einheit: technische Freigabeplanung fuer `profile_assistant` und `job_analysis` aus den
-Review-Entscheidungen ableiten, inklusive SQL-Aenderungsplan, Rueckzugstest und Runtime-Tests ohne
-produktive Aktivierung.
+Naechste kleine Einheit: Phase 2.4 auswerten und entscheiden, ob vor Paket 4 noch ein separater
+Evaluations-/Logging-Grenzplan fuer Profilassistent und Stellenanalyse benoetigt wird.
 
 Planungsdokument:
 `docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
@@ -465,6 +464,36 @@ darf nur die fehlenden Kontexte fuer 36 Claims und 36 Evidence Items ergaenzen.
 Missing-only Dry-Run 2026-08-08: nach erneutem Backup und Restore-Test erfolgreich mit `ROLLBACK`;
 ein Apply wuerde 36 Claims und 36 Evidence Items neu ergaenzen und die bereits vollstaendig
 freigegebenen 24 Claims und 25 Evidence Items nicht erneut schreiben.
+
+Paket 3.1 lokaler Stand 2026-08-08: versionierter Orchestrator-CLI-Pfad
+`profile:context-release:check|dry-run|apply` vorbereitet. Der Pfad liest das Manifest, prueft die
+Audit-Zaehler fail-closed, schreibt missing-only und verlangt fuer `apply` den Confirm-Wert
+`APPLY_PROFILE_CONTEXT_RELEASE_2026_08_08`. Es wurde noch kein produktiver DB-Commit ausgefuehrt.
+
+Paket 3.1 Remote-Vorstufe 2026-08-08: Backup und Restore-Test erneut erfolgreich; der missing-only
+Dry-Run im VPS-Postgres-Container bestaetigte 36 Claim- und 36 Evidence-Updates und wurde mit
+`ROLLBACK` beendet. Es wurde weiterhin kein produktiver DB-Commit ausgefuehrt.
+
+Paket 3.1 Produktiv-Apply 2026-08-08: nach ausdruecklicher Freigabe, erneutem Backup und Restore-Test
+wurden 36 Claims und 36 Evidence Items missing-only fuer `profile_assistant` und `job_analysis`
+committed. Der Post-Commit-Check bestaetigte 60 vollstaendig freigegebene Manifest-Claims, 61
+vollstaendig freigegebene Evidence Items und 0 missing. Die `public_profile`-Projektion blieb bei 60
+Claims und 61 Evidence Items. Produktive KI-, Crawl-, Match- oder Kontaktfunktionen bleiben weiterhin
+deaktiviert.
+
+Paket 3.2 Retrieval-Gates 2026-08-08: `profile:retrieval:gate` wurde als rein zaehlerbasiertes Gate
+ergaenzt. Remote bestaetigt: `profile_assistant` und `job_analysis` liefern jeweils 65 Claims und 66
+Evidence Items, Invalid-Row-Zaehler sind 0/0, die `public_profile`-Projektion bleibt 60/61. Repository-
+Tests sichern die Kontext-, Status-, Sichtbarkeits-, Evidence- und Source-Document-Filter sowie den
+Ausschluss privater Source-Felder ab. Es wurde keine KI-, Crawl-, Match- oder Kontakt-Runtime aktiviert.
+
+Paket 3.3 Rueckzugs-/Invalidierungsgate 2026-08-08: `profile:withdrawal:gate` wurde als transaktionales
+Rollback-Gate ergaenzt. Nach erneutem VPS-Backup und Restore-Test wurde ein fuer alle drei Kontexte
+sichtbarer Testclaim innerhalb einer Transaktion auf `withdrawn` gesetzt. Vor Rueckzug war er in
+`public_profile`, `profile_assistant` und `job_analysis` jeweils mit 1 Claim und 1 Evidence Item
+sichtbar; nach simuliertem Rueckzug jeweils 0/0. Die Transaktion endete mit `ROLLBACK`, und der
+Post-Rollback-Check bestaetigte wieder 1/1 in allen drei Kontexten. Produktive Runtime bleibt
+deaktiviert.
 
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.

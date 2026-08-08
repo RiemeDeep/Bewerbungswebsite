@@ -66,6 +66,7 @@ describe("createPostgresProfileRepository", () => {
     expect(calls[0]?.text).toContain("$1::public.profile_usage_context = any(c.allowed_contexts)");
     expect(calls[0]?.text).toContain("$1::public.profile_usage_context = any(e.allowed_contexts)");
     expect(calls[0]?.text).toContain("sd.publication_status = 'published'");
+    expect(calls[0]?.text).not.toMatch(/sd\.title|sd\.storage_path|document_locator|chunk/u);
   });
 });
 

@@ -197,6 +197,7 @@ describe("createPostgresMatchEvidenceRepository", () => {
       "'job_analysis'::public.profile_usage_context = any(e.allowed_contexts)",
     );
     expect(calls[0]?.text).toContain("sd.publication_status = 'published'");
+    expect(calls[0]?.text).not.toMatch(/sd\.title|sd\.storage_path|document_locator|chunk/u);
   });
 });
 

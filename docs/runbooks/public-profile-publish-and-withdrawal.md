@@ -63,6 +63,35 @@ Wenn zugehoerige Evidence nicht mehr in anderen veroeffentlichten Claims verwend
 separat fachlich pruefen und ebenfalls kontrolliert zurueckziehen. Nicht pauschal alle Evidence Items
 loeschen oder zurueckziehen, weil Evidence fachlich wiederverwendbar sein kann.
 
+## Rueckzugsgate Nach Kontextfreigabe
+
+Vor produktiver Nutzung von `profile_assistant` oder `job_analysis` muss ein Rueckzugsgate nachweisen,
+dass ein zurueckgezogener Claim aus allen drei relevanten Projektionen verschwindet. Das Gate arbeitet in
+einer Transaktion und endet mit `ROLLBACK`.
+
+Vor Remote-Ausfuehrung gelten Backup und Restore-Test aus dem Abschnitt `VPS-Zugang Und Sicherung`.
+
+```powershell
+$env:PROFILE_DATABASE_URL = '<admin-url-via-secure-access>'
+$env:PROFILE_WITHDRAWAL_GATE_CLAIM_ID = '32000000-0000-4000-8000-000000200031'
+pnpm profile:withdrawal:gate
+```
+
+Erwartung:
+
+- Vor simuliertem Rueckzug ist der Claim in `public_profile`, `profile_assistant` und `job_analysis`
+  sichtbar.
+- Nach `publication_status = 'withdrawn'` innerhalb der Transaktion ist er in allen drei Kontexten nicht
+  mehr sichtbar.
+- Die Transaktion endet mit `ROLLBACK`; der Testclaim bleibt produktiv unveraendert.
+- Die CLI darf keine Profilinhalte ausgeben.
+
+Letztes Gate: Am 2026-08-08 wurde nach Backup
+`/opt/bewerbungswebsite/backups/postgres/bewerbungswebsite-20260808T155841Z.dump` und erfolgreichem
+Restore-Test Claim `32000000-0000-4000-8000-000000200031` getestet. Vor Rueckzug: 1 Claim/1 Evidence in
+allen drei Kontexten. Nach simuliertem Rueckzug: 0/0 in allen drei Kontexten. Danach `ROLLBACK` und
+Post-Rollback wieder 1/1 in allen drei Kontexten.
+
 ## Publish-Projektion Pruefen
 
 Wenn die Datenbank nur intern im Docker-Netz des VPS erreichbar ist, lokal einen temporaeren SSH-Tunnel
@@ -88,6 +117,46 @@ Erwartung nach einer synchronisierten Public-Profile-Korrektur:
 - `check` ist bytegenau erfolgreich, wenn PostgreSQL-Projektion und
   `apps/web/src/content/generated/public-profile.json` synchron sind.
 - Bei Drift zuerst klaeren, ob PostgreSQL oder der Snapshot die fachlich freigegebene Version enthaelt.
+
+## Kontextfreigabe Fuer Profilassistent Und Job-Analyse
+
+Die fachlich reviewten Claims aus `docs/content/profile-context-release-manifest.json` koennen ueber den
+versionierten Orchestrator-Pfad technisch fuer `profile_assistant` und `job_analysis` ergaenzt werden.
+Der Schritt bleibt vom Artefakt-Publish und von produktiver Runtime-Aktivierung getrennt.
+
+Vor jedem Remote-Schreibversuch gelten Backup und Restore-Test aus dem Abschnitt `VPS-Zugang Und
+Sicherung`. Danach zuerst nur pruefen und dry-runnen:
+
+```powershell
+$env:PROFILE_DATABASE_URL = '<admin-url-via-secure-access>'
+pnpm profile:context-release:check
+pnpm profile:context-release:dry-run
+```
+
+Erwartete Ausgabe-Zaehler vor Apply: 60 Manifest-Claims, 60 eligible Claims, 61 eligible Evidence Items,
+24 bereits vollstaendig freigegebene Claims, 25 bereits vollstaendig freigegebene Evidence Items, 36
+fehlende Claims und 36 fehlende Evidence Items. Jede Abweichung ist ein Stop-Signal.
+
+Nach dem Apply ist der bekannte Sollzustand: 60 vollstaendig freigegebene Claims, 61 vollstaendig
+freigegebene Evidence Items und 0 fehlende Claims beziehungsweise Evidence Items. Wiederholte
+`dry-run`-/`apply`-Aufrufe duerfen dann keine weiteren Datensaetze schreiben.
+
+Nur nach ausdruecklicher Freigabe:
+
+```powershell
+$env:PROFILE_CONTEXT_RELEASE_CONFIRM = 'APPLY_PROFILE_CONTEXT_RELEASE_2026_08_08'
+pnpm profile:context-release:apply
+```
+
+Die CLI darf keine Profilinhalte ausgeben. Nach Apply muessen `profile:publish:validate` und
+`profile:publish:check` weiterhin erfolgreich bleiben; produktive KI-, Crawl-, Match- oder
+Kontaktfunktionen bleiben bis zu separaten Runtime-Gates deaktiviert.
+
+Letzter Apply: Am 2026-08-08 wurden nach Backup
+`/opt/bewerbungswebsite/backups/postgres/bewerbungswebsite-20260808T153402Z.dump` und erfolgreichem
+Restore-Test 36 Claims und 36 Evidence Items missing-only committed. Der Post-Commit-Check bestaetigte
+60/61 vollstaendig freigegebene Datensaetze und 0/0 missing; die `public_profile`-Projektion blieb bei
+60 Claims und 61 Evidence Items.
 
 ## Artefakt Neu Schreiben
 

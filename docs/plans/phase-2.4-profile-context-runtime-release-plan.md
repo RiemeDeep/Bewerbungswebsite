@@ -1,7 +1,7 @@
 # Phase 2.4: Profil-Kontextfreigabe Fuer Assistant Und Job-Analyse
 
 Stand: 2026-08-08
-Status: lokales Gate umgesetzt, Remote-Dry-Run bestanden, kein Commit/Apply
+Status: missing-only Kontextfreigabe auf VPS committed, Runtime-Aktivierung offen
 
 ## Ziel
 
@@ -235,3 +235,182 @@ Folgerung:
 - Der naechste technische Apply kann als missing-only Apply vorbereitet werden.
 - Vor einem echten `COMMIT` sind erneut Backup, Restore-Test und missing-only `ROLLBACK` Pflicht.
 - Produktive Runtime-Aktivierung bleibt davon getrennt.
+
+## Paket 3.1: Versionierter Missing-Only-Apply-Pfad
+
+Der technische Apply-Pfad ist lokal als Orchestrator-CLI vorbereitet und schreibt keine Profilinhalte in
+die Ausgabe. Die CLI liest `docs/content/profile-context-release-manifest.json`, prueft die bekannten
+Audit-Zaehler fail-closed und verwendet dieselben SQL-Filter wie der manuelle Dry-Run.
+
+Befehle:
+
+```powershell
+$env:PROFILE_DATABASE_URL = '<admin-url-via-secure-access>'
+pnpm profile:context-release:check
+pnpm profile:context-release:dry-run
+```
+
+Erwartung vor produktivem Apply:
+
+- `manifestClaims = 60`
+- `eligibleClaims = 60`
+- `eligibleEvidence = 61`
+- `fullyReleasedClaims = 24`
+- `fullyReleasedEvidence = 25`
+- `missingClaims = 36`
+- `missingEvidence = 36`
+- `dry-run` meldet `updatedClaims = 36` und `updatedEvidence = 36` und endet mit `ROLLBACK`.
+
+Erwartung nach produktivem Apply:
+
+- `fullyReleasedClaims = 60`
+- `fullyReleasedEvidence = 61`
+- `missingClaims = 0`
+- `missingEvidence = 0`
+- `check` meldet den bekannten Zustand `applied`.
+
+Ein echter Apply ist nur nach erneutem VPS-Backup, Restore-Test, erfolgreichem `dry-run` und
+ausdruecklicher Nutzerbestaetigung erlaubt:
+
+```powershell
+$env:PROFILE_CONTEXT_RELEASE_CONFIRM = 'APPLY_PROFILE_CONTEXT_RELEASE_2026_08_08'
+pnpm profile:context-release:apply
+```
+
+Der Apply ist weiterhin kein Runtime-Go-live. Danach sind mindestens `profile:publish:validate`,
+`profile:publish:check`, Retrieval-Gates und Rueckzug-/Invalidierungstests Pflicht, bevor produktive
+KI-, Crawl-, Match- oder Kontaktfunktionen aktiviert werden.
+
+## Paket 3.1 Remote-Vorstufe 2026-08-08
+
+Vor einem produktiven Apply wurden Backup und Restore-Test auf dem VPS erneut erfolgreich ausgefuehrt.
+Der anschliessende missing-only Dry-Run lief direkt im Postgres-Container, gab nur Zaehler aus und endete
+mit `ROLLBACK`.
+
+Ergebnis:
+
+- Backup-Datei: `/opt/bewerbungswebsite/backups/postgres/bewerbungswebsite-20260808T150046Z.dump`.
+- `manifestClaims = 60`
+- `eligibleClaims = 60`
+- `eligibleEvidence = 61`
+- `fullyReleasedClaims = 24`
+- `fullyReleasedEvidence = 25`
+- `missingClaims = 36`
+- `missingEvidence = 36`
+- `updatedClaims = 36`
+- `updatedEvidence = 36`
+- hypothetischer Post-Check: 60 Claims und 61 Evidence Items vollstaendig freigegeben, 0 Claims und 0
+  Evidence Items missing.
+- Die Transaktion endete mit `ROLLBACK`; es wurden keine zusaetzlichen Kontexte persistiert.
+
+## Paket 3.1 Produktiver Apply 2026-08-08
+
+Nach ausdruecklicher Nutzerfreigabe wurde der echte missing-only Apply auf dem VPS ausgefuehrt. Direkt
+davor liefen Backup und Restore-Test erneut erfolgreich.
+
+Ergebnis:
+
+- Backup-Datei: `/opt/bewerbungswebsite/backups/postgres/bewerbungswebsite-20260808T153402Z.dump`.
+- Pre-Apply-Zaehler: 60 Manifest-Claims, 60 eligible Claims, 61 eligible Evidence Items, 24 bereits
+  vollstaendig freigegebene Claims, 25 bereits vollstaendig freigegebene Evidence Items, 36 missing
+  Claims und 36 missing Evidence Items.
+- Apply: 36 Claims und 36 Evidence Items wurden missing-only fuer `profile_assistant` und
+  `job_analysis` ergaenzt.
+- Post-Apply-Zaehler innerhalb der Transaktion: 60 Claims und 61 Evidence Items vollstaendig
+  freigegeben, 0 Claims und 0 Evidence Items missing.
+- Die Transaktion endete mit `COMMIT`.
+- Unabhaengiger Post-Commit-Check: 60 Manifest-Claims, 60 eligible Claims, 61 eligible Evidence Items,
+  60 vollstaendig freigegebene Claims, 61 vollstaendig freigegebene Evidence Items, 0 missing Claims, 0
+  missing Evidence Items.
+- Die `public_profile`-Projektion liefert weiterhin 60 Claims und 61 Evidence Items; das oeffentliche
+  Artefakt wurde durch die Kontextfreigabe nicht geaendert.
+
+Produktive Runtime-Aktivierung bleibt ausgeschlossen, bis die separaten Retrieval-, Rueckzugs- und
+Invalidierungsgates bestanden sind.
+
+## Paket 3.2: Retrieval-Gates Ohne KI-Aktivierung
+
+Das Retrieval-Gate prueft die beiden technischen Zielkontexte nach dem committed Apply rein ueber
+aggregierte Zaehler. Es fuehrt keine Modell-, Assistant-, Crawl-, Match- oder Kontakt-Runtime aus und
+gibt keine Profiltexte, Evidence Labels, privaten Source-Felder oder Secrets aus.
+
+Befehl:
+
+```powershell
+$env:PROFILE_DATABASE_URL = '<read-only-or-admin-url-via-secure-access>'
+pnpm profile:retrieval:gate
+```
+
+Lokale Absicherung:
+
+- `createPostgresProfileRepository` filtert weiterhin auf `profile_assistant`, `published`,
+  `subject_verified`, nicht-private Entity/Claim-Sichtbarkeit, sichere Evidence-Sichtbarkeit,
+  sichere Evidence-Basis und published Source Documents.
+- `createPostgresMatchEvidenceRepository` filtert weiterhin analog auf `job_analysis`.
+- Beide Repository-SQL-Tests sichern ab, dass keine privaten Source-Felder wie Source-Titel,
+  Storage-Pfade, Locator oder Chunks selektiert werden.
+- `profile:retrieval:gate` bricht fail-closed ab, wenn die erwarteten Retrieval-Zaehler oder die
+  Invalid-Row-Zaehler driften.
+
+Remote-Ergebnis 2026-08-08:
+
+- `profileAssistantClaims = 65`
+- `profileAssistantEvidence = 66`
+- `profileAssistantInvalidRows = 0`
+- `jobAnalysisClaims = 65`
+- `jobAnalysisEvidence = 66`
+- `jobAnalysisInvalidRows = 0`
+- `publicProfileClaims = 60`
+- `publicProfileEvidence = 61`
+
+Interpretation:
+
+- Beide Retrieval-Kontexte sind nach Paket 3.1 technisch verfuegbar.
+- Es gibt keine Datensaetze mit Retrieval-Kontexten, die durch Status-, Sichtbarkeits-, Review-,
+  Evidence- oder Source-Document-Gates als ungueltig zaehlen.
+- Die oeffentliche Projektion bleibt kleiner und unveraendert bei 60 Claims und 61 Evidence Items.
+- Produktive Runtime-Aktivierung bleibt weiterhin ausgeschlossen; Paket 3.3 muss Rueckzug und
+  Invalidierung nach Kontextfreigabe pruefen.
+
+## Paket 3.3: Rueckzugs- Und Invalidierungsgate
+
+Das Rueckzugsgate prueft einen realen, bereits fuer alle drei Kontexte sichtbaren Claim in einer
+isolierten Transaktion. Der Test setzt `publication_status = 'withdrawn'` und `withdrawn_at = now()` nur
+innerhalb der Transaktion, zaehlt die Sichtbarkeit erneut und rollt danach zurueck. Es werden keine
+Profiltexte, Evidence Labels, privaten Source-Felder oder Secrets ausgegeben.
+
+Befehl:
+
+```powershell
+$env:PROFILE_DATABASE_URL = '<admin-url-via-secure-access>'
+$env:PROFILE_WITHDRAWAL_GATE_CLAIM_ID = '32000000-0000-4000-8000-000000200031'
+pnpm profile:withdrawal:gate
+```
+
+Lokale Absicherung:
+
+- `profile:withdrawal:gate` bricht ab, wenn der ausgewaehlte Claim vor Rueckzug nicht in
+  `public_profile`, `profile_assistant` und `job_analysis` sichtbar ist.
+- Das Gate bricht ab, wenn nach simuliertem Rueckzug in einem der drei Kontexte noch Claim- oder
+  Evidence-Sichtbarkeit uebrig bleibt.
+- Das Gate fuehrt immer `ROLLBACK` aus; auch Fehlerpfade versuchen zurueckzurollen.
+
+Remote-Ergebnis 2026-08-08:
+
+- Vor Schreibversuch liefen Backup und Restore-Test erfolgreich.
+- Backup-Datei: `/opt/bewerbungswebsite/backups/postgres/bewerbungswebsite-20260808T155841Z.dump`.
+- Testclaim: `32000000-0000-4000-8000-000000200031`.
+- Vor simuliertem Rueckzug: `public_profile`, `profile_assistant` und `job_analysis` jeweils 1 Claim und
+  1 Evidence Item sichtbar.
+- Simulierter Rueckzug aktualisierte 1 Claim innerhalb der Transaktion.
+- Nach simuliertem Rueckzug: alle drei Kontexte jeweils 0 Claims und 0 Evidence Items sichtbar.
+- Die Transaktion endete mit `ROLLBACK`.
+- Post-Rollback-Check: der Testclaim ist wieder in allen drei Kontexten mit 1 Claim und 1 Evidence Item
+  sichtbar.
+
+Interpretation:
+
+- `publication_status = 'withdrawn'` invalidiert nach Kontextfreigabe weiterhin `public_profile`,
+  `profile_assistant` und `job_analysis` deterministisch.
+- Produktive Runtime-Aktivierung bleibt dennoch ausgeschlossen, bis Evaluation, Logging-Grenzen und der
+  spaetere Re-Indexierungs-/Publish-Ereignispfad entschieden sind.
