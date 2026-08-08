@@ -19,9 +19,9 @@ export default function ProfilePage() {
         </p>
       </section>
       <SectionNote>
-        Die Inhalte sind freigegeben fuer die oeffentliche Vorbereitung. Sensible Details wie
-        private Namen, exakte Kaufpreise, Steuerdaten und interne Zeugnisformulierungen bleiben
-        bewusst ausgeblendet.
+        Die Inhalte sind freigegeben für die öffentliche Vorbereitung. Sensible Details wie private
+        Namen, exakte Kaufpreise, Steuerdaten und interne Zeugnisformulierungen bleiben bewusst
+        ausgeblendet.
       </SectionNote>
       <section className="content-section" aria-labelledby="competencies-title">
         <div className="section-heading">

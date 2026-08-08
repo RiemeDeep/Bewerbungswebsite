@@ -508,6 +508,11 @@ Suchmaschinenindexierung vor Go-live deaktiviert bleibt und Impressum sowie Date
 nicht-produktive Platzhalter blockieren, bis Betreiber-, Dienst- und Kontaktentscheidungen final
 freigegeben sind.
 
+Paket 4 redaktionelle Glättung 2026-08-08: sichtbare statische Release-Copy wurde von technischen
+ASCII-Umschreibungen auf normale deutsche Schreibweise umgestellt. Claim-Statements aus dem
+Public-Profile-Artefakt wurden dabei nicht fachlich verändert; ein Web-Content-Test sichert die
+statische Editorial-Copy gegen erneute technische Umschreibungen ab.
+
 ## Bisherige technische Umsetzungseinheit
 
 Phase-5.0 Match-Analyse:

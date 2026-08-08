@@ -116,7 +116,7 @@ describe("phase 1 pages", () => {
       expect(screen.getByRole("heading", { level: 3, name: item.title })).toBeTruthy();
     }
     expect(
-      screen.getByRole("heading", { level: 3, name: "Bewusst nicht veroeffentlicht" }),
+      screen.getByRole("heading", { level: 3, name: "Bewusst nicht veröffentlicht" }),
     ).toBeTruthy();
     expect(text).not.toMatch(/[\w.-]+@[\w.-]+\.[a-z]{2,}/iu);
     expect(text).not.toMatch(/IBAN|St\.Nr\.|UStId/u);

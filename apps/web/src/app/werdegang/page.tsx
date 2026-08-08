@@ -60,7 +60,7 @@ export default function WerdegangPage() {
       <section className="content-section" aria-labelledby="visible-fields-title">
         <div className="section-heading">
           <p className="eyebrow">Sichtbarkeit</p>
-          <h2 id="visible-fields-title">Was sichtbar ist und was bewusst draussen bleibt</h2>
+          <h2 id="visible-fields-title">Was sichtbar ist und was bewusst draußen bleibt</h2>
         </div>
         <div className="release-grid">
           <article className="info-card">
@@ -72,7 +72,7 @@ export default function WerdegangPage() {
             </ul>
           </article>
           <article className="info-card">
-            <h3>Bewusst nicht veroeffentlicht</h3>
+            <h3>Bewusst nicht veröffentlicht</h3>
             <ul className="plain-list">
               {overview.withheldFields.map((field) => (
                 <li key={field}>{field}</li>

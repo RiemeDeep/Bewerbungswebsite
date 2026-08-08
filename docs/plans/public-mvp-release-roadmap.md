@@ -242,6 +242,9 @@ Fortschritt am 2026-08-08:
 - Globales `noindex,nofollow` bleibt testgesichert bis zum finalen Go-live-Gate aktiv.
 - Impressum und Datenschutz sind als nicht-produktive Platzhalter testgesichert, bis Betreiber-, Dienst-
   und Kontaktentscheidungen final freigegeben sind.
+- Erste redaktionelle Glättung der statischen Release-Copy umgesetzt: sichtbare technische
+  ASCII-Umschreibungen in Layout-, Übersichts- und Sicherheitskopien wurden durch normale deutsche
+  Schreibweise ersetzt, ohne Claim-Statements fachlich zu verändern.
 
 1. Oeffentliche Texte redaktionell glatten:
    - Umlaute statt technischer ASCII-Umschreibungen;

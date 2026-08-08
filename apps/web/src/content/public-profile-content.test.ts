@@ -184,4 +184,20 @@ describe("public profile content assembly", () => {
       "Noten und interne Zeugnisformulierungen",
     );
   });
+
+  it("uses polished German spelling in static editorial release copy", () => {
+    const staticEditorialCopy = JSON.stringify({
+      meta: profileContent.meta,
+      careerOverview: profileContent.careerOverview,
+      projectsOverview: profileContent.projectsOverview,
+      credentialGroups: profileContent.credentialGroups.map(({ title, summary }) => ({
+        title,
+        summary,
+      })),
+    });
+
+    expect(staticEditorialCopy).not.toMatch(
+      /oeffentlich|Belegauszuege|Zeitraeume|vollstaendige|ausserhalb|ausschliesslich|Teamfuehrung|Qualitaet/u,
+    );
+  });
 });

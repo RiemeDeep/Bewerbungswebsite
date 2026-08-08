@@ -82,7 +82,7 @@ export function assemblePublicProfileContent(input: unknown): ProfileContent {
       language: "de",
       editorialStatus: "approved-public-draft",
       notice:
-        "Freigegebene oeffentliche Arbeitsfassung aus dem kontrollierten Public-Profile-Artefakt.",
+        "Freigegebene öffentliche Arbeitsfassung aus dem kontrollierten Public-Profile-Artefakt.",
     },
     assistantEntry: {
       eyebrow: "Interaktives Kandidatenprofil",
@@ -143,20 +143,20 @@ export function assemblePublicProfileContent(input: unknown): ProfileContent {
       eyebrow: "Werdegang",
       title: "Freigegebene Stationen mit bewussten Grenzen",
       intro:
-        "Die folgenden Stationen werden aus freigegebenen Claims und oeffentlichen Belegauszuegen zusammengesetzt.",
+        "Die folgenden Stationen werden aus freigegebenen Claims und öffentlichen Belegauszügen zusammengesetzt.",
       releaseNote:
         "Zahlen und Ergebnisse erscheinen nur, wenn sie im Public-Profile-Artefakt freigegeben sind.",
       status: "released-timeline",
       visibleFields: [
-        "freigegebene Rollen, Zeitraeume und Aufgaben",
+        "freigegebene Rollen, Zeiträume und Aufgaben",
         "freigegebene Projekt- und Qualifikationsclaims",
-        "oeffentliche Beleglabels und Belegauszuege",
+        "öffentliche Beleglabels und Belegauszüge",
       ],
       withheldFields: [
         "private Namen von Mitarbeitenden, Teammitgliedern und Ansprechpartnern",
-        "Bankverbindungen, Steuerdaten, Telefonnummern und vollstaendige Partnerlisten",
+        "Bankverbindungen, Steuerdaten, Telefonnummern und vollständige Partnerlisten",
         "exakter Exit-Adventures-Kaufpreis",
-        "interne Zeugnisformulierungen ausserhalb freigegebener Notenangaben",
+        "interne Zeugnisformulierungen außerhalb freigegebener Notenangaben",
         "Heil-, Therapie- oder Erfolgversprechen im Fitness-/Coachingkontext",
       ],
     },
@@ -198,7 +198,7 @@ export function assemblePublicProfileContent(input: unknown): ProfileContent {
       eyebrow: "Projekte",
       title: "Freigegebene Projektkerne ohne sensible Rohdaten",
       intro:
-        "Die Projektseite verwendet ausschliesslich freigegebene Aussagen aus dem Public-Profile-Artefakt.",
+        "Die Projektseite verwendet ausschließlich freigegebene Aussagen aus dem Public-Profile-Artefakt.",
       releaseNote:
         "Private Namen, steuerliche Details, exakte Kaufpreise und interne Unterlagen bleiben ausgeblendet.",
       status: "released-project-summaries",

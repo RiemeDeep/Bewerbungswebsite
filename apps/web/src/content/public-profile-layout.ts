@@ -117,7 +117,7 @@ export const publicProfileLayout = {
     },
     {
       id: "sales-team-management",
-      title: "Sales, Kundenkommunikation und Teamfuehrung",
+      title: "Sales, Kundenkommunikation und Teamführung",
       periodMode: "range",
       periodClaimIds: ["32000000-0000-4000-8000-000000200011"],
       roleClaimId: "32000000-0000-4000-8000-000000200011",
@@ -223,7 +223,7 @@ export const publicProfileLayout = {
     },
     {
       id: "qualitaet-projekt",
-      title: "Qualitaet und Projektmanagement",
+      title: "Qualität und Projektmanagement",
       summary: "Historische Abschlüsse ohne Behauptung einer heutigen Zertifikatsgültigkeit.",
       claimIds: [
         "32000000-0000-4000-8000-000000200042",
