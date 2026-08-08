@@ -71,6 +71,8 @@ export {
 export type { NormalizedJobRequirement } from "./match-requirements.js";
 export { profileContentSchema } from "./profile-content.js";
 export type { ProfileContent } from "./profile-content.js";
+export { profileContextReleaseManifestSchema } from "./profile-context-release.js";
+export type { ProfileContextReleaseManifest } from "./profile-context-release.js";
 export { publicProfileArtifactSchema } from "./public-profile-artifact.js";
 export type {
   PublicProfileArtifact,

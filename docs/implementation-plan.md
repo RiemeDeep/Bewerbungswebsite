@@ -448,6 +448,9 @@ Naechste kleine Einheit: technische Freigabeplanung fuer `profile_assistant` und
 Review-Entscheidungen ableiten, inklusive SQL-Aenderungsplan, Rueckzugstest und Runtime-Tests ohne
 produktive Aktivierung.
 
+Planungsdokument:
+`docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
+
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.
 

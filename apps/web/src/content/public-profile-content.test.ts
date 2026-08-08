@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
+import { profileContextReleaseManifestSchema } from "@bewerbungswebsite/contracts";
 
 import {
   assemblePublicProfileContent,
@@ -65,6 +66,40 @@ function getEvidenceStoryMatrixClaimIds(): string[] {
     });
 }
 
+function getApprovedContextReviewClaimIds(): string[] {
+  const reviewDirectory = new URL("../../../../docs/content/context-reviews/", import.meta.url);
+  return readdirSync(reviewDirectory)
+    .filter((fileName) => fileName.endsWith("-context-review.md"))
+    .flatMap((fileName) => {
+      const review = readFileSync(new URL(fileName, reviewDirectory), "utf8");
+      expect(review).toContain("database_change_requested: false");
+
+      return review
+        .split("\n")
+        .filter((line) => line.startsWith("| `") && line.includes("`approve`"))
+        .map((line) => {
+          const [claimId] = line.match(claimIdPattern) ?? [];
+          if (!claimId) throw new Error(`Missing claim id in ${fileName}: ${line}`);
+          expect(line).toMatch(/\| `approve`\s+\| `approve`\s+\|/u);
+          return claimId;
+        });
+    });
+}
+
+function getContextReleaseManifestClaimIds(): string[] {
+  const manifest = profileContextReleaseManifestSchema.parse(
+    JSON.parse(
+      readFileSync(
+        new URL("../../../../docs/content/profile-context-release-manifest.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+  );
+
+  expect(manifest.targetContexts).toEqual(["profile_assistant", "job_analysis"]);
+  return manifest.claimIds;
+}
+
 describe("public profile content assembly", () => {
   it("accounts for every artifact claim explicitly", () => {
     const accountedFor = new Set(getPublicProfileLayoutClaimIds());
@@ -79,6 +114,17 @@ describe("public profile content assembly", () => {
 
     expect(new Set(matrixClaimIds)).toEqual(new Set(artifactClaimIds));
     expect(matrixClaimIds).toHaveLength(artifactClaimIds.length);
+  });
+
+  it("keeps context review approvals aligned with every artifact claim without DB activation", () => {
+    const reviewClaimIds = getApprovedContextReviewClaimIds();
+    const manifestClaimIds = getContextReleaseManifestClaimIds();
+    const artifactClaimIds = publicProfileArtifact.claims.map((claim) => claim.claimId);
+
+    expect(new Set(reviewClaimIds)).toEqual(new Set(artifactClaimIds));
+    expect(reviewClaimIds).toHaveLength(artifactClaimIds.length);
+    expect(new Set(manifestClaimIds)).toEqual(new Set(artifactClaimIds));
+    expect(manifestClaimIds).toHaveLength(artifactClaimIds.length);
   });
 
   it("removes a withdrawn mapped claim from assembled website content", () => {

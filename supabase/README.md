@@ -26,6 +26,8 @@ Regeln:
   MatchAnalysis-Persistenz mit Token-Hash, TTL, Status und restriktiver RLS.
 - `tests/match_analysis_storage.sql` prueft direkte Rollenrechte, RLS, fehlende Klartexttoken-Spalten,
   Hashformat und Expiry-Constraints.
+- `tests/profile_context_release_dry_run.sql` prueft den synthetischen Rollback-Dry-Run fuer die
+  technische Freigabe von `profile_assistant` und `job_analysis`, ohne produktive Kontexte zu setzen.
 
 Lokale Ausfuehrung:
 
@@ -34,6 +36,7 @@ pnpm dlx supabase start
 pnpm dlx supabase db reset
 $env:PGPASSWORD='postgres'; psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f "supabase/tests/stage_2_profile_knowledge.sql"
 $env:PGPASSWORD='postgres'; psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f "supabase/tests/match_analysis_storage.sql"
+$env:PGPASSWORD='postgres'; psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f "supabase/tests/profile_context_release_dry_run.sql"
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- supabase-profile-repository.test.ts
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- match-analysis-store.test.ts
 $env:LOCAL_SUPABASE_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'; pnpm --filter @bewerbungswebsite/orchestrator test -- match-storage-runtime.test.ts

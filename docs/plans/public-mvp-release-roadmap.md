@@ -210,6 +210,9 @@ Noch offen:
 - Runtime-Filter, Retrieval-/Assistant-Verhalten und Claim-Rueckzug nach Kontextfreigabe testen.
 - Visuelle Vorschauabnahme auf Desktop und Smartphone abschliessen.
 
+Planungsartefakt fuer die technische Freigabe:
+`docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
+
 Abnahme:
 
 - Der vollstaendige oeffentlich freigegebene Werdegang liegt strukturiert vor.
