@@ -21,6 +21,60 @@ describe("orchestrator runtime dependencies", () => {
     await expect(runtime.close()).resolves.toBeUndefined();
   });
 
+  it("enables the protected profile assistant staging runtime only with complete configuration", async () => {
+    const runtime = createRuntimeApp({
+      ENABLE_PROFILE_ASSISTANT_STAGING: "1",
+      PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+      LLM_API_KEY: "sk-test",
+      LLM_ASSISTANT_MODEL: "test-model",
+      ORCHESTRATOR_REQUEST_SECRET: "strong-internal-test-secret",
+    });
+
+    expect(runtime.dependencies.profileAssistant).toBeDefined();
+    expect(runtime.dependencies.profileAssistantAccess).toBeDefined();
+    await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
+  it("rejects profile assistant staging combined with the synthetic assistant", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_PROFILE_ASSISTANT_STAGING: "1",
+        ENABLE_SYNTHETIC_ASSISTANT_TEST: "1",
+        PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+        LLM_API_KEY: "sk-test",
+        ORCHESTRATOR_REQUEST_SECRET: "strong-internal-test-secret",
+      }),
+    ).toThrow("cannot be combined");
+  });
+
+  it("rejects profile assistant staging without profile storage or provider credentials", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_PROFILE_ASSISTANT_STAGING: "1",
+        ORCHESTRATOR_REQUEST_SECRET: "strong-internal-test-secret",
+      }),
+    ).toThrow("requires PROFILE_DATABASE_URL");
+
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_PROFILE_ASSISTANT_STAGING: "1",
+        PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+        ORCHESTRATOR_REQUEST_SECRET: "strong-internal-test-secret",
+      }),
+    ).toThrow("requires LLM_API_KEY or OPENAI_API_KEY");
+  });
+
+  it("rejects profile assistant staging with a missing or placeholder internal secret", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_PROFILE_ASSISTANT_STAGING: "1",
+        PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+        LLM_API_KEY: "sk-test",
+        ORCHESTRATOR_REQUEST_SECRET: "replace-me",
+      }),
+    ).toThrow("requires a non-placeholder internal secret");
+  });
+
   it("enables the job context preview with the deterministic mock crawl provider", async () => {
     const runtime = createRuntimeApp({
       ENABLE_JOB_CONTEXT_PREVIEW: "1",

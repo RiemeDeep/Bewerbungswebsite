@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import type { AccessibleMatchAnalysis, ProfileReviewClaim } from "@bewerbungswebsite/contracts";
 
 import { createApp } from "./app.js";
+import { createAssistantRuntimeGuard } from "./assistant-runtime-guard.js";
 import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
 import {
   createDeterministicMockJobContextExtractor,
@@ -34,6 +35,7 @@ const validAssistantRequest = {
 const publicResolver: DnsResolver = async () => [{ address: "93.184.216.34", family: 4 }];
 const matchAccessToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123";
 const internalSecret = "test-internal-cleanup-secret";
+const assistantStagingSecret = "test-profile-assistant-staging-secret";
 
 function restoreEnvValue(key: string, value: string | undefined) {
   if (value === undefined) {
@@ -212,6 +214,140 @@ describe("POST /api/v1/assistant/messages", () => {
       openQuestions: [],
       safetyFlags: [],
     });
+  });
+
+  it("protects staging assistant requests and sets private response headers", async () => {
+    const profileAssistant = await createTestAssistant();
+    const guard = createAssistantRuntimeGuard({
+      maxRequestsPerMinute: 5,
+      maxRequestsPerDay: 10,
+      maxConcurrentRequests: 1,
+      timeoutMs: 1_000,
+    });
+    const app = createApp({
+      profileAssistant,
+      profileAssistantAccess: { secret: assistantStagingSecret, guard },
+    });
+
+    const unauthorized = await request(app)
+      .post("/api/internal/profile-assistant/messages")
+      .send(validAssistantRequest)
+      .expect(401);
+    expect(unauthorized.headers["cache-control"]).toBe("private, no-store, max-age=0");
+    expect(unauthorized.headers["referrer-policy"]).toBe("no-referrer");
+    expect(unauthorized.headers["x-robots-tag"]).toBe("noindex,nofollow");
+    expect(unauthorized.headers["x-request-id"]).toEqual(expect.any(String));
+
+    await request(app)
+      .post("/api/internal/profile-assistant/messages")
+      .set("authorization", `Bearer ${assistantStagingSecret}`)
+      .send(validAssistantRequest)
+      .expect(200);
+  });
+
+  it("emits only content-free staging runtime events", async () => {
+    const events: unknown[] = [];
+    const canaryQuestion = "PRIVATE_QUESTION_CANARY technische Prozessverbesserungen";
+    const app = createApp({
+      profileAssistant: await createTestAssistant(),
+      profileAssistantAccess: {
+        secret: assistantStagingSecret,
+        guard: createAssistantRuntimeGuard({
+          maxRequestsPerMinute: 5,
+          maxRequestsPerDay: 10,
+          maxConcurrentRequests: 1,
+          timeoutMs: 1_000,
+        }),
+        logEvent: (event) => events.push(event),
+      },
+    });
+
+    await request(app)
+      .post("/api/internal/profile-assistant/messages")
+      .set("authorization", `Bearer ${assistantStagingSecret}`)
+      .send({ ...validAssistantRequest, message: canaryQuestion })
+      .expect(200);
+
+    expect(events).toEqual([
+      expect.objectContaining({
+        status: "success",
+        classification: "direct",
+        evidenceCount: 1,
+        requestId: expect.any(String),
+        durationMs: expect.any(Number),
+      }),
+    ]);
+    expect(JSON.stringify(events)).not.toContain(canaryQuestion);
+    expect(JSON.stringify(events)).not.toContain("Wartungsprozess");
+  });
+
+  it("returns retryable controlled errors for staging limits and deadlines", async () => {
+    const rateLimitedApp = createApp({
+      profileAssistant: await createTestAssistant(),
+      profileAssistantAccess: {
+        secret: assistantStagingSecret,
+        guard: createAssistantRuntimeGuard({
+          maxRequestsPerMinute: 1,
+          maxRequestsPerDay: 10,
+          maxConcurrentRequests: 1,
+          timeoutMs: 1_000,
+        }),
+      },
+    });
+
+    await request(rateLimitedApp)
+      .post("/api/internal/profile-assistant/messages")
+      .set("authorization", `Bearer ${assistantStagingSecret}`)
+      .send(validAssistantRequest)
+      .expect(200);
+    const limited = await request(rateLimitedApp)
+      .post("/api/internal/profile-assistant/messages")
+      .set("authorization", `Bearer ${assistantStagingSecret}`)
+      .send(validAssistantRequest)
+      .expect(429);
+    expect(limited.body.error.code).toBe("ASSISTANT_RATE_LIMITED");
+    expect(limited.headers["retry-after"]).toEqual(expect.any(String));
+
+    const timeoutApp = createApp({
+      profileAssistant: {
+        async answer() {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          return (await createTestAssistant()).answer(validAssistantRequest);
+        },
+      },
+      profileAssistantAccess: {
+        secret: assistantStagingSecret,
+        guard: createAssistantRuntimeGuard({
+          maxRequestsPerMinute: 5,
+          maxRequestsPerDay: 10,
+          maxConcurrentRequests: 1,
+          timeoutMs: 5,
+        }),
+      },
+    });
+    const timedOut = await request(timeoutApp)
+      .post("/api/internal/profile-assistant/messages")
+      .set("authorization", `Bearer ${assistantStagingSecret}`)
+      .send(validAssistantRequest)
+      .expect(504);
+    expect(timedOut.body.error.code).toBe("ASSISTANT_TIMEOUT");
+  });
+
+  it("does not expose the synthetic assistant route from the protected staging composition", async () => {
+    const app = createApp({
+      profileAssistant: await createTestAssistant(),
+      profileAssistantAccess: {
+        secret: assistantStagingSecret,
+        guard: createAssistantRuntimeGuard({
+          maxRequestsPerMinute: 5,
+          maxRequestsPerDay: 10,
+          maxConcurrentRequests: 1,
+          timeoutMs: 1_000,
+        }),
+      },
+    });
+
+    await request(app).post("/api/v1/assistant/messages").send(validAssistantRequest).expect(404);
   });
 
   it("returns a controlled response when no evidence is available", async () => {

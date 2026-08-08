@@ -18,6 +18,11 @@ import {
 } from "@bewerbungswebsite/contracts";
 import express, { type ErrorRequestHandler, type Express } from "express";
 
+import {
+  AssistantRuntimeLimitError,
+  type AssistantRuntimeGuard,
+  type AssistantRuntimeLimit,
+} from "./assistant-runtime-guard.js";
 import type { JobContextPreviewService } from "./job-context-preview.js";
 import type { MatchAnalysisStore } from "./match-analysis-store.js";
 import { MatchAnalysisError, type MatchAnalyzer } from "./match-analyzer.js";
@@ -32,12 +37,26 @@ import { UrlSecurityError } from "./url-security.js";
 
 export type AppDependencies = {
   profileAssistant?: ProfileAssistantService;
+  profileAssistantAccess?: {
+    secret: string;
+    guard: AssistantRuntimeGuard;
+    logEvent?: (event: AssistantRuntimeEvent) => void;
+  };
   jobContextPreview?: JobContextPreviewService;
   matchAnalyzer?: MatchAnalyzer;
   matchAnalysisStore?: MatchAnalysisStore;
   matchAssistant?: MatchAssistantService;
   profileReviewRepository?: ProfileReviewRepository;
   now?: () => Date;
+};
+
+export type AssistantRuntimeEvent = {
+  requestId: string;
+  status: "success" | "invalid_request" | "unauthorized" | "limited" | "provider_error";
+  durationMs: number;
+  classification?: string;
+  evidenceCount?: number;
+  limitedBy?: AssistantRuntimeLimit;
 };
 
 function createErrorResponse(input: {
@@ -73,6 +92,14 @@ function isAuthorizedInternalRequest(authorizationHeader: string | undefined, se
   return safelyEquals(authorizationHeader.slice("Bearer ".length), secret);
 }
 
+function setPrivateAssistantHeaders(response: express.Response, requestId: string) {
+  response
+    .set("cache-control", "private, no-store, max-age=0")
+    .set("referrer-policy", "no-referrer")
+    .set("x-robots-tag", "noindex,nofollow")
+    .set("x-request-id", requestId);
+}
+
 const matchAnalysisHardDeleteAfterMs = 30 * 24 * 60 * 60 * 1_000;
 
 export function createApp(dependencies: AppDependencies = {}): Express {
@@ -93,11 +120,38 @@ export function createApp(dependencies: AppDependencies = {}): Express {
 
   const profileAssistant = dependencies.profileAssistant;
   if (profileAssistant) {
-    app.post("/api/v1/assistant/messages", async (request, response) => {
+    const assistantRoute = dependencies.profileAssistantAccess
+      ? "/api/internal/profile-assistant/messages"
+      : "/api/v1/assistant/messages";
+    app.post(assistantRoute, async (request, response) => {
       const requestId = randomUUID();
+      const startedAt = Date.now();
+      const access = dependencies.profileAssistantAccess;
+      const logEvent = (event: Omit<AssistantRuntimeEvent, "requestId" | "durationMs">) =>
+        access?.logEvent?.({
+          requestId,
+          durationMs: Date.now() - startedAt,
+          ...event,
+        });
+      setPrivateAssistantHeaders(response, requestId);
+
+      if (access && !isAuthorizedInternalRequest(request.get("authorization"), access.secret)) {
+        logEvent({ status: "unauthorized" });
+        response.status(401).json(
+          createErrorResponse({
+            code: "INVALID_REQUEST",
+            message: "Die Anfrage ist ungueltig.",
+            requestId,
+            retryable: false,
+          }),
+        );
+        return;
+      }
+
       const parsedRequest = assistantMessageRequestSchema.safeParse(request.body);
 
       if (!parsedRequest.success) {
+        logEvent({ status: "invalid_request" });
         response.status(400).json(
           createErrorResponse({
             code: "INVALID_REQUEST",
@@ -110,10 +164,39 @@ export function createApp(dependencies: AppDependencies = {}): Express {
       }
 
       try {
-        const result = await profileAssistant.answer(parsedRequest.data);
+        const result = access
+          ? await access.guard.execute((signal) =>
+              profileAssistant.answer(parsedRequest.data, signal),
+            )
+          : await profileAssistant.answer(parsedRequest.data);
+        logEvent({
+          status: "success",
+          classification: result.classification,
+          evidenceCount: result.evidence.length,
+        });
         response.status(200).json(assistantResponseSchema.parse(result));
       } catch (error) {
+        if (error instanceof AssistantRuntimeLimitError) {
+          logEvent({ status: "limited", limitedBy: error.limit });
+          response
+            .set("retry-after", String(error.retryAfterSeconds))
+            .status(error.limit === "timeout" ? 504 : 429)
+            .json(
+              createErrorResponse({
+                code: error.limit === "timeout" ? "ASSISTANT_TIMEOUT" : "ASSISTANT_RATE_LIMITED",
+                message:
+                  error.limit === "timeout"
+                    ? "Die interne Assistentenanfrage hat das Zeitlimit ueberschritten."
+                    : "Die interne Assistentenruntime hat ihr aktuelles Limit erreicht.",
+                requestId,
+                retryable: true,
+              }),
+            );
+          return;
+        }
+
         if (error instanceof ProfileAssistantError) {
+          logEvent({ status: "provider_error" });
           response.status(502).json(
             createErrorResponse({
               code: error.code,
@@ -126,6 +209,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
           return;
         }
 
+        logEvent({ status: "provider_error" });
         response.status(500).json(
           createErrorResponse({
             code: "ASSISTANT_INTERNAL_ERROR",

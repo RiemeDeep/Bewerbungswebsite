@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SyntheticAssistantTest } from "./synthetic-assistant-test";
+import { ProfileAssistantClient } from "../../../components/profile-assistant-client";
 
 afterEach(() => {
   cleanup();
@@ -98,5 +99,34 @@ describe("SyntheticAssistantTest", () => {
     expect(
       screen.getByText("Die synthetische Testantwort konnte nicht verarbeitet werden."),
     ).toBeTruthy();
+  });
+});
+
+describe("internal profile assistant staging client", () => {
+  it("uses the protected BFF and labels the page as internal staging", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          answer: "Keine belastbare Information vorhanden.",
+          classification: "not_available",
+          confidence: "insufficient",
+          evidence: [],
+          openQuestions: [],
+          safetyFlags: [],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    render(<ProfileAssistantClient mode="internal-staging" />);
+    expect(screen.getByText("Geschuetzter Staging-Modus")).toBeTruthy();
+    expect(screen.getByText(/keine Chatverlaeufe gespeichert/u)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Intern pruefen" }));
+
+    await waitFor(() => expect(screen.getByText("Validierte interne Antwort")).toBeTruthy());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/internal/profile-assistant",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });

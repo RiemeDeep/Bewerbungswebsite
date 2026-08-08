@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { AppDependencies } from "./app.js";
+import { createAssistantRuntimeGuard } from "./assistant-runtime-guard.js";
 import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
 import { createFirecrawlCrawlProvider } from "./firecrawl-crawl-provider.js";
 import { createDeterministicMockJobContextExtractor } from "./job-context-extractor.js";
@@ -17,6 +18,7 @@ import {
 } from "./match-evidence-repository.js";
 import { createOpenAiJobContextExtractor } from "./openai-job-context-extractor.js";
 import { createOpenAiMatchAnalysisProvider } from "./openai-match-analysis-provider.js";
+import { createOpenAiStructuredModelProvider } from "./openai-structured-provider.js";
 import {
   createDeterministicMockProvider,
   createProfileAssistantService,
@@ -27,6 +29,7 @@ import { createPostgresPoolProfileRepository } from "./supabase-profile-reposito
 const runtimeEnvironmentSchema = z
   .object({
     ENABLE_SYNTHETIC_ASSISTANT_TEST: z.literal("1").optional(),
+    ENABLE_PROFILE_ASSISTANT_STAGING: z.literal("1").optional(),
     ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
     ENABLE_MATCH_ANALYSIS: z.literal("1").optional(),
     ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
@@ -43,6 +46,7 @@ const runtimeEnvironmentSchema = z
       .default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
     MATCH_DATABASE_URL: z.string().trim().min(1).optional(),
     PROFILE_DATABASE_URL: z.string().trim().min(1).optional(),
+    ORCHESTRATOR_REQUEST_SECRET: z.string().trim().min(1).optional(),
     CRAWL_PROVIDER: z.enum(["mock", "firecrawl"]).default("mock"),
     JOB_CONTEXT_EXTRACTOR: z.enum(["mock", "openai"]).default("mock"),
     FIRECRAWL_API_KEY: z.string().optional(),
@@ -51,11 +55,60 @@ const runtimeEnvironmentSchema = z
     LLM_API_KEY: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
     LLM_ANALYSIS_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
+    LLM_ASSISTANT_MODEL: z.string().trim().min(1).default("gpt-4.1-mini"),
     LLM_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
     LLM_REQUEST_RETRIES: z.coerce.number().int().min(0).default(1),
     LLM_REPAIR_ATTEMPTS: z.coerce.number().int().min(0).default(1),
+    PROFILE_ASSISTANT_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(18_000),
+    PROFILE_ASSISTANT_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(5),
+    PROFILE_ASSISTANT_REQUESTS_PER_DAY: z.coerce.number().int().positive().default(50),
+    PROFILE_ASSISTANT_MAX_CONCURRENCY: z.coerce.number().int().positive().default(2),
   })
   .superRefine((environment, context) => {
+    if (
+      environment.ENABLE_PROFILE_ASSISTANT_STAGING === "1" &&
+      environment.ENABLE_SYNTHETIC_ASSISTANT_TEST === "1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "ENABLE_PROFILE_ASSISTANT_STAGING cannot be combined with ENABLE_SYNTHETIC_ASSISTANT_TEST.",
+        path: ["ENABLE_PROFILE_ASSISTANT_STAGING"],
+      });
+    }
+
+    if (environment.ENABLE_PROFILE_ASSISTANT_STAGING === "1" && !environment.PROFILE_DATABASE_URL) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_PROFILE_ASSISTANT_STAGING requires PROFILE_DATABASE_URL.",
+        path: ["PROFILE_DATABASE_URL"],
+      });
+    }
+
+    if (
+      environment.ENABLE_PROFILE_ASSISTANT_STAGING === "1" &&
+      !environment.LLM_API_KEY?.trim() &&
+      !environment.OPENAI_API_KEY?.trim()
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_PROFILE_ASSISTANT_STAGING requires LLM_API_KEY or OPENAI_API_KEY.",
+        path: ["LLM_API_KEY"],
+      });
+    }
+
+    if (
+      environment.ENABLE_PROFILE_ASSISTANT_STAGING === "1" &&
+      (!environment.ORCHESTRATOR_REQUEST_SECRET ||
+        environment.ORCHESTRATOR_REQUEST_SECRET === "replace-me")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_PROFILE_ASSISTANT_STAGING requires a non-placeholder internal secret.",
+        path: ["ORCHESTRATOR_REQUEST_SECRET"],
+      });
+    }
+
     if (
       environment.MATCH_DATABASE_URL &&
       (environment.ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST === "1" ||
@@ -128,6 +181,37 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
       repository,
       provider: createDeterministicMockProvider(),
     });
+    closeHandlers.push(() => repository.close());
+  }
+
+  if (environment.ENABLE_PROFILE_ASSISTANT_STAGING === "1") {
+    const repository = createPostgresPoolProfileRepository(environment.PROFILE_DATABASE_URL ?? "", {
+      statementTimeoutMs: Math.min(5_000, environment.PROFILE_ASSISTANT_REQUEST_TIMEOUT_MS),
+    });
+
+    dependencies.profileAssistant = createProfileAssistantService({
+      mode: "released-profile",
+      repository,
+      provider: createOpenAiStructuredModelProvider({
+        apiKey: environment.LLM_API_KEY ?? environment.OPENAI_API_KEY ?? "",
+        model: environment.LLM_ASSISTANT_MODEL,
+        timeoutMs: environment.LLM_REQUEST_TIMEOUT_MS,
+        repairAttempts: environment.LLM_REPAIR_ATTEMPTS,
+        profileMode: "released-profile",
+      }),
+    });
+    dependencies.profileAssistantAccess = {
+      secret: environment.ORCHESTRATOR_REQUEST_SECRET ?? "",
+      guard: createAssistantRuntimeGuard({
+        maxRequestsPerMinute: environment.PROFILE_ASSISTANT_REQUESTS_PER_MINUTE,
+        maxRequestsPerDay: environment.PROFILE_ASSISTANT_REQUESTS_PER_DAY,
+        maxConcurrentRequests: environment.PROFILE_ASSISTANT_MAX_CONCURRENCY,
+        timeoutMs: environment.PROFILE_ASSISTANT_REQUEST_TIMEOUT_MS,
+      }),
+      logEvent(event) {
+        console.info("assistant_runtime_event", JSON.stringify(event));
+      },
+    };
     closeHandlers.push(() => repository.close());
   }
 

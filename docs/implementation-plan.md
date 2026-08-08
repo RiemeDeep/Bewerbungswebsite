@@ -444,12 +444,15 @@ Alle 60 Public-Profile-Claims sind fachlich fuer `profile_assistant` und `job_an
 dokumentiert. Die technische Kontextfreigabe ueber `allowed_contexts`, Runtime-Filter und
 Rueckzugstests bleibt ein separates Gate.
 
-Naechste kleine Einheit: Paket 4 fortsetzen und den statischen Release-Kandidaten redaktionell sowie
-rechtlich absichern. Produktive Assistenten-/Match-Runtime bleibt Paket 5+ und bekommt vor Go-live einen
-separaten Evaluations- und Logging-Grenzplan.
+Naechste kleine Einheit: Paket 5.0 lokal verifizieren und danach den geschuetzten Staging-Apply separat
+freigeben. Produktive oeffentliche Assistenten-/Match-Runtime bleibt deaktiviert; Betreiber-,
+Datenschutz-, Monitoring- und Go-live-Gates sind weiterhin offen.
 
 Planungsdokument:
 `docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
+
+Paket-5.0-Planungsdokument:
+`docs/plans/phase-5.0-profile-assistant-staging-runtime.md`
 
 Remote-Dry-Run 2026-08-08: Backup und Restore-Test auf dem VPS erfolgreich; die Dry-Run-Transaktion
 haette 60 Claims und 61 Evidence Items idempotent freigegeben und wurde per `ROLLBACK` beendet. Dabei
@@ -537,6 +540,13 @@ Kaufpreisdetails in die strukturierten Daten gelangen.
 Paket 4 mobile Timeline-Glättung 2026-08-08: Die Werdegangsseite rendert freigegebene Stationen jetzt als
 semantische, nummerierte Timeline statt als generisches Kartenraster. Die mobile Darstellung nutzt
 kompaktere Marker und bleibt testseitig an die Zahl der freigegebenen Career Items gekoppelt.
+
+Paket 5.0 lokale Staging-Runtime 2026-08-08: Ein standardmaessig deaktivierter, nicht verlinkter
+Profilassistent-Durchstich verbindet geschuetzte interne Webroute, BFF, Bearer-authentifizierten
+Orchestrator, `profile_assistant`-Retrieval und Structured Provider. Minute-/Tagesbudget,
+Parallelitaetsgrenze, Deadlines, no-store/noindex-Header und inhaltsfreie Runtime-Events sind
+testgesichert. Reale Antworten werden nur aus freigegebener Evidence-Relevanz kanonisiert; interne
+Claim-Originaltexte und Provider-Freitext erreichen den Client nicht. Es wurde kein VPS-Flag aktiviert.
 
 ## Bisherige technische Umsetzungseinheit
 

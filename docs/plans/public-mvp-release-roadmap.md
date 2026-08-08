@@ -296,6 +296,20 @@ Abnahme:
 
 Prioritaet: P1
 
+Fortschritt Paket 5.0 am 2026-08-08:
+
+- Geschuetzte interne Staging-Seite und BFF ausserhalb des `/test`-Namespace lokal implementiert; beide
+  bleiben standardmaessig deaktiviert, nicht verlinkt und per Basic Auth geschuetzt.
+- Reale Profil-DB-/Structured-Provider-Komposition hinter separatem Orchestrator-Flag vorbereitet und
+  mit Bearer Auth, Minute-/Tagesbudget, Parallelitaetsgrenze sowie Deadlines abgesichert.
+- Provider-Freitext und interne Claim-Originaltexte werden nicht ausgeliefert; Antworten entstehen
+  serverseitig aus allowlist-gepruefter oeffentlicher Evidence-Relevanz.
+- Inhaltsfreie Runtime-Events sowie Canary-, Injection-, Missing-Evidence-, Auth-, Limit- und
+  Deaktivierungstests sind lokal umgesetzt.
+- Ausfuehrlicher Grenz- und Staging-Plan:
+  `docs/plans/phase-5.0-profile-assistant-staging-runtime.md`.
+- Kein VPS-Apply und keine oeffentliche KI-Aktivierung wurden durchgefuehrt.
+
 Aufgaben:
 
 1. Oeffentliche Assistenten-UI und BFF aus dem `/test`-Namespace herausloesen.

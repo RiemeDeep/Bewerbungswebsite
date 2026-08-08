@@ -63,8 +63,10 @@ function countMatches(questionTokens: Set<string>, searchableText: string): numb
 
 export function createPostgresProfileRepository(client: Queryable): ProfileRepository {
   return {
-    async retrieveForAssistant(question, limit) {
+    async retrieveForAssistant(question, limit, signal) {
+      signal?.throwIfAborted();
       const result = await client.query(retrieveClaimsSql, ["profile_assistant"]);
+      signal?.throwIfAborted();
       const questionTokens = tokenize(question);
       const claimsById = new Map<string, RetrievedClaim & { score: number }>();
 
@@ -118,10 +120,18 @@ export function createPostgresProfileRepository(client: Queryable): ProfileRepos
   };
 }
 
-export function createPostgresPoolProfileRepository(connectionString: string): ProfileRepository & {
+export function createPostgresPoolProfileRepository(
+  connectionString: string,
+  options: { statementTimeoutMs?: number } = {},
+): ProfileRepository & {
   close(): Promise<void>;
 } {
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    connectionTimeoutMillis: options.statementTimeoutMs,
+    statement_timeout: options.statementTimeoutMs,
+    query_timeout: options.statementTimeoutMs,
+  });
   const repository = createPostgresProfileRepository(pool);
 
   return {

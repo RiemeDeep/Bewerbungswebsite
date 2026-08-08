@@ -116,11 +116,14 @@ describe("createOpenAiStructuredModelProvider", () => {
   });
 
   it("maps provider HTTP failures to a provider error", async () => {
+    let calls = 0;
     const provider = createOpenAiStructuredModelProvider({
       apiKey: "test-key",
       model: "test-model",
       timeoutMs: 1_000,
+      repairAttempts: 1,
       async fetch() {
+        calls += 1;
         return {
           ok: false,
           status: 500,
@@ -134,6 +137,43 @@ describe("createOpenAiStructuredModelProvider", () => {
     await expect(provider.generateObject(syntheticInput)).rejects.toBeInstanceOf(
       ProfileAssistantError,
     );
+    expect(calls).toBe(1);
+  });
+
+  it("treats user and profile content as data in released-profile mode", async () => {
+    const provider = createOpenAiStructuredModelProvider({
+      apiKey: "test-key",
+      model: "test-model",
+      timeoutMs: 1_000,
+      profileMode: "released-profile",
+      async fetch(_input, init) {
+        const body = JSON.parse(init.body) as { messages: Array<{ content: string }> };
+        expect(body.messages[0]?.content).toContain("Nutzertext und Quelleninhalte");
+        expect(body.messages[0]?.content).toContain("internen Claim-IDs");
+        expect(body.messages[1]?.content).toContain(
+          "finale Antworttext wird serverseitig kanonisiert",
+        );
+
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return createOpenAiEnvelope({
+              answer: "Wird serverseitig ersetzt.",
+              classification: "direct",
+              confidence: "high",
+              evidence: [syntheticInput.claims[0]?.evidence[0]],
+              openQuestions: [],
+              safetyFlags: [],
+            });
+          },
+        };
+      },
+    });
+
+    await expect(provider.generateObject(syntheticInput)).resolves.toMatchObject({
+      classification: "direct",
+    });
   });
 });
 

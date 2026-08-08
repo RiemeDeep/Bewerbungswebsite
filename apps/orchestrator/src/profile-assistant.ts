@@ -72,7 +72,11 @@ export type RetrievedClaim = {
 };
 
 export interface ProfileRepository {
-  retrieveForAssistant(question: string, limit: number): Promise<RetrievedClaim[]>;
+  retrieveForAssistant(
+    question: string,
+    limit: number,
+    signal?: AbortSignal,
+  ): Promise<RetrievedClaim[]>;
 }
 
 export type StructuredModelInput = {
@@ -82,12 +86,14 @@ export type StructuredModelInput = {
 };
 
 export interface StructuredModelProvider {
-  generateObject(input: StructuredModelInput): Promise<unknown>;
+  generateObject(input: StructuredModelInput, signal?: AbortSignal): Promise<unknown>;
 }
 
 export interface ProfileAssistantService {
-  answer(request: AssistantMessageRequest): Promise<AssistantResponse>;
+  answer(request: AssistantMessageRequest, signal?: AbortSignal): Promise<AssistantResponse>;
 }
+
+export type ProfileAssistantMode = "synthetic" | "released-profile";
 
 export class ProfileAssistantError extends Error {
   constructor(
@@ -154,7 +160,8 @@ export function createInMemoryProfileRepository(fixtureInput: unknown): ProfileR
   }
 
   return {
-    async retrieveForAssistant(question, limit) {
+    async retrieveForAssistant(question, limit, signal) {
+      signal?.throwIfAborted();
       const questionTokens = tokenize(question);
 
       return fixture.claims
@@ -201,9 +208,12 @@ export function createInMemoryProfileRepository(fixtureInput: unknown): ProfileR
   };
 }
 
-function createUnavailableResponse(): AssistantResponse {
+function createUnavailableResponse(mode: ProfileAssistantMode = "synthetic"): AssistantResponse {
   return assistantResponseSchema.parse({
-    answer: "Dazu liegt in den synthetischen Testdaten keine freigegebene Information vor.",
+    answer:
+      mode === "synthetic"
+        ? "Dazu liegt in den synthetischen Testdaten keine freigegebene Information vor."
+        : "Dazu liegt im freigegebenen Profil keine belastbare Information vor.",
     classification: "not_available",
     confidence: "insufficient",
     evidence: [],
@@ -213,33 +223,45 @@ function createUnavailableResponse(): AssistantResponse {
 }
 
 type AllowedEvidence = RetrievedEvidence & {
-  statement: string;
+  answerText: string;
 };
 
 function renderCanonicalAnswer(
   classification: Exclude<AssistantResponse["classification"], "not_available">,
   evidence: AssistantResponse["evidence"],
   allowedEvidence: ReadonlyMap<string, AllowedEvidence>,
+  mode: ProfileAssistantMode,
 ): string {
-  const statements = [
+  const answerTexts = [
     ...new Set(
-      evidence.map((item) => allowedEvidence.get(item.evidenceId)?.statement).filter(Boolean),
+      evidence.map((item) => allowedEvidence.get(item.evidenceId)?.answerText).filter(Boolean),
     ),
   ];
-  const joinedStatements = statements.join(" ");
+  const joinedAnswerTexts = answerTexts.join(" ");
+
+  if (mode === "released-profile") {
+    if (classification === "direct") {
+      return `Die freigegebene Belegbasis zeigt: ${joinedAnswerTexts}`;
+    }
+    if (classification === "transferable") {
+      return `Als uebertragbare Erfahrung zeigt die freigegebene Belegbasis: ${joinedAnswerTexts}`;
+    }
+    return `Die freigegebene Belegbasis enthaelt relevante, aber nicht eindeutig einzuordnende Information: ${joinedAnswerTexts}`;
+  }
 
   if (classification === "direct") {
-    return `Aus den synthetischen, freigegebenen Testdaten geht hervor: ${joinedStatements}`;
+    return `Aus den synthetischen, freigegebenen Testdaten geht hervor: ${joinedAnswerTexts}`;
   }
   if (classification === "transferable") {
-    return `Als uebertragbar zeigen die synthetischen, freigegebenen Testdaten: ${joinedStatements}`;
+    return `Als uebertragbar zeigen die synthetischen, freigegebenen Testdaten: ${joinedAnswerTexts}`;
   }
-  return `Die synthetischen Testdaten enthalten folgende relevante, aber nicht eindeutig einzuordnende Information: ${joinedStatements}`;
+  return `Die synthetischen Testdaten enthalten folgende relevante, aber nicht eindeutig einzuordnende Information: ${joinedAnswerTexts}`;
 }
 
 function validateEvidenceInvariants(
   response: AssistantResponse,
   allowedEvidence: ReadonlyMap<string, AllowedEvidence>,
+  mode: ProfileAssistantMode,
 ): AssistantResponse {
   const referencedIds = new Set<string>();
 
@@ -292,12 +314,17 @@ function validateEvidenceInvariants(
   }
 
   if (response.classification === "not_available") {
-    return createUnavailableResponse();
+    return createUnavailableResponse(mode);
   }
 
   return assistantResponseSchema.parse({
     ...response,
-    answer: renderCanonicalAnswer(response.classification, response.evidence, allowedEvidence),
+    answer: renderCanonicalAnswer(
+      response.classification,
+      response.evidence,
+      allowedEvidence,
+      mode,
+    ),
     openQuestions:
       response.classification === "unclear"
         ? ["Welche zusaetzliche freigegebene Evidenz ist fuer eine eindeutige Einordnung noetig?"]
@@ -309,19 +336,29 @@ function validateEvidenceInvariants(
 export function createProfileAssistantService(dependencies: {
   repository: ProfileRepository;
   provider: StructuredModelProvider;
+  mode?: ProfileAssistantMode;
 }): ProfileAssistantService {
+  const mode = dependencies.mode ?? "synthetic";
+
   return {
-    async answer(request) {
-      const claims = await dependencies.repository.retrieveForAssistant(request.message, 6);
+    async answer(request, signal) {
+      const claims = await dependencies.repository.retrieveForAssistant(request.message, 6, signal);
+      signal?.throwIfAborted();
       if (claims.length === 0) {
-        return createUnavailableResponse();
+        return createUnavailableResponse(mode);
       }
 
       const allowedEvidence = new Map(
         claims.flatMap((claim) =>
           claim.evidence.map(
             (evidence) =>
-              [evidence.evidenceId, { ...evidence, statement: claim.statement }] as const,
+              [
+                evidence.evidenceId,
+                {
+                  ...evidence,
+                  answerText: mode === "released-profile" ? evidence.relevance : claim.statement,
+                },
+              ] as const,
           ),
         ),
       );
@@ -330,11 +367,14 @@ export function createProfileAssistantService(dependencies: {
         evidence: claim.evidence.map((evidence) => ({ ...evidence })),
       }));
 
-      const rawResponse = await dependencies.provider.generateObject({
-        question: request.message,
-        claims: providerClaims,
-        allowedEvidenceIds: [...allowedEvidence.keys()],
-      });
+      const rawResponse = await dependencies.provider.generateObject(
+        {
+          question: request.message,
+          claims: providerClaims,
+          allowedEvidenceIds: [...allowedEvidence.keys()],
+        },
+        signal,
+      );
       const parsedResponse = assistantResponseSchema.safeParse(rawResponse);
 
       if (!parsedResponse.success) {
@@ -344,7 +384,7 @@ export function createProfileAssistantService(dependencies: {
         );
       }
 
-      return validateEvidenceInvariants(parsedResponse.data, allowedEvidence);
+      return validateEvidenceInvariants(parsedResponse.data, allowedEvidence, mode);
     },
   };
 }

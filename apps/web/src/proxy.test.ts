@@ -5,6 +5,7 @@ import { config, proxy } from "./proxy";
 
 const previousEnvironment = {
   enabled: process.env.ENABLE_INTERNAL_PROFILE_PREVIEW,
+  assistantEnabled: process.env.ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING,
   username: process.env.INTERNAL_PROFILE_PREVIEW_USERNAME,
   password: process.env.INTERNAL_PROFILE_PREVIEW_PASSWORD,
 };
@@ -19,13 +20,17 @@ function restoreEnvironmentValue(name: string, value: string | undefined) {
 
 afterEach(() => {
   restoreEnvironmentValue("ENABLE_INTERNAL_PROFILE_PREVIEW", previousEnvironment.enabled);
+  restoreEnvironmentValue(
+    "ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING",
+    previousEnvironment.assistantEnabled,
+  );
   restoreEnvironmentValue("INTERNAL_PROFILE_PREVIEW_USERNAME", previousEnvironment.username);
   restoreEnvironmentValue("INTERNAL_PROFILE_PREVIEW_PASSWORD", previousEnvironment.password);
 });
 
-function createRequest(authorization?: string) {
+function createRequest(authorization?: string, path = "/internal/profilvorschau") {
   return new NextRequest(
-    "https://example.com/internal/profilvorschau",
+    `https://example.com${path}`,
     authorization ? { headers: { authorization } } : {},
   );
 }
@@ -38,7 +43,12 @@ describe("private preview proxy", () => {
   it("sets restrictive headers for both preview matchers", () => {
     const response = proxy();
 
-    expect(config.matcher).toEqual(["/match/preview/:path*", "/internal/profilvorschau/:path*"]);
+    expect(config.matcher).toEqual([
+      "/match/preview/:path*",
+      "/internal/profilvorschau/:path*",
+      "/internal/profilassistent/:path*",
+      "/api/internal/profile-assistant/:path*",
+    ]);
     expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
     expect(response.headers.get("x-robots-tag")).toBe("noindex,nofollow");
@@ -80,5 +90,28 @@ describe("private preview proxy", () => {
 
     expect(proxy(createRequest(basicAuthorization("review", "wrong"))).status).toBe(401);
     expect(proxy(createRequest(basicAuthorization("review", "strong-password"))).status).toBe(200);
+  });
+
+  it("protects both the internal assistant page and its BFF with the same credentials", () => {
+    process.env.ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING = "1";
+    process.env.INTERNAL_PROFILE_PREVIEW_USERNAME = "review";
+    process.env.INTERNAL_PROFILE_PREVIEW_PASSWORD = "strong-password";
+
+    expect(proxy(createRequest(undefined, "/internal/profilassistent")).status).toBe(401);
+    expect(
+      proxy(
+        createRequest(
+          basicAuthorization("review", "strong-password"),
+          "/api/internal/profile-assistant",
+        ),
+      ).status,
+    ).toBe(200);
+  });
+
+  it("keeps the internal assistant unavailable while its staging flag is disabled", () => {
+    delete process.env.ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING;
+
+    expect(proxy(createRequest(undefined, "/internal/profilassistent")).status).toBe(404);
+    expect(proxy(createRequest(undefined, "/api/internal/profile-assistant")).status).toBe(404);
   });
 });
