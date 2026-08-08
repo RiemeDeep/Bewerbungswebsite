@@ -1,7 +1,7 @@
 # Phase 2.4: Profil-Kontextfreigabe Fuer Assistant Und Job-Analyse
 
 Stand: 2026-08-08
-Status: Planungs- und Testgate, keine produktive Aktivierung
+Status: lokales Gate umgesetzt, Remote-Dry-Run bestanden, kein Commit/Apply
 
 ## Ziel
 
@@ -168,3 +168,37 @@ Pflichtnachweise:
   `psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/profile_context_release_dry_run.sql`.
 - Backup-/Restore-Pflicht ist im Ablauf verankert.
 - Produktive Aktivierung bleibt ausdruecklich ausgeschlossen.
+
+## Remote-Dry-Run 2026-08-08
+
+Der erste VPS-Dry-Run wurde nach erfolgreichem Backup und Restore-Test ausgefuehrt. Die SQL-Transaktion
+lief vollstaendig durch und endete mit `ROLLBACK`.
+
+Ergebnis:
+
+- 60 Manifest-Claims wurden als technisch eligible erkannt.
+- 61 zugehoerige Evidence Items wurden als technisch eligible erkannt.
+- Der idempotente Update-Dry-Run haette 60 Claims und 61 Evidence Items fuer `profile_assistant` und
+  `job_analysis` freigegeben.
+- Die Transaktion wurde zurueckgerollt; es wurden keine zusaetzlichen Kontexte persistiert.
+
+Wichtige Abweichung gegenueber der bisherigen Dokumentannahme:
+
+- Im realen VPS-Bestand hatten bereits vor dem Dry-Run 24 der 60 Manifest-Claims die Kontexte
+  `profile_assistant` und `job_analysis`.
+- Bei den Evidence Items zu diesen Manifest-Claims hatten bereits 25 Items diese Zielkontexte.
+- Verteilung innerhalb des Manifest-Bestands:
+  - Claims: 36 mit `{public_profile,admin_review}` und 24 mit
+    `{public_profile,profile_assistant,job_analysis,admin_review}`.
+  - Evidence Items: 36 mit `{public_profile,admin_review}` und 25 mit
+    `{public_profile,profile_assistant,job_analysis,admin_review}`.
+
+Folgerung:
+
+- Der Dry-Run ist technisch erfolgreich und idempotent.
+- Vor einem echten `commit` muss die Herkunft der bereits gesetzten Zielkontexte geklaert werden.
+- Das nicht-inhaltliche Bestandsaudit ist in
+  `docs/content/profile-context-existing-context-audit.md` dokumentiert.
+- Die bereits gesetzten Zielkontexte konzentrieren sich auf `ES-PUBLIC-001`, `ES-PUBLIC-007`,
+  `ES-PUBLIC-008` und `ES-PUBLIC-010` und stammen nach Datums-/ID-Muster aus dem Pilotimport bzw. dem
+  vollstaendigen Public-Profile-Import vom 2026-08-06.

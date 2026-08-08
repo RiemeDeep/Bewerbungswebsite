@@ -213,6 +213,10 @@ Noch offen:
 Planungsartefakt fuer die technische Freigabe:
 `docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
 
+Remote-Dry-Run 2026-08-08: technisch erfolgreich mit `ROLLBACK`, aber der reale VPS-Bestand enthaelt
+bereits teilweise `profile_assistant`-/`job_analysis`-Kontexte fuer 24 Manifest-Claims und 25 Evidence
+Items. Vor einem echten Apply ist deshalb ein Bestandsaudit der bereits gesetzten Kontexte erforderlich.
+
 Abnahme:
 
 - Der vollstaendige oeffentlich freigegebene Werdegang liegt strukturiert vor.

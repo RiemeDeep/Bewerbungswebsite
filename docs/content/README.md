@@ -23,6 +23,10 @@ beleggestuetzte Wissensbasis der Bewerbungswebsite.
 - `context-review-template.md`: Vorlage fuer getrennte Kontextreviews zu `profile_assistant` und
   `job_analysis` ohne automatische Freigabe.
 - `context-reviews/`: vorbereitende Kontextreview-Batches ohne Datenbankfreigabe.
+- `profile-context-release-manifest.json`: maschinenlesbare Liste der fachlich freigegebenen
+  Kontextfreigabe-Claims.
+- `profile-context-existing-context-audit.md`: nicht-inhaltliches Audit bereits gesetzter
+  `profile_assistant`-/`job_analysis`-Kontexte im VPS-Bestand.
 - `source-inventory-template.md`: Metadateninventar fuer vorhandene Quellen.
 - `source-inventory.md`: aktueller, in Git zulaessiger Inventarstand ohne private Inhalte.
 - `workshop-progress.md`: operativer Workshop-Stand ohne Rohnotizen oder private Profilangaben.

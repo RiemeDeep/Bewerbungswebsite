@@ -451,6 +451,13 @@ produktive Aktivierung.
 Planungsdokument:
 `docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
 
+Remote-Dry-Run 2026-08-08: Backup und Restore-Test auf dem VPS erfolgreich; die Dry-Run-Transaktion
+haette 60 Claims und 61 Evidence Items idempotent freigegeben und wurde per `ROLLBACK` beendet. Dabei
+wurde eine Abweichung entdeckt: 24 Manifest-Claims und 25 zugehoerige Evidence Items hatten bereits
+`profile_assistant` und `job_analysis` in `allowed_contexts`. Vor einem echten Apply ist ein
+nicht-inhaltliches Bestandsaudit dieser bereits gesetzten Kontexte erforderlich. Dieses Audit ist in
+`docs/content/profile-context-existing-context-audit.md` dokumentiert.
+
 Explizit nicht enthalten: Aktivierung produktiver KI-, Crawl-, Match- oder Kontaktfunktionen,
 Entfernung des globalen `noindex,nofollow` oder oeffentliche Bewerbung der Website.
 
