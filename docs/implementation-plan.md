@@ -519,6 +519,16 @@ freigegebenen Claim-Referenzen und Evidence Labels zusammengesetzt; fehlende Gre
 separat freigegeben gekennzeichnet. Tests sichern Claim-Referenzen, Rendering, Linkverzicht und private
 Detailausschluesse ab.
 
+Paket 4 SEO-/Metadata-Vorbereitung 2026-08-08: Root-Metadata enthalten jetzt Titel-Template,
+Application Name, Open Graph und Twitter Summary. `noindex,nofollow` bleibt testgesichert aktiv. Eine
+Canonical URL wird nur gesetzt, wenn `NEXT_PUBLIC_SITE_URL` explizit konfiguriert ist; ohne finale Domain
+wird keine Produktions-URL erfunden.
+
+Paket 4 Security-Header-Vorbereitung 2026-08-08: Die globale Next-Header-Konfiguration setzt jetzt eine
+statische CSP fuer den Release-Kandidaten sowie die vorhandenen Browser-Hardening-Header zentral und
+testgesichert. Die CSP bleibt bewusst auf Eigenressourcen begrenzt; externe Dienste muessen vor Go-live
+explizit bewertet und freigegeben werden.
+
 ## Bisherige technische Umsetzungseinheit
 
 Phase-5.0 Match-Analyse:

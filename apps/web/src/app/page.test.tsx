@@ -17,6 +17,17 @@ afterEach(() => cleanup());
 describe("phase 1 pages", () => {
   it("keeps the static release candidate out of search indexes before go-live", () => {
     expect(metadata.robots).toMatchObject({ index: false, follow: false });
+    expect(metadata.openGraph).toMatchObject({
+      title: expect.stringContaining("Michael Flatau"),
+      description: expect.stringContaining("beleggestützte Analyse"),
+      locale: "de_DE",
+      siteName: "Michael Flatau",
+      type: "profile",
+    });
+    expect(metadata.twitter).toMatchObject({
+      card: "summary",
+      title: expect.stringContaining("Michael Flatau"),
+    });
   });
 
   it("renders the profile assistant as the central entry", () => {

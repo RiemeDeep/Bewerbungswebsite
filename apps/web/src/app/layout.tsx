@@ -7,8 +7,27 @@ import { siteConfig } from "../lib/site-config";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: siteConfig.name,
+  ...(siteConfig.siteUrl
+    ? { metadataBase: siteConfig.siteUrl, alternates: { canonical: "/" } }
+    : {}),
+  title: {
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.shortName}`,
+  },
   description: siteConfig.description,
+  applicationName: siteConfig.shortName,
+  openGraph: {
+    title: siteConfig.name,
+    description: siteConfig.description,
+    locale: siteConfig.locale,
+    siteName: siteConfig.shortName,
+    type: siteConfig.type,
+  },
+  twitter: {
+    card: "summary",
+    title: siteConfig.name,
+    description: siteConfig.description,
+  },
   robots: {
     index: false,
     follow: false,

@@ -248,6 +248,12 @@ Fortschritt am 2026-08-08:
 - Projektkarten wurden zu kompakten Fallstudien mit Ausgangslage, Rolle, Vorgehen, Ergebnis,
   Grenze/Lernpunkt und Belegstatus erweitert. Die Abschnitte referenzieren freigegebene Claims; fehlende
   Grenzen werden transparent als nicht separat freigegeben markiert, statt neue Fakten zu erfinden.
+- SEO-/Social-Metadata wurden vorbereitet: Titel-Template, Open Graph und Twitter Summary sind gesetzt,
+  `noindex,nofollow` bleibt aktiv und eine Canonical URL wird nur aus einer explizit gesetzten
+  `NEXT_PUBLIC_SITE_URL` abgeleitet.
+- CSP und Browser-Hardening-Header sind global in `next.config.ts` vorbereitet und testgesichert. Die CSP
+  erlaubt nur Eigenressourcen; externe Dienste bleiben bis zur finalen Betreiber-/Dienstfreigabe
+  ausgeschlossen.
 
 1. Oeffentliche Texte redaktionell glatten:
    - Umlaute statt technischer ASCII-Umschreibungen;
@@ -267,7 +273,8 @@ Fortschritt am 2026-08-08:
 6. Kontaktentscheidung treffen:
    - direkter freigegebener Kontaktweg oder
    - Formular mit Einwilligung, Honeypot, Rate-Limit und definierter Aufbewahrung.
-7. CSP und weitere Security Header ergaenzen.
+7. CSP und weitere Security Header ergaenzen. Erledigt fuer den statischen Staging-Stand; vor Go-live bei
+   neuen externen Diensten erneut pruefen.
 8. Globales `noindex,nofollow` erst im finalen Go-live-Gate entfernen.
 
 Abnahme:
