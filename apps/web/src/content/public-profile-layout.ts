@@ -51,30 +51,65 @@ export const publicProfileLayout = {
       entityId: "21000000-0000-4000-8000-000000000001",
       category: "Projekt- und Teamaufbau",
       claimId: "21000000-0000-4000-8000-000000000206",
+      caseStudyClaimIds: {
+        situation: ["21000000-0000-4000-8000-000000000202"],
+        role: ["21000000-0000-4000-8000-000000000201", "21000000-0000-4000-8000-000000000203"],
+        approach: ["21000000-0000-4000-8000-000000000204", "21000000-0000-4000-8000-000000000205"],
+        result: ["21000000-0000-4000-8000-000000000206"],
+        boundary: ["21000000-0000-4000-8000-000000000212"],
+      },
     },
     {
       id: "foodbox",
       entityId: "32000000-0000-4000-8000-000000000010",
       category: "Geschäftsmodell und operative Abläufe",
       claimId: "32000000-0000-4000-8000-000000200019",
+      caseStudyClaimIds: {
+        situation: ["32000000-0000-4000-8000-000000200020"],
+        role: ["32000000-0000-4000-8000-000000200019"],
+        approach: ["32000000-0000-4000-8000-000000200021"],
+        result: ["32000000-0000-4000-8000-000000200022"],
+        boundary: ["32000000-0000-4000-8000-000000200023"],
+      },
     },
     {
       id: "escape-room",
       entityId: "32000000-0000-4000-8000-000000000009",
       category: "Konzeptaufbau und Betrieb",
       claimId: "32000000-0000-4000-8000-000000200018",
+      caseStudyClaimIds: {
+        situation: ["32000000-0000-4000-8000-000000200015"],
+        role: ["32000000-0000-4000-8000-000000200015"],
+        approach: ["32000000-0000-4000-8000-000000200016", "32000000-0000-4000-8000-000000200017"],
+        result: ["32000000-0000-4000-8000-000000200018"],
+        boundary: [],
+      },
     },
     {
       id: "fitnessstudio-clubmanagement",
       entityId: "32000000-0000-4000-8000-000000000011",
       category: "Operative Verantwortung",
       claimId: "32000000-0000-4000-8000-000000200024",
+      caseStudyClaimIds: {
+        situation: ["32000000-0000-4000-8000-000000200024"],
+        role: ["32000000-0000-4000-8000-000000200025"],
+        approach: ["32000000-0000-4000-8000-000000200026"],
+        result: ["32000000-0000-4000-8000-000000200026"],
+        boundary: [],
+      },
     },
     {
       id: "motai",
       entityId: "32000000-0000-4000-8000-000000000012",
       category: "KI- und Digitalisierungsprojekt",
       claimId: "32000000-0000-4000-8000-000000200027",
+      caseStudyClaimIds: {
+        situation: ["32000000-0000-4000-8000-000000200027"],
+        role: ["32000000-0000-4000-8000-000000200029"],
+        approach: ["32000000-0000-4000-8000-000000200028", "32000000-0000-4000-8000-000000200029"],
+        result: ["32000000-0000-4000-8000-000000200030"],
+        boundary: ["32000000-0000-4000-8000-000000200031"],
+      },
     },
   ],
   careerItems: [
@@ -259,6 +294,13 @@ export const publicProfileLayout = {
     entityId: string;
     category: string;
     claimId: ClaimReference;
+    caseStudyClaimIds: {
+      situation: ReadonlyArray<ClaimReference>;
+      role: ReadonlyArray<ClaimReference>;
+      approach: ReadonlyArray<ClaimReference>;
+      result: ReadonlyArray<ClaimReference>;
+      boundary: ReadonlyArray<ClaimReference>;
+    };
   }>;
   careerItems: ReadonlyArray<{
     id: string;

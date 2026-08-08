@@ -783,7 +783,7 @@ h3 {
 }
 
 .project-index {
-  grid-row: 1 / 4;
+  grid-row: 1 / 5;
   color: var(--color-primary);
   font-size: 0.72rem;
   font-weight: 900;
@@ -795,9 +795,35 @@ h3 {
   grid-column: 2;
 }
 
-.project-grid p:last-child {
+.project-grid > .info-card > p:last-of-type {
   margin-bottom: 0;
   color: var(--color-text-muted);
+}
+
+.case-study-list {
+  grid-column: 2;
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 0;
+}
+
+.case-study-list div {
+  display: grid;
+  gap: 4px;
+}
+
+.case-study-list dt {
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.case-study-list dd {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.65;
 }
 
 .detail-links {

@@ -245,6 +245,9 @@ Fortschritt am 2026-08-08:
 - Erste redaktionelle Glättung der statischen Release-Copy umgesetzt: sichtbare technische
   ASCII-Umschreibungen in Layout-, Übersichts- und Sicherheitskopien wurden durch normale deutsche
   Schreibweise ersetzt, ohne Claim-Statements fachlich zu verändern.
+- Projektkarten wurden zu kompakten Fallstudien mit Ausgangslage, Rolle, Vorgehen, Ergebnis,
+  Grenze/Lernpunkt und Belegstatus erweitert. Die Abschnitte referenzieren freigegebene Claims; fehlende
+  Grenzen werden transparent als nicht separat freigegeben markiert, statt neue Fakten zu erfinden.
 
 1. Oeffentliche Texte redaktionell glatten:
    - Umlaute statt technischer ASCII-Umschreibungen;

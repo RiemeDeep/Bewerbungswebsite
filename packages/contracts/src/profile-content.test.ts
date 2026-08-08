@@ -44,6 +44,15 @@ const validContent = {
       name: "MotAI",
       category: "KI- und Digitalisierungsprojekt",
       note: "Freigegebene Projektzusammenfassung ohne externe Verlinkung.",
+      caseStudy: {
+        situation: "Freigegebene Ausgangslage.",
+        role: "Freigegebene Rolle.",
+        approach: "Freigegebenes Vorgehen.",
+        result: "Freigegebenes Ergebnis.",
+        boundary: "Freigegebene Grenze.",
+        evidenceStatus: "Belegbasis: synthetischer Beleg.",
+        sourceClaimIds: ["11111111-1111-4111-8111-111111111111"],
+      },
     },
   ],
   careerOverview: {

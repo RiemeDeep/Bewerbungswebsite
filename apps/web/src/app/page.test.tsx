@@ -124,15 +124,28 @@ describe("phase 1 pages", () => {
   });
 
   it("renders the project page without external project links", () => {
-    render(<ProjektePage />);
+    const { container } = render(<ProjektePage />);
+    const text = container.textContent ?? "";
 
     expect(
       screen.getByRole("heading", { level: 1, name: profileContent.projectsOverview.title }),
     ).toBeTruthy();
     for (const project of profileContent.projectKernels) {
       expect(screen.getByRole("heading", { level: 3, name: project.name })).toBeTruthy();
+      expect(screen.getByLabelText(`Fallstudie ${project.name}`)).toBeTruthy();
+    }
+    for (const label of [
+      "Ausgangslage",
+      "Rolle",
+      "Vorgehen",
+      "Ergebnis",
+      "Grenze/Lernpunkt",
+      "Belegstatus",
+    ]) {
+      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }
     expect(screen.queryByRole("link", { name: /MotAI/i })).toBeNull();
+    expect(text).not.toMatch(/IBAN|St\.Nr\.|UStId|100\.000|Einhunderttausend/u);
   });
 
   it("renders the contact release state without live contact channels", () => {

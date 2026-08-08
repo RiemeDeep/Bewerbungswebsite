@@ -171,6 +171,40 @@ describe("public profile content assembly", () => {
     }
   });
 
+  it("structures project case studies from approved claim references", () => {
+    const statements = new Map(
+      publicProfileArtifact.claims.map((claim) => [claim.claimId, claim.statement]),
+    );
+
+    for (const project of profileContent.projectKernels) {
+      expect(project.caseStudy.sourceClaimIds.length).toBeGreaterThan(0);
+      for (const claimId of project.caseStudy.sourceClaimIds) {
+        expect(statements.has(claimId)).toBe(true);
+      }
+
+      expect(
+        project.caseStudy.sourceClaimIds.some((claimId) =>
+          project.caseStudy.situation.includes(statements.get(claimId) ?? "__missing__"),
+        ),
+      ).toBe(true);
+      expect(
+        project.caseStudy.sourceClaimIds.some((claimId) =>
+          project.caseStudy.role.includes(statements.get(claimId) ?? "__missing__"),
+        ),
+      ).toBe(true);
+      expect(
+        project.caseStudy.sourceClaimIds.some((claimId) =>
+          project.caseStudy.approach.includes(statements.get(claimId) ?? "__missing__"),
+        ),
+      ).toBe(true);
+      expect(
+        project.caseStudy.sourceClaimIds.some((claimId) =>
+          project.caseStudy.result.includes(statements.get(claimId) ?? "__missing__"),
+        ),
+      ).toBe(true);
+    }
+  });
+
   it("contains no private source metadata", () => {
     expect(JSON.stringify(publicProfileArtifact)).not.toMatch(
       /sourceTitle|storagePath|sourceLocator|documentChunks|reviewedBy|allowedContexts/u,

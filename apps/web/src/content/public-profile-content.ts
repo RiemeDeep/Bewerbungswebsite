@@ -15,7 +15,14 @@ export function getPublicProfileLayoutClaimIds(): string[] {
   return [
     ...publicProfileLayout.perspectives.map((item) => item.claimId),
     ...publicProfileLayout.competencies.map((item) => item.claimId),
-    ...publicProfileLayout.projectKernels.map((item) => item.claimId),
+    ...publicProfileLayout.projectKernels.flatMap((item) => [
+      item.claimId,
+      ...item.caseStudyClaimIds.situation,
+      ...item.caseStudyClaimIds.role,
+      ...item.caseStudyClaimIds.approach,
+      ...item.caseStudyClaimIds.result,
+      ...item.caseStudyClaimIds.boundary,
+    ]),
     ...publicProfileLayout.careerItems.flatMap((item) => [
       ...item.periodClaimIds,
       item.roleClaimId,
@@ -76,6 +83,15 @@ export function assemblePublicProfileContent(input: unknown): ProfileContent {
     return `Belegbasis: ${labels.join("; ")}.`;
   }
 
+  function getClaimCopy(claimIds: readonly string[], fallback: string): string {
+    const statements = claimIds.flatMap((claimId) => {
+      const claim = claimsById.get(claimId);
+      return claim ? [claim.statement] : [];
+    });
+
+    return statements.length > 0 ? statements.join(" ") : fallback;
+  }
+
   return profileContentSchema.parse({
     meta: {
       schemaVersion: "1.0",
@@ -128,6 +144,16 @@ export function assemblePublicProfileContent(input: unknown): ProfileContent {
     projectKernels: publicProfileLayout.projectKernels.flatMap((item) => {
       const claim = claimsById.get(item.claimId);
       const entity = entitiesById.get(item.entityId);
+      const sourceClaimIds = [
+        ...new Set([
+          item.claimId,
+          ...item.caseStudyClaimIds.situation,
+          ...item.caseStudyClaimIds.role,
+          ...item.caseStudyClaimIds.approach,
+          ...item.caseStudyClaimIds.result,
+          ...item.caseStudyClaimIds.boundary,
+        ]),
+      ];
       return claim && entity
         ? [
             {
@@ -135,6 +161,18 @@ export function assemblePublicProfileContent(input: unknown): ProfileContent {
               name: entity.canonicalName,
               category: item.category,
               note: claim.statement,
+              caseStudy: {
+                situation: getClaimCopy(item.caseStudyClaimIds.situation, claim.statement),
+                role: getClaimCopy(item.caseStudyClaimIds.role, claim.statement),
+                approach: getClaimCopy(item.caseStudyClaimIds.approach, claim.statement),
+                result: getClaimCopy(item.caseStudyClaimIds.result, claim.statement),
+                boundary: getClaimCopy(
+                  item.caseStudyClaimIds.boundary,
+                  "Keine separate Grenze freigegeben; sensible Details bleiben ausgeblendet.",
+                ),
+                evidenceStatus: getEvidenceNote(sourceClaimIds),
+                sourceClaimIds,
+              },
             },
           ]
         : [];

@@ -513,6 +513,12 @@ ASCII-Umschreibungen auf normale deutsche Schreibweise umgestellt. Claim-Stateme
 Public-Profile-Artefakt wurden dabei nicht fachlich verändert; ein Web-Content-Test sichert die
 statische Editorial-Copy gegen erneute technische Umschreibungen ab.
 
+Paket 4 Projektfallstudien 2026-08-08: Projektkarten wurden zu kompakten Fallstudien erweitert. Die
+Abschnitte Ausgangslage, Rolle, Vorgehen, Ergebnis, Grenze/Lernpunkt und Belegstatus werden aus
+freigegebenen Claim-Referenzen und Evidence Labels zusammengesetzt; fehlende Grenzen werden als nicht
+separat freigegeben gekennzeichnet. Tests sichern Claim-Referenzen, Rendering, Linkverzicht und private
+Detailausschluesse ab.
+
 ## Bisherige technische Umsetzungseinheit
 
 Phase-5.0 Match-Analyse:

@@ -32,6 +32,18 @@ const publicCredentialGroupSchema = z
   })
   .strict();
 
+const publicProjectCaseStudySchema = z
+  .object({
+    situation: nonEmptyTextSchema,
+    role: nonEmptyTextSchema,
+    approach: nonEmptyTextSchema,
+    result: nonEmptyTextSchema,
+    boundary: nonEmptyTextSchema,
+    evidenceStatus: nonEmptyTextSchema,
+    sourceClaimIds: z.array(z.string().uuid()).min(1),
+  })
+  .strict();
+
 export const profileContentSchema = z
   .object({
     meta: z
@@ -88,6 +100,7 @@ export const profileContentSchema = z
             name: nonEmptyTextSchema,
             category: nonEmptyTextSchema,
             note: nonEmptyTextSchema,
+            caseStudy: publicProjectCaseStudySchema,
           })
           .strict(),
       )
