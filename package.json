@@ -23,6 +23,8 @@
     "profile:publish:check": "pnpm run build:contracts && pnpm --filter @bewerbungswebsite/orchestrator profile:publish:check",
     "profile:publish:validate": "pnpm run build:contracts && pnpm --filter @bewerbungswebsite/orchestrator profile:publish:validate",
     "profile:publish:write": "pnpm run build:contracts && pnpm --filter @bewerbungswebsite/orchestrator profile:publish:write",
+    "profile-assistant:evaluate": "pnpm run build:contracts && pnpm --filter @bewerbungswebsite/orchestrator profile-assistant:evaluate",
+    "profile-assistant:staging:preflight": "pnpm run build:contracts && pnpm --filter @bewerbungswebsite/orchestrator profile-assistant:staging:preflight",
     "test": "pnpm run build:contracts && pnpm -r --if-present test",
     "test:e2e": "pnpm --filter @bewerbungswebsite/web test:e2e",
     "typecheck": "pnpm -r --if-present typecheck",
