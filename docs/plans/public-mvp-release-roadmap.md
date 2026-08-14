@@ -1,6 +1,6 @@
 # Roadmap: Vom aktuellen Arbeitsstand zum oeffentlichen interaktiven MVP
 
-Stand: 2026-08-06
+Stand: 2026-08-14
 Status: angenommen als aktueller Umsetzungsplan
 
 Die fachliche Source of Truth bleibt `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`.
@@ -346,6 +346,9 @@ Abnahme:
 
 Prioritaet: P1
 
+Feinplanung fuer Pakete 6 und 7:
+`docs/plans/phase-6-7-match-end-to-end-release.md`.
+
 Aufgaben:
 
 1. JobContext-UI und BFF aus dem `/test`-Namespace herausloesen.
@@ -425,28 +428,27 @@ Abnahme:
 
 ## Naechste kleine Umsetzungseinheit
 
-Die unmittelbar naechste Einheit ist **Paket 5.1a: AI-first Qualitaetsbaseline und neue Contracts**.
+**Paket M1: URL- und TTL-Invarianten** aus
+`docs/plans/phase-6-7-match-end-to-end-release.md`.
 
-Sie umfasst:
+Abgeschlossen am 2026-08-14:
 
-- den Referenzfall `Was war Michaels erster Job nach dem Studium?` und alltagssprachliche Paraphrasen;
-- weitere zeitliche, relationale, Multi-Claim- und partielle Antwortfaelle;
-- reproduzierbaren Nachweis, dass die bestehende Keyword-Pipeline diese Qualitaetsfaelle verfehlt;
-- Trennung von internem Provider-Draft und oeffentlichem Browsercontract;
-- Contractentwurf fuer direkte, abgeleitete, partielle und nicht verfuegbare Antworten;
-- Abnahmekriterien fuer Antwortnutzen, Belegtreue, Unsicherheit und Privacy.
+- erneute URL-Sicherheitspruefung jeder vom Crawl-Provider zurueckgegebenen Quelle;
+- Ablehnung privater, lokaler und reservierter Provider-Ziele vor Extraktion;
+- validierte Runtime-Konfiguration von `ANALYSIS_TTL_HOURS`;
+- Weitergabe der konfigurierten Default-TTL an produktive und synthetische Match-Stores;
+- Unit- und Runtime-Tests ohne VPS-, Datenbank- oder Provideraktivierung;
+- vollstaendiger `pnpm check` erfolgreich.
 
-Sie aendert noch nicht die aktive Staging-Runtime. Die eigentliche Laufzeitumstellung folgt in Paket
-5.1b und 5.1c nach einer testgesicherten Baseline.
+**Paket M2: Interne Match-Runtime-Grenze** ist am 2026-08-14 lokal abgeschlossen:
 
-Folgeeinheit ist **Paket 5.1b: Vollstaendiger sicherer Kontext-Snapshot**.
+- geschuetzte `/api/internal/match/...`-Pfade mit Bearer-Authentisierung;
+- gemeinsames Minute-/Tagesbudget, Parallelitaetsgrenze und Deadline;
+- Abort-Signal bis Crawl-, Extraktions- und Analyseprovider;
+- inhaltsfreie Runtime-Events und kontrollierte Limit-/Timeoutcodes;
+- serverseitige Test-BFFs mit Secret, `no-store` und eigener Deadline;
+- vollstaendiger `pnpm check` erfolgreich; keine VPS-Aktivierung.
 
-Sie umfasst:
-
-- Entfernung des lokalen Tokenfilters aus dem produktiven Profilrepository;
-- vollstaendige, kompakte und stabil sortierte Projektion aller freigegebenen Assistant-Claims;
-- harte Snapshot-Groessenlimits und fail-closed Verhalten;
-- erneute Visibility-, Context-, Review-, Withdrawal- und Privacy-Gates.
-
-Danach folgen AI-Antwortsynthese, Support-Verifier, erweiterte Evaluation und kontrollierter
-Staging-Rollout gemaess Phase-5.1-Plan.
+Die unmittelbar naechste Einheit ist **Paket M3: Oeffentliche JobContext-Strecke**. Sie ueberfuehrt die
+vorhandene Testoberflaeche in eine produktionsgeeignete `/match`-Route und einen serverseitigen BFF, ohne
+bereits Analyseerzeugung oder Match-Assistent oeffentlich zu aktivieren.

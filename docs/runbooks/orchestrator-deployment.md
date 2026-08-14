@@ -294,6 +294,42 @@ docker compose \
   -f /opt/bewerbungswebsite/deploy/orchestrator/compose.yml up -d orchestrator web
 ```
 
+## Interne Match-Runtime-Grenze
+
+Die Match-Runtime ist lokal vorbereitet, aber auf dem VPS noch nicht aktiviert. Vor einer spaeteren
+internen Aktivierung gelten dieselben Secret-, Backup-/Restore-, Health-, `401`-, Kill-Switch- und
+Rollback-Regeln wie fuer andere DB-/Provider-bezogene Staging-Schritte.
+
+Orchestrator-Konfiguration in der root-only `.env.orchestrator`:
+
+```dotenv
+ENABLE_MATCH_RUNTIME_STAGING=1
+MATCH_RUNTIME_REQUEST_TIMEOUT_MS=45000
+MATCH_RUNTIME_REQUESTS_PER_MINUTE=10
+MATCH_RUNTIME_REQUESTS_PER_DAY=100
+MATCH_RUNTIME_MAX_CONCURRENCY=2
+ANALYSIS_TTL_HOURS=24
+```
+
+`ORCHESTRATOR_REQUEST_SECRET` muss gesetzt und mit dem serverseitigen Web-Secret identisch sein. Fuer die
+jeweils benoetigten Dienste bleiben die separaten Feature-Flags und Provider-/Datenbankvorbedingungen
+zusaetzlich erforderlich. Synthetische Match-Flags sind mit `ENABLE_MATCH_RUNTIME_STAGING=1` unvereinbar.
+
+Geschuetzte Orchestrator-Pfade:
+
+- `POST /api/internal/match/job-context/preview`
+- `POST /api/internal/match/analyze`
+- `POST /api/internal/match/analyses`
+- `POST /api/internal/match/assistant/messages` (wird erst mit dem produktiven Service aus Paket M5
+  registriert)
+
+Die vorhandenen Web-Test-BFFs verwenden diese Pfade im Orchestrator-Modus mit
+`MATCH_RUNTIME_BFF_TIMEOUT_MS=55000`. Die BFF-Deadline muss oberhalb der Orchestrator-Deadline plus der
+maximalen Datenbank-Query-Zeit liegen. Dies ist noch keine oeffentliche `/match`-Freigabe. Ohne Bearer
+muessen die internen Pfade `401` liefern; die entsprechenden ungeschuetzten `/api/v1`-Schreibpfade sind
+in der geschuetzten Komposition nicht registriert. Runtime-Logs duerfen nur Request-ID, Operation, Status,
+Dauer und feste Limitklassen enthalten.
+
 ## Interner Profilassistent-Evaluationslauf
 
 Nach erfolgreichem Preflight, Healthcheck, 401-Negativtest und geschuetzter Staging-Aktivierung kann der

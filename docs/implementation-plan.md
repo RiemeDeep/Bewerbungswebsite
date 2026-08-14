@@ -444,17 +444,23 @@ Alle 60 Public-Profile-Claims sind fachlich fuer `profile_assistant` und `job_an
 dokumentiert. Die technische Kontextfreigabe ueber `allowed_contexts`, Runtime-Filter und
 Rueckzugstests bleibt ein separates Gate.
 
-Naechste kleine Einheit: `timeline-exit-adventures-period` anhand der privaten exakten Rohprotokolle und
-Michaels fachlicher Bewertung korrigieren. Michael bestaetigte `partial-barts-market-ready` als fachlich in
-Ordnung. Fuer Exit Adventures fehlt in der Antwort der Zeitraum: Start ist das Datum der Gewerbeanmeldung
-in Kaiserslautern als erstem Standort; verkauft wurde das Unternehmen zum 01.01.2019. Der
-Evaluationsvertrag darf dafuer Gruendungs-/Betriebsbeleg und Verkaufsbeleg gemeinsam zulassen.
-`direct-football-license` und `negative-prompt-injection` wegen Modellvarianz zunaechst dreifach
-wiederholen, nicht sofort veraendern. Die freigegebene Schutzpolicy fuer private/zurueckgezogene Inhalte
-und medizinische Diagnose-/Therapiebefaehigung bleibt unveraendert. Jeder VPS-Lauf muss ein privates
-exaktes Rohprotokoll fuer Michaels Bewertung erzeugen. Kein neues Feature und keine oeffentliche
-Aktivierung beginnen, bevor die Phase-5.1-Abnahmeschwellen erreicht sind. Betreiber-, Datenschutz-,
-Monitoring- und Go-live-Gates bleiben weiterhin offen.
+Match-Paket M1 ist am 2026-08-14 abgeschlossen: Provider-Rueckgabe-URLs werden vor Extraktion erneut gegen
+die URL-Sicherheitsregeln geprueft, und `ANALYSIS_TTL_HOURS` steuert jetzt mit validiertem 24-Stunden-
+Default die produktiven und synthetischen Match-Stores. Detailplan:
+`docs/plans/phase-6-7-match-end-to-end-release.md`.
+
+Match-Paket M2 ist am 2026-08-14 lokal abgeschlossen: JobContext-Preview, Analyseerzeugung und
+Match-Assistent besitzen in der geschuetzten Komposition interne Bearer-Pfade, gemeinsame
+Rate-/Kosten-/Parallelitaetsgrenzen, Deadline-Abbruch bis zum Provider und inhaltsfreie Runtime-Events.
+Der vollstaendige `pnpm check` bestand; eine VPS-Aktivierung erfolgte nicht.
+
+Naechste kleine Umsetzungseinheit ist Match-Paket M3: die vorhandene JobContext-Testoberflaeche als
+produktionsgeeignete `/match`-Route und serverseitigen BFF mit URL-/Text-Fallback, editierbarer
+Bestaetigung sowie Lade-, Fehler- und Abbruchzustaenden bereitstellen. Analyseerzeugung und
+Match-Assistent bleiben dabei weiterhin nicht oeffentlich. Die Profilassistent-Faelle `direct-football-license` und
+`negative-prompt-injection` bleiben wegen Modellvarianz als separates dreifaches Wiederholungsgate offen;
+hieraus darf ohne stabilen Befund keine Produktlogik abgeleitet werden. Kein neues Feature wird oeffentlich
+aktiviert, bevor die jeweiligen Staging-, Datenschutz-, Monitoring- und Go-live-Gates erreicht sind.
 
 Planungsdokument:
 `docs/plans/phase-2.4-profile-context-runtime-release-plan.md`
