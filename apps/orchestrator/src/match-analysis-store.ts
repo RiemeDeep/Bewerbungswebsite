@@ -41,6 +41,8 @@ export interface MatchAnalysisStore {
 
 type MatchAnalysisStoreOptions = {
   now?: () => Date;
+  defaultTtlHours?: number;
+  statementTimeoutMs?: number;
   accessMetadataFactory?: (ttlHours?: number) => MatchAnalysisAccessMetadata;
 };
 
@@ -127,12 +129,20 @@ export function createPostgresMatchAnalysisStore(
     async create(input) {
       const jobContext = jobContextSchema.parse(input.jobContext);
       const matchAnalysis = matchAnalysisSchema.parse(input.matchAnalysis);
+      if (
+        options.defaultTtlHours !== undefined &&
+        input.ttlHours !== undefined &&
+        input.ttlHours > options.defaultTtlHours
+      ) {
+        throw new Error("Explicit match analysis TTL must not exceed the configured default TTL.");
+      }
+      const ttlHours = input.ttlHours ?? options.defaultTtlHours;
       const access = matchAnalysisAccessMetadataSchema.parse(
         options.accessMetadataFactory
-          ? options.accessMetadataFactory(input.ttlHours)
+          ? options.accessMetadataFactory(ttlHours)
           : createMatchAnalysisAccessMetadata({
               now,
-              ...(input.ttlHours === undefined ? {} : { ttlHours: input.ttlHours }),
+              ...(ttlHours === undefined ? {} : { ttlHours }),
             }),
       );
       const accessTokenHash = hashMatchAnalysisAccessToken(access.accessToken);
@@ -200,7 +210,12 @@ export function createPostgresPoolMatchAnalysisStore(
   connectionString: string,
   options: MatchAnalysisStoreOptions = {},
 ): MatchAnalysisStore & { close(): Promise<void> } {
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    connectionTimeoutMillis: options.statementTimeoutMs,
+    statement_timeout: options.statementTimeoutMs,
+    query_timeout: options.statementTimeoutMs,
+  });
   const store = createPostgresMatchAnalysisStore(pool, options);
 
   return {

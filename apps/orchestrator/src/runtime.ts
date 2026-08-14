@@ -33,6 +33,7 @@ const runtimeEnvironmentSchema = z
     ENABLE_PROFILE_ASSISTANT_STAGING: z.enum(["0", "1"]).optional(),
     ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
     ENABLE_MATCH_ANALYSIS: z.literal("1").optional(),
+    ENABLE_MATCH_RUNTIME_STAGING: z.enum(["0", "1"]).optional(),
     ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
     ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: z.literal("1").optional(),
     SYNTHETIC_PROFILE_DATABASE_URL: z
@@ -64,6 +65,11 @@ const runtimeEnvironmentSchema = z
     PROFILE_ASSISTANT_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(5),
     PROFILE_ASSISTANT_REQUESTS_PER_DAY: z.coerce.number().int().positive().default(50),
     PROFILE_ASSISTANT_MAX_CONCURRENCY: z.coerce.number().int().positive().default(2),
+    MATCH_RUNTIME_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(45_000),
+    MATCH_RUNTIME_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
+    MATCH_RUNTIME_REQUESTS_PER_DAY: z.coerce.number().int().positive().default(100),
+    MATCH_RUNTIME_MAX_CONCURRENCY: z.coerce.number().int().positive().default(2),
+    ANALYSIS_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(24),
   })
   .superRefine((environment, context) => {
     if (
@@ -131,6 +137,68 @@ const runtimeEnvironmentSchema = z
         code: "custom",
         message: "ENABLE_MATCH_ANALYSIS cannot be combined with synthetic match runtime flags.",
         path: ["ENABLE_MATCH_ANALYSIS"],
+      });
+    }
+
+    if (
+      environment.ENABLE_MATCH_RUNTIME_STAGING === "1" &&
+      (!environment.ORCHESTRATOR_REQUEST_SECRET ||
+        environment.ORCHESTRATOR_REQUEST_SECRET === "replace-me" ||
+        environment.ORCHESTRATOR_REQUEST_SECRET.length < 32)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_RUNTIME_STAGING requires a non-placeholder internal secret.",
+        path: ["ORCHESTRATOR_REQUEST_SECRET"],
+      });
+    }
+
+    if (
+      environment.ENABLE_MATCH_ANALYSIS === "1" &&
+      environment.ENABLE_MATCH_RUNTIME_STAGING !== "1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ANALYSIS requires ENABLE_MATCH_RUNTIME_STAGING.",
+        path: ["ENABLE_MATCH_RUNTIME_STAGING"],
+      });
+    }
+
+    if (
+      environment.ENABLE_JOB_CONTEXT_PREVIEW === "1" &&
+      (environment.CRAWL_PROVIDER !== "mock" || environment.JOB_CONTEXT_EXTRACTOR !== "mock") &&
+      environment.ENABLE_MATCH_RUNTIME_STAGING !== "1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Real JobContext providers require ENABLE_MATCH_RUNTIME_STAGING.",
+        path: ["ENABLE_MATCH_RUNTIME_STAGING"],
+      });
+    }
+
+    if (
+      environment.ENABLE_MATCH_RUNTIME_STAGING === "1" &&
+      environment.ENABLE_JOB_CONTEXT_PREVIEW !== "1" &&
+      environment.ENABLE_MATCH_ANALYSIS !== "1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "ENABLE_MATCH_RUNTIME_STAGING requires ENABLE_JOB_CONTEXT_PREVIEW or ENABLE_MATCH_ANALYSIS.",
+        path: ["ENABLE_MATCH_RUNTIME_STAGING"],
+      });
+    }
+
+    if (
+      environment.ENABLE_MATCH_RUNTIME_STAGING === "1" &&
+      (environment.ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST === "1" ||
+        environment.ENABLE_SYNTHETIC_MATCH_STORAGE_TEST === "1")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "ENABLE_MATCH_RUNTIME_STAGING cannot be combined with synthetic match runtime flags.",
+        path: ["ENABLE_MATCH_RUNTIME_STAGING"],
       });
     }
 
@@ -253,7 +321,10 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
   }
 
   if (environment.MATCH_DATABASE_URL) {
-    const store = createPostgresPoolMatchAnalysisStore(environment.MATCH_DATABASE_URL);
+    const store = createPostgresPoolMatchAnalysisStore(environment.MATCH_DATABASE_URL, {
+      defaultTtlHours: environment.ANALYSIS_TTL_HOURS,
+      statementTimeoutMs: Math.min(5_000, environment.MATCH_RUNTIME_REQUEST_TIMEOUT_MS),
+    });
     dependencies.matchAnalysisStore = store;
     closeHandlers.push(() => store.close());
 
@@ -288,10 +359,28 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
       );
     }
 
-    const store = createPostgresPoolMatchAnalysisStore(environment.SYNTHETIC_MATCH_DATABASE_URL);
+    const store = createPostgresPoolMatchAnalysisStore(environment.SYNTHETIC_MATCH_DATABASE_URL, {
+      defaultTtlHours: environment.ANALYSIS_TTL_HOURS,
+      statementTimeoutMs: Math.min(5_000, environment.MATCH_RUNTIME_REQUEST_TIMEOUT_MS),
+    });
     dependencies.matchAnalysisStore = store;
     dependencies.matchAssistant = createDeterministicMockMatchAssistantService({ store });
     closeHandlers.push(() => store.close());
+  }
+
+  if (environment.ENABLE_MATCH_RUNTIME_STAGING === "1") {
+    dependencies.matchRuntimeAccess = {
+      secret: environment.ORCHESTRATOR_REQUEST_SECRET ?? "",
+      guard: createAssistantRuntimeGuard({
+        maxRequestsPerMinute: environment.MATCH_RUNTIME_REQUESTS_PER_MINUTE,
+        maxRequestsPerDay: environment.MATCH_RUNTIME_REQUESTS_PER_DAY,
+        maxConcurrentRequests: environment.MATCH_RUNTIME_MAX_CONCURRENCY,
+        timeoutMs: environment.MATCH_RUNTIME_REQUEST_TIMEOUT_MS,
+      }),
+      logEvent(event) {
+        console.info("match_runtime_event", JSON.stringify(event));
+      },
+    };
   }
 
   return {

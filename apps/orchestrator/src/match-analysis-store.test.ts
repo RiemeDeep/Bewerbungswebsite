@@ -122,6 +122,32 @@ describe("createPostgresMatchAnalysisStore", () => {
     expect(JSON.stringify(calls[0]?.values)).not.toContain(accessToken);
   });
 
+  it("uses the configured default TTL unless a create call overrides it", async () => {
+    const receivedTtlHours: Array<number | undefined> = [];
+    const store = createPostgresMatchAnalysisStore(
+      {
+        async query() {
+          return { rows: [], rowCount: 1 };
+        },
+      },
+      {
+        defaultTtlHours: 24,
+        accessMetadataFactory(ttlHours) {
+          receivedTtlHours.push(ttlHours);
+          return accessMetadata;
+        },
+      },
+    );
+
+    await store.create({ jobContext, matchAnalysis });
+    await store.create({ jobContext, matchAnalysis, ttlHours: 6 });
+
+    expect(receivedTtlHours).toEqual([24, 6]);
+    await expect(store.create({ jobContext, matchAnalysis, ttlHours: 48 })).rejects.toThrow(
+      "must not exceed",
+    );
+  });
+
   it("loads only active, non-expired analyses by a hashed token", async () => {
     const calls: Array<{ text: string; values: unknown[] }> = [];
     const store = createPostgresMatchAnalysisStore(

@@ -128,6 +128,31 @@ describe("createFirecrawlCrawlProvider", () => {
     );
   });
 
+  it("combines an external abort signal with the Firecrawl timeout signal", async () => {
+    const controller = new AbortController();
+    const reason = new Error("external deadline");
+    const provider = createFirecrawlCrawlProvider({
+      apiKey: "fc-test",
+      async fetcher(_input, init) {
+        expect(init.signal).toBeInstanceOf(AbortSignal);
+        expect(init.signal).not.toBe(controller.signal);
+
+        controller.abort(reason);
+
+        expect(init.signal?.aborted).toBe(true);
+        expect(init.signal?.reason).toBe(reason);
+        throw init.signal?.reason;
+      },
+    });
+
+    await expect(
+      provider.crawl(
+        { jobUrl: "https://example.com/jobs/technische-projektrolle", companyUrl: null },
+        controller.signal,
+      ),
+    ).rejects.toBe(reason);
+  });
+
   it("rejects missing API keys", () => {
     expect(() => createFirecrawlCrawlProvider({ apiKey: " " })).toThrow(CrawlProviderError);
   });

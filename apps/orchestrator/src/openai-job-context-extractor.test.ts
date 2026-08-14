@@ -246,6 +246,33 @@ describe("createOpenAiJobContextExtractor", () => {
     expect(calls).toBe(2);
   });
 
+  it("combines an external abort signal with the provider timeout signal", async () => {
+    const controller = new AbortController();
+    const reason = new Error("external deadline");
+    let calls = 0;
+    const extractor = createOpenAiJobContextExtractor({
+      apiKey: "test-key",
+      model: "test-model",
+      timeoutMs: 60_000,
+      maxRetries: 1,
+      async fetch(_input, init) {
+        calls += 1;
+        expect(init.signal).not.toBe(controller.signal);
+
+        controller.abort(reason);
+
+        expect(init.signal.aborted).toBe(true);
+        expect(init.signal.reason).toBe(reason);
+        throw init.signal.reason;
+      },
+    });
+
+    await expect(extractor.extract(input, controller.signal)).rejects.toThrow(
+      "aborted by the external deadline",
+    );
+    expect(calls).toBe(1);
+  });
+
   it("runs an opt-in OpenAI extraction with synthetic public-style input", async () => {
     const shouldRun = (await readLocalEnvValue("RUN_PROVIDER_INTEGRATION_TESTS")) === "1";
     const apiKey =

@@ -8,7 +8,10 @@ import {
 import type { MatchAnalysisStore } from "./match-analysis-store.js";
 
 export interface MatchAssistantService {
-  answer(request: MatchAssistantMessageRequest): Promise<MatchAssistantResponse>;
+  answer(
+    request: MatchAssistantMessageRequest,
+    signal?: AbortSignal,
+  ): Promise<MatchAssistantResponse>;
 }
 
 export class MatchAssistantError extends Error {

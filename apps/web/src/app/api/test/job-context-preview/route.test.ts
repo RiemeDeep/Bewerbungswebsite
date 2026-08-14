@@ -94,6 +94,7 @@ describe("POST /api/test/job-context-preview", () => {
     const previousFlag = process.env.ENABLE_MATCH_PREVIEW_TEST;
     const previousMode = process.env.MATCH_PREVIEW_MODE;
     const previousBaseUrl = process.env.ORCHESTRATOR_BASE_URL;
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -131,6 +132,7 @@ describe("POST /api/test/job-context-preview", () => {
     process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
     process.env.MATCH_PREVIEW_MODE = "orchestrator";
     process.env.ORCHESTRATOR_BASE_URL = "http://127.0.0.1:4000";
+    process.env.ORCHESTRATOR_REQUEST_SECRET = "test-match-runtime-secret";
 
     try {
       const response = await POST(
@@ -142,14 +144,20 @@ describe("POST /api/test/job-context-preview", () => {
 
       expect(response.status).toBe(200);
       expect(fetchMock).toHaveBeenCalledWith(
-        "http://127.0.0.1:4000/api/v1/job-context/preview",
-        expect.objectContaining({ method: "POST" }),
+        "http://127.0.0.1:4000/api/internal/match/job-context/preview",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            authorization: "Bearer test-match-runtime-secret",
+          }),
+        }),
       );
     } finally {
       fetchMock.mockRestore();
       restoreEnvValue("ENABLE_MATCH_PREVIEW_TEST", previousFlag);
       restoreEnvValue("MATCH_PREVIEW_MODE", previousMode);
       restoreEnvValue("ORCHESTRATOR_BASE_URL", previousBaseUrl);
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
     }
   });
 
@@ -157,6 +165,7 @@ describe("POST /api/test/job-context-preview", () => {
     const previousFlag = process.env.ENABLE_MATCH_PREVIEW_TEST;
     const previousMode = process.env.MATCH_PREVIEW_MODE;
     const previousBaseUrl = process.env.ORCHESTRATOR_BASE_URL;
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -168,13 +177,17 @@ describe("POST /api/test/job-context-preview", () => {
             retryable: true,
           },
         }),
-        { status: 502, headers: { "content-type": "application/json" } },
+        {
+          status: 502,
+          headers: { "content-type": "application/json", "retry-after": "15" },
+        },
       ),
     );
 
     process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
     process.env.MATCH_PREVIEW_MODE = "orchestrator";
     process.env.ORCHESTRATOR_BASE_URL = "http://127.0.0.1:4000";
+    process.env.ORCHESTRATOR_REQUEST_SECRET = "test-match-runtime-secret";
 
     try {
       const response = await POST(
@@ -185,6 +198,7 @@ describe("POST /api/test/job-context-preview", () => {
       );
 
       expect(response.status).toBe(502);
+      expect(response.headers.get("retry-after")).toBe("15");
       await expect(readJson(response)).resolves.toMatchObject({
         error: {
           code: "ASSISTANT_INTERNAL_ERROR",
@@ -199,6 +213,7 @@ describe("POST /api/test/job-context-preview", () => {
       restoreEnvValue("ENABLE_MATCH_PREVIEW_TEST", previousFlag);
       restoreEnvValue("MATCH_PREVIEW_MODE", previousMode);
       restoreEnvValue("ORCHESTRATOR_BASE_URL", previousBaseUrl);
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
     }
   });
 });

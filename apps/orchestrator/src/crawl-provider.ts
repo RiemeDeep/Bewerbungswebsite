@@ -6,7 +6,7 @@ export type CrawlProviderInput = {
 };
 
 export interface CrawlProvider {
-  crawl(input: CrawlProviderInput): Promise<CrawlResult>;
+  crawl(input: CrawlProviderInput, signal?: AbortSignal): Promise<CrawlResult>;
 }
 
 export function createDeterministicMockCrawlProvider(

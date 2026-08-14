@@ -11,7 +11,7 @@ export type JobContextExtractorInput = {
 };
 
 export interface JobContextExtractor {
-  extract(input: JobContextExtractorInput): Promise<JobContext>;
+  extract(input: JobContextExtractorInput, signal?: AbortSignal): Promise<JobContext>;
 }
 
 export class JobContextExtractionError extends Error {

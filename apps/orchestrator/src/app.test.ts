@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import type { AccessibleMatchAnalysis, ProfileReviewClaim } from "@bewerbungswebsite/contracts";
 
-import { createApp } from "./app.js";
+import { createApp, type MatchRuntimeEvent } from "./app.js";
 import { createAssistantRuntimeGuard } from "./assistant-runtime-guard.js";
 import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
 import {
@@ -14,7 +14,10 @@ import {
 } from "./job-context-extractor.js";
 import { createJobContextPreviewService } from "./job-context-preview.js";
 import type { MatchAnalysisStore } from "./match-analysis-store.js";
-import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
+import {
+  createDeterministicMockMatchAnalyzer,
+  MatchAnalysisProviderError,
+} from "./match-analyzer.js";
 import { createDeterministicMockMatchAssistantService } from "./match-assistant.js";
 import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
 import {
@@ -37,6 +40,7 @@ const publicResolver: DnsResolver = async () => [{ address: "93.184.216.34", fam
 const matchAccessToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123";
 const internalSecret = "test-internal-cleanup-secret";
 const assistantStagingSecret = "test-profile-assistant-staging-secret";
+const matchRuntimeSecret = "test-match-runtime-secret";
 
 function restoreEnvValue(key: string, value: string | undefined) {
   if (value === undefined) {
@@ -51,6 +55,23 @@ function createSyntheticMatchAnalyzer() {
   return createDeterministicMockMatchAnalyzer({
     evidenceRepository: createSyntheticMatchEvidenceRepository(),
   });
+}
+
+function createTestMatchRuntimeAccess(options?: {
+  maxRequestsPerMinute?: number;
+  timeoutMs?: number;
+  logEvent?: (event: MatchRuntimeEvent) => void;
+}) {
+  return {
+    secret: matchRuntimeSecret,
+    guard: createAssistantRuntimeGuard({
+      maxRequestsPerMinute: options?.maxRequestsPerMinute ?? 20,
+      maxRequestsPerDay: 100,
+      maxConcurrentRequests: 2,
+      timeoutMs: options?.timeoutMs ?? 1_000,
+    }),
+    ...(options?.logEvent ? { logEvent: options.logEvent } : {}),
+  };
 }
 
 function createTestMatchAnalysisStore(): MatchAnalysisStore {
@@ -496,6 +517,158 @@ describe("POST /api/v1/assistant/messages", () => {
       },
     });
     expect(JSON.stringify(response.body)).not.toContain("PRIVATE_PROFILE_CANARY");
+  });
+});
+
+describe("protected internal match runtime", () => {
+  it("requires bearer auth and hides the unprotected write routes", async () => {
+    const store = createTestMatchAnalysisStore();
+    const app = createApp({
+      jobContextPreview: createTestJobContextPreview(),
+      matchAnalyzer: createSyntheticMatchAnalyzer(),
+      matchAnalysisStore: store,
+      matchAssistant: createDeterministicMockMatchAssistantService({ store }),
+      matchRuntimeAccess: createTestMatchRuntimeAccess(),
+    });
+    const jobContextRequest = {
+      jobUrl: null,
+      companyUrl: null,
+      pastedText: "Beispiel GmbH sucht technische Projektkoordination.",
+      suppliedJobTitle: "Projektkoordination",
+      suppliedCompanyName: "Beispiel GmbH",
+      confirmsNoThirdPartyPrivateData: true,
+    };
+
+    const unauthorized = await request(app)
+      .post("/api/internal/match/job-context/preview")
+      .send(jobContextRequest)
+      .expect(401);
+    expect(unauthorized.headers["cache-control"]).toBe("private, no-store, max-age=0");
+    expect(unauthorized.headers["x-request-id"]).toEqual(expect.any(String));
+
+    const preview = await request(app)
+      .post("/api/internal/match/job-context/preview")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send(jobContextRequest)
+      .expect(200);
+    const creation = await request(app)
+      .post("/api/internal/match/analyses")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send(preview.body)
+      .expect(201);
+    await request(app)
+      .post("/api/internal/match/assistant/messages")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send({
+        sessionId: "99999999-9999-4999-8999-999999999999",
+        message: "Wie passt technische Projektarbeit?",
+        accessToken: creation.body.access.accessToken,
+      })
+      .expect(200);
+
+    await request(app).post("/api/v1/job-context/preview").send(jobContextRequest).expect(404);
+    await request(app).post("/api/v1/match/analyses").send(preview.body).expect(404);
+    await request(app).post("/api/v1/match/assistant/messages").send({}).expect(404);
+  });
+
+  it("shares a controlled request budget across match operations", async () => {
+    const app = createApp({
+      jobContextPreview: createTestJobContextPreview(),
+      matchAnalyzer: createSyntheticMatchAnalyzer(),
+      matchRuntimeAccess: createTestMatchRuntimeAccess({ maxRequestsPerMinute: 1 }),
+    });
+
+    await request(app)
+      .post("/api/internal/match/job-context/preview")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send({
+        jobUrl: null,
+        companyUrl: null,
+        pastedText: "Technische Projektkoordination.",
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(200);
+    const limited = await request(app)
+      .post("/api/internal/match/analyze")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send(validJobContext)
+      .expect(429);
+
+    expect(limited.body.error.code).toBe("MATCH_RUNTIME_RATE_LIMITED");
+    expect(limited.headers["retry-after"]).toEqual(expect.any(String));
+  });
+
+  it("aborts timed-out work and emits only content-free runtime events", async () => {
+    const events: unknown[] = [];
+    let observedAbort = false;
+    const canary = "PRIVATE_JOB_CONTEXT_CANARY";
+    const app = createApp({
+      jobContextPreview: {
+        async preview(_input, signal) {
+          return new Promise((_resolve, reject) => {
+            signal?.addEventListener("abort", () => {
+              observedAbort = true;
+              reject(new DOMException("Aborted", "AbortError"));
+            });
+          });
+        },
+      },
+      matchRuntimeAccess: createTestMatchRuntimeAccess({
+        timeoutMs: 5,
+        logEvent: (event) => events.push(event),
+      }),
+    });
+
+    const response = await request(app)
+      .post("/api/internal/match/job-context/preview")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send({
+        jobUrl: null,
+        companyUrl: null,
+        pastedText: canary,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      })
+      .expect(504);
+
+    expect(observedAbort).toBe(true);
+    expect(response.body.error.code).toBe("MATCH_RUNTIME_TIMEOUT");
+    expect(events).toEqual([
+      expect.objectContaining({
+        operation: "job_context_preview",
+        status: "limited",
+        limitedBy: "timeout",
+        requestId: expect.any(String),
+        durationMs: expect.any(Number),
+      }),
+    ]);
+    expect(JSON.stringify(events)).not.toContain(canary);
+  });
+
+  it("maps upstream match provider failures to retryable server errors", async () => {
+    const app = createApp({
+      matchAnalyzer: {
+        async analyze() {
+          throw new MatchAnalysisProviderError("PRIVATE_PROVIDER_ERROR_CANARY");
+        },
+      },
+      matchRuntimeAccess: createTestMatchRuntimeAccess(),
+    });
+
+    const response = await request(app)
+      .post("/api/internal/match/analyze")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send(validJobContext)
+      .expect(502);
+
+    expect(response.body.error).toMatchObject({
+      code: "ASSISTANT_INTERNAL_ERROR",
+      retryable: true,
+    });
+    expect(JSON.stringify(response.body)).not.toContain("PRIVATE_PROVIDER_ERROR_CANARY");
   });
 });
 

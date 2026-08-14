@@ -158,6 +158,33 @@ describe("createOpenAiMatchAnalysisProvider", () => {
     );
   });
 
+  it("combines an external abort signal with the provider timeout signal", async () => {
+    const controller = new AbortController();
+    const reason = new Error("external deadline");
+    let calls = 0;
+    const provider = createOpenAiMatchAnalysisProvider({
+      apiKey: "test-key",
+      model: "test-model",
+      timeoutMs: 60_000,
+      repairAttempts: 1,
+      async fetch(_input, init) {
+        calls += 1;
+        expect(init.signal).not.toBe(controller.signal);
+
+        controller.abort(reason);
+
+        expect(init.signal.aborted).toBe(true);
+        expect(init.signal.reason).toBe(reason);
+        throw init.signal.reason;
+      },
+    });
+
+    await expect(
+      provider.generateObject(await createProviderInput(), controller.signal),
+    ).rejects.toThrow("aborted by the external deadline");
+    expect(calls).toBe(1);
+  });
+
   it("rejects missing API keys during provider creation", () => {
     expect(() =>
       createOpenAiMatchAnalysisProvider({

@@ -1,7 +1,7 @@
 import { matchAnalysisSchema } from "@bewerbungswebsite/contracts";
 import { z } from "zod";
 
-import { MatchAnalysisError, type MatchAnalysisProvider } from "./match-analyzer.js";
+import { MatchAnalysisProviderError, type MatchAnalysisProvider } from "./match-analyzer.js";
 
 type FetchLike = (
   input: string,
@@ -250,7 +250,7 @@ function parseProviderContent(content: string) {
   try {
     return JSON.parse(content) as unknown;
   } catch {
-    throw new MatchAnalysisError("The provider returned non-JSON content.");
+    throw new MatchAnalysisProviderError("The provider returned non-JSON content.");
   }
 }
 
@@ -259,7 +259,7 @@ export function createOpenAiMatchAnalysisProvider(
 ): MatchAnalysisProvider {
   const apiKey = options.apiKey.trim();
   if (!apiKey) {
-    throw new MatchAnalysisError("OpenAI API key is required for match analysis.");
+    throw new MatchAnalysisProviderError("OpenAI API key is required for match analysis.");
   }
 
   const fetchImplementation = options.fetch ?? fetch;
@@ -267,13 +267,14 @@ export function createOpenAiMatchAnalysisProvider(
   const repairAttempts = options.repairAttempts ?? 0;
 
   return {
-    async generateObject(input) {
+    async generateObject(input, signal) {
       let attempt = 0;
       let repairContext: string | undefined;
 
       while (attempt <= repairAttempts) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), options.timeoutMs);
+        const requestSignal = signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(options.timeoutMs)])
+          : AbortSignal.timeout(options.timeoutMs);
 
         try {
           const response = await fetchImplementation(`${baseUrl}/chat/completions`, {
@@ -283,17 +284,19 @@ export function createOpenAiMatchAnalysisProvider(
               "content-type": "application/json",
             },
             body: createRequestBody(options.model, input, repairContext),
-            signal: controller.signal,
+            signal: requestSignal,
           });
           const responseText = await response.text();
 
           if (!response.ok) {
-            throw new MatchAnalysisError(`The provider returned HTTP ${response.status}.`);
+            throw new MatchAnalysisProviderError(`The provider returned HTTP ${response.status}.`);
           }
 
           const parsedEnvelope = openAiChatCompletionSchema.safeParse(JSON.parse(responseText));
           if (!parsedEnvelope.success) {
-            throw new MatchAnalysisError("The provider returned an invalid OpenAI envelope.");
+            throw new MatchAnalysisProviderError(
+              "The provider returned an invalid OpenAI envelope.",
+            );
           }
 
           const parsedContent = parseProviderContent(
@@ -307,7 +310,12 @@ export function createOpenAiMatchAnalysisProvider(
           repairContext = "Die vorherige Antwort war keine gueltige MatchAnalysis nach Schema.";
           attempt += 1;
         } catch (error) {
-          if (error instanceof MatchAnalysisError) {
+          if (signal?.aborted) {
+            throw new MatchAnalysisProviderError(
+              "The provider request was aborted by the external deadline.",
+            );
+          }
+          if (error instanceof MatchAnalysisProviderError) {
             if (attempt < repairAttempts) {
               repairContext = error.message;
               attempt += 1;
@@ -322,16 +330,14 @@ export function createOpenAiMatchAnalysisProvider(
               attempt += 1;
               continue;
             }
-            throw new MatchAnalysisError("The provider returned an invalid JSON envelope.");
+            throw new MatchAnalysisProviderError("The provider returned an invalid JSON envelope.");
           }
 
-          throw new MatchAnalysisError("The provider request failed.");
-        } finally {
-          clearTimeout(timeout);
+          throw new MatchAnalysisProviderError("The provider request failed.");
         }
       }
 
-      throw new MatchAnalysisError("The provider did not return a valid match analysis.");
+      throw new MatchAnalysisProviderError("The provider did not return a valid match analysis.");
     },
   };
 }

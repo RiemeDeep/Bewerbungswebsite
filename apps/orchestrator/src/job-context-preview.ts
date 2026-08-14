@@ -9,7 +9,7 @@ import type { JobContextExtractor } from "./job-context-extractor.js";
 import { validatePublicHttpUrl, type DnsResolver } from "./url-security.js";
 
 export interface JobContextPreviewService {
-  preview(input: JobContextInput): Promise<JobContext>;
+  preview(input: JobContextInput, signal?: AbortSignal): Promise<JobContext>;
 }
 
 export function createJobContextPreviewService(dependencies: {
@@ -19,7 +19,7 @@ export function createJobContextPreviewService(dependencies: {
   now?: () => Date;
 }): JobContextPreviewService {
   return {
-    async preview(input) {
+    async preview(input, signal) {
       const crawlInput: CrawlProviderInput = { jobUrl: null, companyUrl: null };
 
       if (input.jobUrl) {
@@ -35,9 +35,18 @@ export function createJobContextPreviewService(dependencies: {
 
       const crawled =
         crawlInput.jobUrl || crawlInput.companyUrl
-          ? await dependencies.crawlProvider.crawl(crawlInput)
+          ? await dependencies.crawlProvider.crawl(crawlInput, signal)
           : null;
-      const documents: CrawlDocument[] = [...(crawled?.documents ?? [])];
+      const documents: CrawlDocument[] = await Promise.all(
+        (crawled?.documents ?? []).map(async (document) => ({
+          ...document,
+          source: {
+            ...document.source,
+            url: (await validatePublicHttpUrl(document.source.url, dependencies.dnsResolver))
+              .normalizedUrl,
+          },
+        })),
+      );
 
       if (input.pastedText) {
         documents.unshift({
@@ -50,11 +59,14 @@ export function createJobContextPreviewService(dependencies: {
         });
       }
 
-      return dependencies.extractor.extract({
-        documents,
-        suppliedJobTitle: input.suppliedJobTitle,
-        suppliedCompanyName: input.suppliedCompanyName,
-      });
+      return dependencies.extractor.extract(
+        {
+          documents,
+          suppliedJobTitle: input.suppliedJobTitle,
+          suppliedCompanyName: input.suppliedCompanyName,
+        },
+        signal,
+      );
     },
   };
 }

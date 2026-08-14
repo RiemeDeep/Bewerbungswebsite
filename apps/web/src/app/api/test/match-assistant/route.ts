@@ -10,6 +10,11 @@ import {
 } from "@bewerbungswebsite/contracts";
 import { NextResponse } from "next/server";
 
+import {
+  fetchInternalMatchRuntime,
+  InternalMatchRuntimeTimeoutError,
+} from "../../../../lib/internal-match-runtime";
+
 function isMatchPreviewTestEnabled() {
   return process.env.ENABLE_MATCH_PREVIEW_TEST === "1";
 }
@@ -19,7 +24,11 @@ function isOrchestratorModeEnabled() {
 }
 
 function createErrorResponse(status: number, input: ApiErrorResponse) {
-  return NextResponse.json(apiErrorResponseSchema.parse(input), { status });
+  const response = NextResponse.json(apiErrorResponseSchema.parse(input), { status });
+  response.headers.set("cache-control", "private, no-store, max-age=0");
+  response.headers.set("referrer-policy", "no-referrer");
+  response.headers.set("x-robots-tag", "noindex,nofollow");
+  return response;
 }
 
 function createMockResponse(request: MatchAssistantMessageRequest): MatchAssistantResponse {
@@ -76,6 +85,7 @@ class OrchestratorMatchAssistantError extends Error {
   constructor(
     readonly status: number,
     readonly payload: ApiErrorResponse,
+    readonly retryAfter: string | null,
   ) {
     super(payload.error.message);
     this.name = "OrchestratorMatchAssistantError";
@@ -86,21 +96,16 @@ async function fetchOrchestratorResponse(
   requestBody: MatchAssistantMessageRequest,
   requestId: string,
 ): Promise<MatchAssistantResponse> {
-  const baseUrl = process.env.ORCHESTRATOR_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("Missing ORCHESTRATOR_BASE_URL for match assistant orchestrator mode.");
-  }
-
-  const response = await fetch(new URL("/api/v1/match/assistant/messages", baseUrl).toString(), {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
+  const response = await fetchInternalMatchRuntime(
+    "/api/internal/match/assistant/messages",
+    requestBody,
+  );
 
   if (!response.ok) {
     throw new OrchestratorMatchAssistantError(
       response.status,
       await readOrchestratorError(response, requestId),
+      response.headers.get("retry-after"),
     );
   }
 
@@ -161,8 +166,20 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof InternalMatchRuntimeTimeoutError) {
+      return createErrorResponse(504, {
+        error: {
+          code: "MATCH_RUNTIME_TIMEOUT",
+          message: "Die interne Match-Anfrage hat das Zeitlimit ueberschritten.",
+          requestId,
+          retryable: true,
+        },
+      });
+    }
     if (error instanceof OrchestratorMatchAssistantError) {
-      return createErrorResponse(error.status, error.payload);
+      const response = createErrorResponse(error.status, error.payload);
+      if (error.retryAfter) response.headers.set("retry-after", error.retryAfter);
+      return response;
     }
 
     return createErrorResponse(502, {

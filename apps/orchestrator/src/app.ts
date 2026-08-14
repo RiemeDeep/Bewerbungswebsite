@@ -25,7 +25,11 @@ import {
 } from "./assistant-runtime-guard.js";
 import type { JobContextPreviewService } from "./job-context-preview.js";
 import type { MatchAnalysisStore } from "./match-analysis-store.js";
-import { MatchAnalysisError, type MatchAnalyzer } from "./match-analyzer.js";
+import {
+  MatchAnalysisError,
+  MatchAnalysisProviderError,
+  type MatchAnalyzer,
+} from "./match-analyzer.js";
 import {
   MatchAssistantAccessError,
   MatchAssistantError,
@@ -46,6 +50,11 @@ export type AppDependencies = {
   matchAnalyzer?: MatchAnalyzer;
   matchAnalysisStore?: MatchAnalysisStore;
   matchAssistant?: MatchAssistantService;
+  matchRuntimeAccess?: {
+    secret: string;
+    guard: AssistantRuntimeGuard;
+    logEvent?: (event: MatchRuntimeEvent) => void;
+  };
   profileReviewRepository?: ProfileReviewRepository;
   now?: () => Date;
 };
@@ -56,6 +65,16 @@ export type AssistantRuntimeEvent = {
   durationMs: number;
   classification?: string;
   evidenceCount?: number;
+  limitedBy?: AssistantRuntimeLimit;
+};
+
+export type MatchRuntimeOperation = "job_context_preview" | "match_analysis" | "match_assistant";
+
+export type MatchRuntimeEvent = {
+  requestId: string;
+  operation: MatchRuntimeOperation;
+  status: "success" | "invalid_request" | "unauthorized" | "limited" | "upstream_error";
+  durationMs: number;
   limitedBy?: AssistantRuntimeLimit;
 };
 
@@ -92,12 +111,84 @@ function isAuthorizedInternalRequest(authorizationHeader: string | undefined, se
   return safelyEquals(authorizationHeader.slice("Bearer ".length), secret);
 }
 
-function setPrivateAssistantHeaders(response: express.Response, requestId: string) {
+function setPrivateRuntimeHeaders(response: express.Response, requestId: string) {
   response
     .set("cache-control", "private, no-store, max-age=0")
     .set("referrer-policy", "no-referrer")
     .set("x-robots-tag", "noindex,nofollow")
     .set("x-request-id", requestId);
+}
+
+type MatchRequestContext = {
+  requestId: string;
+  logEvent(event: Omit<MatchRuntimeEvent, "requestId" | "operation" | "durationMs">): void;
+  execute<T>(operation: (signal?: AbortSignal) => Promise<T>): Promise<T>;
+};
+
+function prepareMatchRequest(
+  request: express.Request,
+  response: express.Response,
+  access: AppDependencies["matchRuntimeAccess"],
+  operation: MatchRuntimeOperation,
+): MatchRequestContext | null {
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  const logEvent = (event: Omit<MatchRuntimeEvent, "requestId" | "operation" | "durationMs">) =>
+    access?.logEvent?.({
+      requestId,
+      operation,
+      durationMs: Date.now() - startedAt,
+      ...event,
+    });
+
+  setPrivateRuntimeHeaders(response, requestId);
+  if (access && !isAuthorizedInternalRequest(request.get("authorization"), access.secret)) {
+    logEvent({ status: "unauthorized" });
+    response.status(401).json(
+      createErrorResponse({
+        code: "INVALID_REQUEST",
+        message: "Die Anfrage ist ungueltig.",
+        requestId,
+        retryable: false,
+      }),
+    );
+    return null;
+  }
+
+  return {
+    requestId,
+    logEvent,
+    execute: access
+      ? (runtimeOperation) => access.guard.execute(runtimeOperation)
+      : (runtimeOperation) => runtimeOperation(undefined),
+  };
+}
+
+function handleMatchRuntimeLimit(
+  error: unknown,
+  context: MatchRequestContext,
+  response: express.Response,
+): boolean {
+  if (!(error instanceof AssistantRuntimeLimitError)) {
+    return false;
+  }
+
+  context.logEvent({ status: "limited", limitedBy: error.limit });
+  const timedOut = error.limit === "timeout";
+  response
+    .set("retry-after", String(error.retryAfterSeconds))
+    .status(timedOut ? 504 : 429)
+    .json(
+      createErrorResponse({
+        code: timedOut ? "MATCH_RUNTIME_TIMEOUT" : "MATCH_RUNTIME_RATE_LIMITED",
+        message: timedOut
+          ? "Die interne Match-Anfrage hat das Zeitlimit ueberschritten."
+          : "Die interne Match-Runtime hat ihr aktuelles Limit erreicht.",
+        requestId: context.requestId,
+        retryable: true,
+      }),
+    );
+  return true;
 }
 
 const matchAnalysisHardDeleteAfterMs = 30 * 24 * 60 * 60 * 1_000;
@@ -133,7 +224,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
           durationMs: Date.now() - startedAt,
           ...event,
         });
-      setPrivateAssistantHeaders(response, requestId);
+      setPrivateRuntimeHeaders(response, requestId);
 
       if (access && !isAuthorizedInternalRequest(request.get("authorization"), access.secret)) {
         logEvent({ status: "unauthorized" });
@@ -229,16 +320,26 @@ export function createApp(dependencies: AppDependencies = {}): Express {
 
   const jobContextPreview = dependencies.jobContextPreview;
   if (jobContextPreview) {
-    app.post("/api/v1/job-context/preview", async (request, response) => {
-      const requestId = randomUUID();
+    const previewRoute = dependencies.matchRuntimeAccess
+      ? "/api/internal/match/job-context/preview"
+      : "/api/v1/job-context/preview";
+    app.post(previewRoute, async (request, response) => {
+      const context = prepareMatchRequest(
+        request,
+        response,
+        dependencies.matchRuntimeAccess,
+        "job_context_preview",
+      );
+      if (!context) return;
       const parsedRequest = jobContextInputSchema.safeParse(request.body);
 
       if (!parsedRequest.success) {
+        context.logEvent({ status: "invalid_request" });
         response.status(400).json(
           createErrorResponse({
             code: "INVALID_REQUEST",
             message: "Die Anfrage ist ungueltig.",
-            requestId,
+            requestId: context.requestId,
             retryable: false,
           }),
         );
@@ -246,39 +347,53 @@ export function createApp(dependencies: AppDependencies = {}): Express {
       }
 
       try {
-        response
-          .status(200)
-          .json(jobContextSchema.parse(await jobContextPreview.preview(parsedRequest.data)));
+        const preview = await context.execute((signal) =>
+          jobContextPreview.preview(parsedRequest.data, signal),
+        );
+        context.logEvent({ status: "success" });
+        response.status(200).json(jobContextSchema.parse(preview));
       } catch (error) {
+        if (handleMatchRuntimeLimit(error, context, response)) return;
+        context.logEvent({ status: "upstream_error" });
         if (error instanceof UrlSecurityError) {
           response.status(400).json(
             createErrorResponse({
               code: "INVALID_REQUEST",
               message: "Die URL konnte nicht sicher abgerufen werden.",
-              requestId,
+              requestId: context.requestId,
               retryable: false,
             }),
           );
           return;
         }
 
-        response.status(502).json(createJobProviderErrorResponse(requestId));
+        response.status(502).json(createJobProviderErrorResponse(context.requestId));
       }
     });
   }
 
   const matchAnalyzer = dependencies.matchAnalyzer;
   if (matchAnalyzer) {
-    app.post("/api/v1/match/analyze", async (request, response) => {
-      const requestId = randomUUID();
+    const analyzeRoute = dependencies.matchRuntimeAccess
+      ? "/api/internal/match/analyze"
+      : "/api/v1/match/analyze";
+    app.post(analyzeRoute, async (request, response) => {
+      const context = prepareMatchRequest(
+        request,
+        response,
+        dependencies.matchRuntimeAccess,
+        "match_analysis",
+      );
+      if (!context) return;
       const parsedRequest = jobContextSchema.safeParse(request.body);
 
       if (!parsedRequest.success) {
+        context.logEvent({ status: "invalid_request" });
         response.status(400).json(
           createErrorResponse({
             code: "INVALID_REQUEST",
             message: "Die Anfrage ist ungueltig.",
-            requestId,
+            requestId: context.requestId,
             retryable: false,
           }),
         );
@@ -286,24 +401,24 @@ export function createApp(dependencies: AppDependencies = {}): Express {
       }
 
       try {
-        response
-          .status(200)
-          .json(
-            matchAnalysisSchema.parse(
-              await matchAnalyzer.analyze({ jobContext: parsedRequest.data }),
-            ),
-          );
+        const analysis = await context.execute((signal) =>
+          matchAnalyzer.analyze({ jobContext: parsedRequest.data }, signal),
+        );
+        context.logEvent({ status: "success" });
+        response.status(200).json(matchAnalysisSchema.parse(analysis));
       } catch (error) {
-        response.status(error instanceof MatchAnalysisError ? 400 : 500).json(
+        if (handleMatchRuntimeLimit(error, context, response)) return;
+        context.logEvent({ status: "upstream_error" });
+        const providerError = error instanceof MatchAnalysisProviderError;
+        const analysisError = error instanceof MatchAnalysisError && !providerError;
+        response.status(providerError ? 502 : analysisError ? 400 : 500).json(
           createErrorResponse({
-            code:
-              error instanceof MatchAnalysisError ? "INVALID_REQUEST" : "ASSISTANT_INTERNAL_ERROR",
-            message:
-              error instanceof MatchAnalysisError
-                ? "Der bestaetigte Stellenkontext enthaelt keine auswertbaren Anforderungen."
-                : "Die synthetische Match-Analyse konnte nicht verarbeitet werden.",
-            requestId,
-            retryable: !(error instanceof MatchAnalysisError),
+            code: analysisError ? "INVALID_REQUEST" : "ASSISTANT_INTERNAL_ERROR",
+            message: analysisError
+              ? "Der bestaetigte Stellenkontext enthaelt keine auswertbaren Anforderungen."
+              : "Die Match-Analyse konnte nicht sicher verarbeitet werden.",
+            requestId: context.requestId,
+            retryable: !analysisError,
           }),
         );
       }
@@ -312,16 +427,26 @@ export function createApp(dependencies: AppDependencies = {}): Express {
 
   const matchAnalysisStore = dependencies.matchAnalysisStore;
   if (matchAnalyzer && matchAnalysisStore) {
-    app.post("/api/v1/match/analyses", async (request, response) => {
-      const requestId = randomUUID();
+    const creationRoute = dependencies.matchRuntimeAccess
+      ? "/api/internal/match/analyses"
+      : "/api/v1/match/analyses";
+    app.post(creationRoute, async (request, response) => {
+      const context = prepareMatchRequest(
+        request,
+        response,
+        dependencies.matchRuntimeAccess,
+        "match_analysis",
+      );
+      if (!context) return;
       const parsedRequest = jobContextSchema.safeParse(request.body);
 
       if (!parsedRequest.success) {
+        context.logEvent({ status: "invalid_request" });
         response.status(400).json(
           createErrorResponse({
             code: "INVALID_REQUEST",
             message: "Die Anfrage ist ungueltig.",
-            requestId,
+            requestId: context.requestId,
             retryable: false,
           }),
         );
@@ -329,11 +454,14 @@ export function createApp(dependencies: AppDependencies = {}): Express {
       }
 
       try {
-        const matchAnalysis = await matchAnalyzer.analyze({ jobContext: parsedRequest.data });
+        const matchAnalysis = await context.execute((signal) =>
+          matchAnalyzer.analyze({ jobContext: parsedRequest.data }, signal),
+        );
         const access = await matchAnalysisStore.create({
           jobContext: parsedRequest.data,
           matchAnalysis,
         });
+        context.logEvent({ status: "success" });
 
         response
           .set("cache-control", "private, no-store, max-age=0")
@@ -347,16 +475,20 @@ export function createApp(dependencies: AppDependencies = {}): Express {
             }),
           );
       } catch (error) {
-        response.status(error instanceof MatchAnalysisError ? 400 : 500).json(
+        if (handleMatchRuntimeLimit(error, context, response)) return;
+        context.logEvent({ status: "upstream_error" });
+        const providerError = error instanceof MatchAnalysisProviderError;
+        const analysisError = error instanceof MatchAnalysisError && !providerError;
+        response.status(providerError ? 502 : analysisError ? 400 : 500).json(
           createErrorResponse({
-            code:
-              error instanceof MatchAnalysisError ? "INVALID_REQUEST" : "ASSISTANT_INTERNAL_ERROR",
-            message:
-              error instanceof MatchAnalysisError
-                ? "Der bestaetigte Stellenkontext enthaelt keine auswertbaren Anforderungen."
-                : "Die synthetische Match-Analyse konnte nicht gespeichert werden.",
-            requestId,
-            retryable: !(error instanceof MatchAnalysisError),
+            code: analysisError ? "INVALID_REQUEST" : "ASSISTANT_INTERNAL_ERROR",
+            message: analysisError
+              ? "Der bestaetigte Stellenkontext enthaelt keine auswertbaren Anforderungen."
+              : providerError
+                ? "Die Match-Analyse konnte nicht sicher verarbeitet werden."
+                : "Die Match-Analyse konnte nicht gespeichert werden.",
+            requestId: context.requestId,
+            retryable: !analysisError,
           }),
         );
       }
@@ -518,16 +650,26 @@ export function createApp(dependencies: AppDependencies = {}): Express {
 
   const matchAssistant = dependencies.matchAssistant;
   if (matchAssistant) {
-    app.post("/api/v1/match/assistant/messages", async (request, response) => {
-      const requestId = randomUUID();
+    const assistantRoute = dependencies.matchRuntimeAccess
+      ? "/api/internal/match/assistant/messages"
+      : "/api/v1/match/assistant/messages";
+    app.post(assistantRoute, async (request, response) => {
+      const context = prepareMatchRequest(
+        request,
+        response,
+        dependencies.matchRuntimeAccess,
+        "match_assistant",
+      );
+      if (!context) return;
       const parsedRequest = matchAssistantMessageRequestSchema.safeParse(request.body);
 
       if (!parsedRequest.success) {
+        context.logEvent({ status: "invalid_request" });
         response.status(400).json(
           createErrorResponse({
             code: "INVALID_REQUEST",
             message: "Die Anfrage ist ungueltig.",
-            requestId,
+            requestId: context.requestId,
             retryable: false,
           }),
         );
@@ -535,21 +677,25 @@ export function createApp(dependencies: AppDependencies = {}): Express {
       }
 
       try {
+        const result = await context.execute((signal) =>
+          matchAssistant.answer(parsedRequest.data, signal),
+        );
+        context.logEvent({ status: "success" });
         response
           .set("cache-control", "private, no-store, max-age=0")
           .set("referrer-policy", "no-referrer")
           .set("x-robots-tag", "noindex,nofollow")
           .status(200)
-          .json(
-            matchAssistantResponseSchema.parse(await matchAssistant.answer(parsedRequest.data)),
-          );
+          .json(matchAssistantResponseSchema.parse(result));
       } catch (error) {
+        if (handleMatchRuntimeLimit(error, context, response)) return;
+        context.logEvent({ status: "upstream_error" });
         if (error instanceof MatchAssistantAccessError) {
           response.status(404).json(
             createErrorResponse({
               code: "MATCH_ANALYSIS_NOT_FOUND",
               message: "Die Match-Analyse ist nicht vorhanden oder abgelaufen.",
-              requestId,
+              requestId: context.requestId,
               retryable: false,
             }),
           );
@@ -563,7 +709,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
                 ? "ASSISTANT_EVIDENCE_VIOLATION"
                 : "ASSISTANT_INTERNAL_ERROR",
             message: "Die synthetische Match-Assistentenantwort konnte nicht verarbeitet werden.",
-            requestId,
+            requestId: context.requestId,
             retryable: !(error instanceof MatchAssistantError),
           }),
         );
@@ -585,6 +731,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
         : null;
     const status = errorStatus ?? 500;
 
+    setPrivateRuntimeHeaders(response, requestId);
     response.status(status).json(
       createErrorResponse({
         code: status === 500 ? "ASSISTANT_INTERNAL_ERROR" : "INVALID_REQUEST",

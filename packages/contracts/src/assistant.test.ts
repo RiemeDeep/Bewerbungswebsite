@@ -135,4 +135,11 @@ describe("apiErrorResponseSchema", () => {
       "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED",
     );
   });
+
+  it("accepts controlled match runtime limit errors", () => {
+    expect(assistantErrorCodeSchema.parse("MATCH_RUNTIME_RATE_LIMITED")).toBe(
+      "MATCH_RUNTIME_RATE_LIMITED",
+    );
+    expect(assistantErrorCodeSchema.parse("MATCH_RUNTIME_TIMEOUT")).toBe("MATCH_RUNTIME_TIMEOUT");
+  });
 });

@@ -49,7 +49,7 @@ export function createFirecrawlCrawlProvider(options: {
   const now = options.now ?? (() => new Date());
 
   return {
-    async crawl(input: CrawlProviderInput): Promise<CrawlResult> {
+    async crawl(input: CrawlProviderInput, signal?: AbortSignal): Promise<CrawlResult> {
       const urls = [input.jobUrl, input.companyUrl].filter((url): url is string => url !== null);
       if (urls.length === 0) {
         throw new CrawlProviderError("At least one URL is required for Firecrawl.");
@@ -57,6 +57,9 @@ export function createFirecrawlCrawlProvider(options: {
 
       const documents = await Promise.all(
         urls.map(async (url) => {
+          const requestSignal = signal
+            ? AbortSignal.any([signal, AbortSignal.timeout(30_000)])
+            : AbortSignal.timeout(30_000);
           const response = await fetcher(new URL("/v2/scrape", baseUrl).toString(), {
             method: "POST",
             headers: {
@@ -70,6 +73,7 @@ export function createFirecrawlCrawlProvider(options: {
               storeInCache: options.storeInCache ?? false,
               timeout: 30_000,
             }),
+            signal: requestSignal,
           });
 
           if (!response.ok) {

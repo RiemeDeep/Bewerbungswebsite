@@ -126,6 +126,7 @@ describe("POST /api/test/match-analysis", () => {
     const previousFlag = process.env.ENABLE_MATCH_PREVIEW_TEST;
     const previousMode = process.env.MATCH_PREVIEW_MODE;
     const previousBaseUrl = process.env.ORCHESTRATOR_BASE_URL;
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -202,6 +203,7 @@ describe("POST /api/test/match-analysis", () => {
     process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
     process.env.MATCH_PREVIEW_MODE = "orchestrator";
     process.env.ORCHESTRATOR_BASE_URL = "http://127.0.0.1:4000";
+    process.env.ORCHESTRATOR_REQUEST_SECRET = "test-match-runtime-secret";
 
     try {
       const response = await POST(
@@ -216,8 +218,13 @@ describe("POST /api/test/match-analysis", () => {
       expect(response.headers.get("referrer-policy")).toBe("no-referrer");
       expect(response.headers.get("x-robots-tag")).toBe("noindex,nofollow");
       expect(fetchMock).toHaveBeenCalledWith(
-        "http://127.0.0.1:4000/api/v1/match/analyses",
-        expect.objectContaining({ method: "POST" }),
+        "http://127.0.0.1:4000/api/internal/match/analyses",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            authorization: "Bearer test-match-runtime-secret",
+          }),
+        }),
       );
       await expect(readJson(response)).resolves.toMatchObject({
         access: {
@@ -232,6 +239,7 @@ describe("POST /api/test/match-analysis", () => {
       restoreEnvValue("ENABLE_MATCH_PREVIEW_TEST", previousFlag);
       restoreEnvValue("MATCH_PREVIEW_MODE", previousMode);
       restoreEnvValue("ORCHESTRATOR_BASE_URL", previousBaseUrl);
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
     }
   });
 
@@ -239,6 +247,7 @@ describe("POST /api/test/match-analysis", () => {
     const previousFlag = process.env.ENABLE_MATCH_PREVIEW_TEST;
     const previousMode = process.env.MATCH_PREVIEW_MODE;
     const previousBaseUrl = process.env.ORCHESTRATOR_BASE_URL;
+    const previousSecret = process.env.ORCHESTRATOR_REQUEST_SECRET;
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -256,6 +265,7 @@ describe("POST /api/test/match-analysis", () => {
     process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
     process.env.MATCH_PREVIEW_MODE = "orchestrator";
     process.env.ORCHESTRATOR_BASE_URL = "http://127.0.0.1:4000";
+    process.env.ORCHESTRATOR_REQUEST_SECRET = "test-match-runtime-secret";
 
     try {
       const response = await POST(
@@ -279,6 +289,7 @@ describe("POST /api/test/match-analysis", () => {
       restoreEnvValue("ENABLE_MATCH_PREVIEW_TEST", previousFlag);
       restoreEnvValue("MATCH_PREVIEW_MODE", previousMode);
       restoreEnvValue("ORCHESTRATOR_BASE_URL", previousBaseUrl);
+      restoreEnvValue("ORCHESTRATOR_REQUEST_SECRET", previousSecret);
     }
   });
 });

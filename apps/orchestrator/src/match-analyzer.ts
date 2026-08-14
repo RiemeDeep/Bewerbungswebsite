@@ -15,7 +15,7 @@ export type MatchAnalyzerInput = {
 };
 
 export interface MatchAnalyzer {
-  analyze(input: MatchAnalyzerInput): Promise<MatchAnalysis>;
+  analyze(input: MatchAnalyzerInput, signal?: AbortSignal): Promise<MatchAnalysis>;
 }
 
 export type MatchAnalysisProviderInput = {
@@ -26,13 +26,20 @@ export type MatchAnalysisProviderInput = {
 };
 
 export interface MatchAnalysisProvider {
-  generateObject(input: MatchAnalysisProviderInput): Promise<unknown>;
+  generateObject(input: MatchAnalysisProviderInput, signal?: AbortSignal): Promise<unknown>;
 }
 
 export class MatchAnalysisError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "MatchAnalysisError";
+  }
+}
+
+export class MatchAnalysisProviderError extends MatchAnalysisError {
+  constructor(message: string) {
+    super(message);
+    this.name = "MatchAnalysisProviderError";
   }
 }
 
@@ -170,7 +177,7 @@ function validateCanonicalSubject(analysis: MatchAnalysis, jobContext: JobContex
   };
 
   if (JSON.stringify(analysis.subject) !== JSON.stringify(expectedSubject)) {
-    throw new MatchAnalysisError("The provider changed the canonical match subject.");
+    throw new MatchAnalysisProviderError("The provider changed the canonical match subject.");
   }
 }
 
@@ -186,12 +193,14 @@ function validateRequirementCoverage(
   );
 
   if (expectedRequirementIds.size !== actualRequirementIds.size) {
-    throw new MatchAnalysisError("The provider did not assess the confirmed requirements.");
+    throw new MatchAnalysisProviderError("The provider did not assess the confirmed requirements.");
   }
 
   for (const requirementId of expectedRequirementIds) {
     if (!actualRequirementIds.has(requirementId)) {
-      throw new MatchAnalysisError("The provider did not assess the confirmed requirements.");
+      throw new MatchAnalysisProviderError(
+        "The provider did not assess the confirmed requirements.",
+      );
     }
   }
 }
@@ -209,14 +218,16 @@ function validateEvidenceObjects(analysis: MatchAnalysis, evidenceSet: MatchEvid
       allowedEvidence.publicExcerpt !== evidence.publicExcerpt ||
       allowedEvidence.sourceType !== evidence.sourceType
     ) {
-      throw new MatchAnalysisError("The provider referenced evidence outside the allowlist.");
+      throw new MatchAnalysisProviderError(
+        "The provider referenced evidence outside the allowlist.",
+      );
     }
   }
 }
 
 export function createMatchAnalyzerService(options: MatchAnalyzerServiceOptions): MatchAnalyzer {
   return {
-    async analyze(input) {
+    async analyze(input, signal) {
       const requirements = normalizeJobContextRequirements(input.jobContext);
       if (requirements.length === 0) {
         throw new MatchAnalysisError("At least one normalized requirement is required.");
@@ -227,16 +238,19 @@ export function createMatchAnalyzerService(options: MatchAnalyzerServiceOptions)
         options.evidenceLimit ?? 30,
       );
       const allowedEvidenceIds = [...createMatchEvidenceAllowlist(evidenceSet)];
-      const rawAnalysis = await options.provider.generateObject({
-        jobContext: input.jobContext,
-        requirements,
-        evidenceSet,
-        allowedEvidenceIds,
-      });
+      const rawAnalysis = await options.provider.generateObject(
+        {
+          jobContext: input.jobContext,
+          requirements,
+          evidenceSet,
+          allowedEvidenceIds,
+        },
+        signal,
+      );
       const parsedAnalysis = matchAnalysisSchema.safeParse(rawAnalysis);
 
       if (!parsedAnalysis.success) {
-        throw new MatchAnalysisError("The provider returned an invalid match analysis.");
+        throw new MatchAnalysisProviderError("The provider returned an invalid match analysis.");
       }
 
       validateCanonicalSubject(parsedAnalysis.data, input.jobContext);

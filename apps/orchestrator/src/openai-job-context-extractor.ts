@@ -212,10 +212,11 @@ export function createOpenAiJobContextExtractor(
   const maxRetries = options.maxRetries ?? 1;
 
   return {
-    async extract(input) {
+    async extract(input, signal) {
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), options.timeoutMs);
+        const requestSignal = signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(options.timeoutMs)])
+          : AbortSignal.timeout(options.timeoutMs);
 
         try {
           const response = await fetchImplementation(`${baseUrl}/chat/completions`, {
@@ -225,7 +226,7 @@ export function createOpenAiJobContextExtractor(
               "content-type": "application/json",
             },
             body: createRequestBody(options.model, input),
-            signal: controller.signal,
+            signal: requestSignal,
           }).catch((error: unknown) => {
             throw normalizeRequestError(error);
           });
@@ -255,6 +256,11 @@ export function createOpenAiJobContextExtractor(
 
           return parsedContext.data;
         } catch (error) {
+          if (signal?.aborted) {
+            throw new JobContextExtractionError(
+              "The provider request was aborted by the external deadline.",
+            );
+          }
           if (error instanceof TransientProviderError && attempt < maxRetries) {
             continue;
           }
@@ -265,8 +271,6 @@ export function createOpenAiJobContextExtractor(
             throw error;
           }
           throw new JobContextExtractionError("The provider request failed.");
-        } finally {
-          clearTimeout(timeout);
         }
       }
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createDeterministicMockCrawlProvider } from "./crawl-provider.js";
 import { createDeterministicMockJobContextExtractor } from "./job-context-extractor.js";
@@ -63,6 +63,34 @@ describe("createJobContextPreviewService", () => {
     });
   });
 
+  it("forwards an external abort signal to crawling and extraction", async () => {
+    const crawlProvider = createDeterministicMockCrawlProvider();
+    const extractor = createDeterministicMockJobContextExtractor();
+    const crawl = vi.spyOn(crawlProvider, "crawl");
+    const extract = vi.spyOn(extractor, "extract");
+    const service = createJobContextPreviewService({
+      crawlProvider,
+      extractor,
+      dnsResolver: publicResolver,
+    });
+    const controller = new AbortController();
+
+    await service.preview(
+      {
+        jobUrl: "https://example.com/jobs/technische-projektrolle",
+        companyUrl: null,
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      },
+      controller.signal,
+    );
+
+    expect(crawl).toHaveBeenCalledWith(expect.any(Object), controller.signal);
+    expect(extract).toHaveBeenCalledWith(expect.any(Object), controller.signal);
+  });
+
   it("rejects unsafe URLs before crawling", async () => {
     const service = createJobContextPreviewService({
       crawlProvider: createDeterministicMockCrawlProvider(),
@@ -80,5 +108,40 @@ describe("createJobContextPreviewService", () => {
         confirmsNoThirdPartyPrivateData: true,
       }),
     ).rejects.toThrow();
+  });
+
+  it("rejects unsafe source URLs returned by the crawl provider", async () => {
+    const service = createJobContextPreviewService({
+      crawlProvider: {
+        async crawl() {
+          return {
+            documents: [
+              {
+                source: {
+                  url: "http://127.0.0.1/internal",
+                  retrievedAt: "2026-07-28T12:00:00.000Z",
+                  title: "Unsichere Weiterleitung",
+                },
+                markdown: "# Interner Inhalt",
+              },
+            ],
+            warnings: [],
+          };
+        },
+      },
+      extractor: createDeterministicMockJobContextExtractor(),
+      dnsResolver: publicResolver,
+    });
+
+    await expect(
+      service.preview({
+        jobUrl: "https://example.com/jobs/redirect",
+        companyUrl: null,
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      }),
+    ).rejects.toThrow("blocked network address");
   });
 });

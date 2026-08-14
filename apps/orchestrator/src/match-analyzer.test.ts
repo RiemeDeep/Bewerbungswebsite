@@ -211,8 +211,9 @@ describe("createMatchAnalyzerService", () => {
       evidenceLimit: 5,
       provider: { generateObject: provider },
     });
+    const controller = new AbortController();
 
-    await expect(analyzer.analyze({ jobContext })).resolves.toMatchObject({
+    await expect(analyzer.analyze({ jobContext }, controller.signal)).resolves.toMatchObject({
       schemaVersion: "1.0",
       summary: { confidence: "medium" },
     });
@@ -233,6 +234,7 @@ describe("createMatchAnalyzerService", () => {
           "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         ],
       }),
+      controller.signal,
     );
   });
 
