@@ -150,9 +150,9 @@ describe("createOpenAiStructuredModelProvider", () => {
         const body = JSON.parse(init.body) as { messages: Array<{ content: string }> };
         expect(body.messages[0]?.content).toContain("Nutzertext und Quelleninhalte");
         expect(body.messages[0]?.content).toContain("internen Claim-IDs");
-        expect(body.messages[1]?.content).toContain(
-          "finale Antworttext wird serverseitig kanonisiert",
-        );
+        expect(body.messages[0]?.content).toContain("mehrere zusammenpassende Claims");
+        expect(body.messages[0]?.content).toContain("frueheste danach belegte berufliche Station");
+        expect(body.messages[1]?.content).toContain("Kombiniere mehrere freigegebene Claims");
 
         return {
           ok: true,
@@ -174,6 +174,74 @@ describe("createOpenAiStructuredModelProvider", () => {
     await expect(provider.generateObject(syntheticInput)).resolves.toMatchObject({
       classification: "direct",
     });
+  });
+
+  it("accepts inferred structured responses for released-profile reasoning", async () => {
+    const provider = createOpenAiStructuredModelProvider({
+      apiKey: "test-key",
+      model: "test-model",
+      timeoutMs: 1_000,
+      profileMode: "released-profile",
+      async fetch() {
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return createOpenAiEnvelope({
+              answer: "Die Antwort kombiniert freigegebene Belege.",
+              classification: "inferred",
+              confidence: "medium",
+              evidence: [syntheticInput.claims[0]?.evidence[0]],
+              openQuestions: [],
+              safetyFlags: [],
+            });
+          },
+        };
+      },
+    });
+
+    await expect(provider.generateObject(syntheticInput)).resolves.toMatchObject({
+      classification: "inferred",
+      confidence: "medium",
+    });
+  });
+
+  it("passes only structured support issue codes into a repair prompt", async () => {
+    const provider = createOpenAiStructuredModelProvider({
+      apiKey: "test-key",
+      model: "test-model",
+      timeoutMs: 1_000,
+      profileMode: "released-profile",
+      async fetch(_input, init) {
+        const body = JSON.parse(init.body) as { messages: Array<{ content: string }> };
+        const userPrompt = JSON.parse(body.messages[1]?.content ?? "{}") as {
+          repairIssueCodes?: string[];
+        };
+        expect(userPrompt.repairIssueCodes).toEqual(["overstated_claim", "unsupported_chronology"]);
+
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return createOpenAiEnvelope({
+              answer: "Vorsichtig reparierte Antwort.",
+              classification: "partial",
+              confidence: "medium",
+              evidence: [syntheticInput.claims[0]?.evidence[0]],
+              openQuestions: [],
+              safetyFlags: [],
+            });
+          },
+        };
+      },
+    });
+
+    await expect(
+      provider.generateObject({
+        ...syntheticInput,
+        repairIssueCodes: ["overstated_claim", "unsupported_chronology"],
+      }),
+    ).resolves.toMatchObject({ classification: "partial" });
   });
 });
 

@@ -42,45 +42,56 @@ const retrieveClaimsSql = `
   order by c.id, e.id
 `;
 
-function tokenize(value: string): Set<string> {
-  const normalized = value.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("de-DE");
+const germanMonthIndex = new Map(
+  [
+    "januar",
+    "februar",
+    "marz",
+    "april",
+    "mai",
+    "juni",
+    "juli",
+    "august",
+    "september",
+    "oktober",
+    "november",
+    "dezember",
+  ].map((month, index) => [month, index + 1]),
+);
 
-  return new Set((normalized.match(/[\p{L}\p{N}]+/gu) ?? []).filter((token) => token.length >= 4));
+function normalizeForDateExtraction(value: string) {
+  return value.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("de-DE");
 }
 
-function countMatches(questionTokens: Set<string>, searchableText: string): number {
-  const searchableTokens = tokenize(searchableText);
-  let score = 0;
+function extractEarliestDateRank(value: string) {
+  const normalized = normalizeForDateExtraction(value);
+  const ranks: number[] = [];
 
-  for (const token of questionTokens) {
-    if (searchableTokens.has(token)) {
-      score += 1;
-    }
+  for (const match of normalized.matchAll(
+    /\b(januar|februar|marz|april|mai|juni|juli|august|september|oktober|november|dezember)\s+(20\d{2}|19\d{2})\b/gu,
+  )) {
+    const month = germanMonthIndex.get(match[1] ?? "") ?? 1;
+    ranks.push(Number(match[2]) * 12 + month);
   }
 
-  return score;
+  for (const match of normalized.matchAll(/\b(20\d{2}|19\d{2})\b/gu)) {
+    ranks.push(Number(match[1]) * 12);
+  }
+
+  return Math.min(...ranks, Number.POSITIVE_INFINITY);
 }
 
 export function createPostgresProfileRepository(client: Queryable): ProfileRepository {
   return {
-    async retrieveForAssistant(question, limit, signal) {
+    async retrieveForAssistant(_question, limit, signal) {
       signal?.throwIfAborted();
       const result = await client.query(retrieveClaimsSql, ["profile_assistant"]);
       signal?.throwIfAborted();
-      const questionTokens = tokenize(question);
-      const claimsById = new Map<string, RetrievedClaim & { score: number }>();
+      const claimsById = new Map<string, RetrievedClaim & { chronologyRank: number }>();
 
       for (const rawRow of result.rows) {
         const row = retrievalRowSchema.parse(rawRow);
         const existing = claimsById.get(row.claim_id);
-        const score = countMatches(
-          questionTokens,
-          `${row.statement} ${row.label} ${row.relevance}`,
-        );
-
-        if (score <= 0) {
-          continue;
-        }
 
         if (existing) {
           existing.evidence.push({
@@ -88,7 +99,10 @@ export function createPostgresProfileRepository(client: Queryable): ProfileRepos
             label: row.label,
             relevance: row.relevance,
           });
-          existing.score = Math.max(existing.score, score);
+          existing.chronologyRank = Math.min(
+            existing.chronologyRank,
+            extractEarliestDateRank(`${row.label} ${row.relevance}`),
+          );
           continue;
         }
 
@@ -102,13 +116,14 @@ export function createPostgresProfileRepository(client: Queryable): ProfileRepos
               relevance: row.relevance,
             },
           ],
-          score,
+          chronologyRank: extractEarliestDateRank(`${row.statement} ${row.label} ${row.relevance}`),
         });
       }
 
       return [...claimsById.values()]
         .sort(
-          (left, right) => right.score - left.score || left.claimId.localeCompare(right.claimId),
+          (left, right) =>
+            left.chronologyRank - right.chronologyRank || left.claimId.localeCompare(right.claimId),
         )
         .slice(0, limit)
         .map((claim) => ({

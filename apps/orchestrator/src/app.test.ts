@@ -21,6 +21,7 @@ import {
   createDeterministicMockProvider,
   createInMemoryProfileRepository,
   createProfileAssistantService,
+  ProfileAssistantError,
   type StructuredModelProvider,
 } from "./profile-assistant.js";
 import type { ProfileReviewRepository } from "./profile-review-repository.js";
@@ -443,6 +444,58 @@ describe("POST /api/v1/assistant/messages", () => {
     });
     expect(response.body).not.toHaveProperty("answer");
     expect(JSON.stringify(response.body)).not.toContain("freeText");
+  });
+
+  it("exposes only a fixed evidence violation reason on the protected staging route", async () => {
+    const profileAssistant = {
+      async answer() {
+        throw new ProfileAssistantError(
+          "ASSISTANT_EVIDENCE_VIOLATION",
+          "PRIVATE_PROFILE_CANARY",
+          "verifier_rejected",
+        );
+      },
+    };
+    const access = {
+      secret: assistantStagingSecret,
+      guard: createAssistantRuntimeGuard({
+        maxRequestsPerMinute: 5,
+        maxRequestsPerDay: 50,
+        maxConcurrentRequests: 2,
+        timeoutMs: 1_000,
+      }),
+    };
+    const response = await request(createApp({ profileAssistant, profileAssistantAccess: access }))
+      .post("/api/internal/profile-assistant/messages")
+      .set("authorization", `Bearer ${assistantStagingSecret}`)
+      .send(validAssistantRequest)
+      .expect(502);
+
+    expect(response.headers["x-assistant-violation-reason"]).toBe("verifier_rejected");
+    expect(JSON.stringify(response.body)).not.toContain("PRIVATE_PROFILE_CANARY");
+  });
+
+  it("returns an inhaltsfreier retryable error when the profile snapshot exceeds a limit", async () => {
+    const profileAssistant = {
+      async answer() {
+        throw new ProfileAssistantError(
+          "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED",
+          "PRIVATE_PROFILE_CANARY",
+        );
+      },
+    };
+    const response = await request(createApp({ profileAssistant }))
+      .post("/api/v1/assistant/messages")
+      .send(validAssistantRequest)
+      .expect(502);
+
+    expect(response.body).toMatchObject({
+      error: {
+        code: "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED",
+        retryable: true,
+      },
+    });
+    expect(JSON.stringify(response.body)).not.toContain("PRIVATE_PROFILE_CANARY");
   });
 });
 

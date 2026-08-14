@@ -6,6 +6,14 @@ import {
 } from "@bewerbungswebsite/contracts";
 import { z } from "zod";
 
+import {
+  requiresSupportVerification,
+  supportVerificationSchema,
+  type ProfileAssistantSupportVerifier,
+  type SupportIssueCode,
+} from "./profile-assistant-support-verifier.js";
+import { classifyProtectedProfileQuestion } from "./profile-assistant-protection-policy.js";
+
 const usageContextSchema = z.enum([
   "public_profile",
   "profile_assistant",
@@ -83,6 +91,7 @@ export type StructuredModelInput = {
   readonly question: string;
   readonly claims: ReadonlyArray<RetrievedClaim>;
   readonly allowedEvidenceIds: ReadonlyArray<string>;
+  readonly repairIssueCodes?: ReadonlyArray<SupportIssueCode>;
 };
 
 export interface StructuredModelProvider {
@@ -95,36 +104,60 @@ export interface ProfileAssistantService {
 
 export type ProfileAssistantMode = "synthetic" | "released-profile";
 
+export const profileAssistantSnapshotLimits = {
+  maxClaims: 100,
+  maxEvidence: 150,
+  maxTextCharacters: 40_000,
+} as const;
+
+export type ProfileAssistantViolationReason =
+  | "evidence_allowlist"
+  | "positive_without_evidence"
+  | "unclear_invariant"
+  | "not_available_invariant"
+  | "claim_text_exposure"
+  | "verifier_missing"
+  | "verifier_rejected";
+
 export class ProfileAssistantError extends Error {
   constructor(
     readonly code: Extract<
       AssistantErrorCode,
-      "ASSISTANT_PROVIDER_INVALID_RESPONSE" | "ASSISTANT_EVIDENCE_VIOLATION"
+      | "ASSISTANT_PROVIDER_INVALID_RESPONSE"
+      | "ASSISTANT_EVIDENCE_VIOLATION"
+      | "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED"
     >,
     message: string,
+    readonly violationReason?: ProfileAssistantViolationReason,
   ) {
     super(message);
     this.name = "ProfileAssistantError";
   }
 }
 
-function tokenize(value: string): Set<string> {
-  const normalized = value.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase("de-DE");
+function validateSnapshotLimits(claims: ReadonlyArray<RetrievedClaim>): void {
+  let evidenceCount = 0;
+  let textCharacters = 0;
 
-  return new Set((normalized.match(/[\p{L}\p{N}]+/gu) ?? []).filter((token) => token.length >= 4));
-}
+  for (const claim of claims) {
+    evidenceCount += claim.evidence.length;
+    textCharacters += claim.statement.length;
 
-function countMatches(questionTokens: Set<string>, searchableText: string): number {
-  const searchableTokens = tokenize(searchableText);
-  let score = 0;
-
-  for (const token of questionTokens) {
-    if (searchableTokens.has(token)) {
-      score += 1;
+    for (const evidence of claim.evidence) {
+      textCharacters += evidence.label.length + evidence.relevance.length;
     }
   }
 
-  return score;
+  if (
+    claims.length > profileAssistantSnapshotLimits.maxClaims ||
+    evidenceCount > profileAssistantSnapshotLimits.maxEvidence ||
+    textCharacters > profileAssistantSnapshotLimits.maxTextCharacters
+  ) {
+    throw new ProfileAssistantError(
+      "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED",
+      "The released profile snapshot exceeds a configured safety limit.",
+    );
+  }
 }
 
 export function createInMemoryProfileRepository(fixtureInput: unknown): ProfileRepository {
@@ -160,9 +193,8 @@ export function createInMemoryProfileRepository(fixtureInput: unknown): ProfileR
   }
 
   return {
-    async retrieveForAssistant(question, limit, signal) {
+    async retrieveForAssistant(_question, limit, signal) {
       signal?.throwIfAborted();
-      const questionTokens = tokenize(question);
 
       return fixture.claims
         .filter(
@@ -172,10 +204,6 @@ export function createInMemoryProfileRepository(fixtureInput: unknown): ProfileR
             claim.allowedContexts.includes("profile_assistant"),
         )
         .map((claim) => {
-          const score = countMatches(
-            questionTokens,
-            `${claim.statement} ${claim.keywords.join(" ")}`,
-          );
           const evidence = claim.evidenceIds
             .map((evidenceId) => evidenceById.get(evidenceId))
             .filter(
@@ -195,13 +223,10 @@ export function createInMemoryProfileRepository(fixtureInput: unknown): ProfileR
             claimId: claim.id,
             statement: claim.statement,
             evidence,
-            score,
           };
         })
-        .filter((claim) => claim.score > 0 && claim.evidence.length > 0)
-        .sort(
-          (left, right) => right.score - left.score || left.claimId.localeCompare(right.claimId),
-        )
+        .filter((claim) => claim.evidence.length > 0)
+        .sort((left, right) => left.claimId.localeCompare(right.claimId))
         .slice(0, limit)
         .map(({ claimId, statement, evidence }) => ({ claimId, statement, evidence }));
     },
@@ -225,6 +250,10 @@ function createUnavailableResponse(mode: ProfileAssistantMode = "synthetic"): As
 type AllowedEvidence = RetrievedEvidence & {
   answerText: string;
 };
+
+function isPositiveClassification(classification: AssistantResponse["classification"]) {
+  return ["direct", "inferred", "partial", "transferable"].includes(classification);
+}
 
 function renderCanonicalAnswer(
   classification: Exclude<AssistantResponse["classification"], "not_available">,
@@ -262,32 +291,40 @@ function validateEvidenceInvariants(
   response: AssistantResponse,
   allowedEvidence: ReadonlyMap<string, AllowedEvidence>,
   mode: ProfileAssistantMode,
+  forbiddenClientTexts: ReadonlyArray<string> = [],
 ): AssistantResponse {
+  if (response.classification === "not_available") {
+    return createUnavailableResponse(mode);
+  }
+
   const referencedIds = new Set<string>();
+  const canonicalEvidence: AssistantResponse["evidence"] = [];
 
   for (const evidence of response.evidence) {
     const allowed = allowedEvidence.get(evidence.evidenceId);
-    if (
-      !allowed ||
-      allowed.label !== evidence.label ||
-      allowed.relevance !== evidence.relevance ||
-      referencedIds.has(evidence.evidenceId)
-    ) {
+    if (!allowed || referencedIds.has(evidence.evidenceId)) {
       throw new ProfileAssistantError(
         "ASSISTANT_EVIDENCE_VIOLATION",
         "The provider referenced evidence outside the retrieval allowlist.",
+        "evidence_allowlist",
       );
     }
     referencedIds.add(evidence.evidenceId);
+    canonicalEvidence.push({
+      evidenceId: allowed.evidenceId,
+      label: allowed.label,
+      relevance: allowed.relevance,
+    });
   }
 
   if (
-    (response.classification === "direct" || response.classification === "transferable") &&
+    isPositiveClassification(response.classification) &&
     (response.evidence.length === 0 || response.confidence === "insufficient")
   ) {
     throw new ProfileAssistantError(
       "ASSISTANT_EVIDENCE_VIOLATION",
       "A positive classification requires allowed evidence.",
+      "positive_without_evidence",
     );
   }
 
@@ -300,25 +337,36 @@ function validateEvidenceInvariants(
     throw new ProfileAssistantError(
       "ASSISTANT_EVIDENCE_VIOLATION",
       "An unclear response requires allowed evidence and bounded confidence.",
+      "unclear_invariant",
     );
   }
 
   if (
-    response.classification === "not_available" &&
-    (response.evidence.length > 0 || response.confidence !== "insufficient")
+    mode === "released-profile" &&
+    forbiddenClientTexts.some((text) => text.length >= 20 && response.answer.includes(text))
   ) {
     throw new ProfileAssistantError(
       "ASSISTANT_EVIDENCE_VIOLATION",
-      "A not-available response must not contain evidence or positive confidence.",
+      "The provider exposed an internal claim statement in the client answer.",
+      "claim_text_exposure",
     );
   }
 
-  if (response.classification === "not_available") {
-    return createUnavailableResponse(mode);
+  if (mode === "released-profile") {
+    return assistantResponseSchema.parse({
+      ...response,
+      evidence: canonicalEvidence,
+      openQuestions:
+        response.classification === "unclear" || response.classification === "partial"
+          ? ["Welche zusaetzliche freigegebene Evidenz ist fuer eine eindeutigere Antwort noetig?"]
+          : [],
+      safetyFlags: [],
+    });
   }
 
   return assistantResponseSchema.parse({
     ...response,
+    evidence: canonicalEvidence,
     answer: renderCanonicalAnswer(
       response.classification,
       response.evidence,
@@ -336,14 +384,27 @@ function validateEvidenceInvariants(
 export function createProfileAssistantService(dependencies: {
   repository: ProfileRepository;
   provider: StructuredModelProvider;
+  supportVerifier?: ProfileAssistantSupportVerifier;
   mode?: ProfileAssistantMode;
 }): ProfileAssistantService {
   const mode = dependencies.mode ?? "synthetic";
 
   return {
     async answer(request, signal) {
-      const claims = await dependencies.repository.retrieveForAssistant(request.message, 6, signal);
+      if (
+        mode === "released-profile" &&
+        classifyProtectedProfileQuestion(request.message) !== null
+      ) {
+        return createUnavailableResponse(mode);
+      }
+
+      const claims = await dependencies.repository.retrieveForAssistant(
+        request.message,
+        profileAssistantSnapshotLimits.maxClaims + 1,
+        signal,
+      );
       signal?.throwIfAborted();
+      validateSnapshotLimits(claims);
       if (claims.length === 0) {
         return createUnavailableResponse(mode);
       }
@@ -366,25 +427,79 @@ export function createProfileAssistantService(dependencies: {
         ...claim,
         evidence: claim.evidence.map((evidence) => ({ ...evidence })),
       }));
+      const modelInput: StructuredModelInput = {
+        question: request.message,
+        claims: providerClaims,
+        allowedEvidenceIds: [...allowedEvidence.keys()],
+      };
+      const validateProviderResponse = (rawResponse: unknown) => {
+        const parsedResponse = assistantResponseSchema.safeParse(rawResponse);
+        if (!parsedResponse.success) {
+          throw new ProfileAssistantError(
+            "ASSISTANT_PROVIDER_INVALID_RESPONSE",
+            "The provider returned an invalid structured response.",
+          );
+        }
 
-      const rawResponse = await dependencies.provider.generateObject(
-        {
-          question: request.message,
-          claims: providerClaims,
-          allowedEvidenceIds: [...allowedEvidence.keys()],
-        },
-        signal,
+        return validateEvidenceInvariants(
+          parsedResponse.data,
+          allowedEvidence,
+          mode,
+          mode === "released-profile" ? claims.map((claim) => claim.statement) : [],
+        );
+      };
+
+      let response = validateProviderResponse(
+        await dependencies.provider.generateObject(modelInput, signal),
       );
-      const parsedResponse = assistantResponseSchema.safeParse(rawResponse);
+      if (!requiresSupportVerification(response, claims)) return response;
 
-      if (!parsedResponse.success) {
+      if (!dependencies.supportVerifier) {
         throw new ProfileAssistantError(
-          "ASSISTANT_PROVIDER_INVALID_RESPONSE",
-          "The provider returned an invalid structured response.",
+          "ASSISTANT_EVIDENCE_VIOLATION",
+          "A combined or partial response requires support verification.",
+          "verifier_missing",
         );
       }
 
-      return validateEvidenceInvariants(parsedResponse.data, allowedEvidence, mode);
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const rawVerification = await dependencies.supportVerifier.verify(
+          { question: request.message, response, claims: providerClaims },
+          signal,
+        );
+        const verification = supportVerificationSchema.safeParse(rawVerification);
+        if (!verification.success) {
+          throw new ProfileAssistantError(
+            "ASSISTANT_PROVIDER_INVALID_RESPONSE",
+            "The support verifier returned an invalid structured verdict.",
+          );
+        }
+        if (verification.data.verdict === "pass") return response;
+
+        if (attempt === 1) {
+          throw new ProfileAssistantError(
+            "ASSISTANT_EVIDENCE_VIOLATION",
+            "The repaired response did not pass support verification.",
+            "verifier_rejected",
+          );
+        }
+
+        response = validateProviderResponse(
+          await dependencies.provider.generateObject(
+            {
+              ...modelInput,
+              repairIssueCodes: [...new Set(verification.data.issues.map((issue) => issue.code))],
+            },
+            signal,
+          ),
+        );
+      }
+
+      throw new ProfileAssistantError(
+        "ASSISTANT_EVIDENCE_VIOLATION",
+        "The response did not pass support verification.",
+        "verifier_rejected",
+      );
     },
   };
 }
@@ -392,6 +507,10 @@ export function createProfileAssistantService(dependencies: {
 export function createDeterministicMockProvider(): StructuredModelProvider {
   return {
     async generateObject(input) {
+      if (input.question.toLocaleLowerCase("de-DE").includes("schweiss")) {
+        return createUnavailableResponse();
+      }
+
       const firstEvidence = input.claims.at(0)?.evidence.at(0);
       if (!firstEvidence) {
         return createUnavailableResponse();

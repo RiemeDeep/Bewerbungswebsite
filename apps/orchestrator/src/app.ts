@@ -197,13 +197,18 @@ export function createApp(dependencies: AppDependencies = {}): Express {
 
         if (error instanceof ProfileAssistantError) {
           logEvent({ status: "provider_error" });
+          if (access && error.violationReason) {
+            response.set("x-assistant-violation-reason", error.violationReason);
+          }
           response.status(502).json(
             createErrorResponse({
               code: error.code,
               message:
                 "Die strukturierte Assistentenantwort konnte nicht sicher verarbeitet werden.",
               requestId,
-              retryable: error.code === "ASSISTANT_PROVIDER_INVALID_RESPONSE",
+              retryable:
+                error.code === "ASSISTANT_PROVIDER_INVALID_RESPONSE" ||
+                error.code === "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED",
             }),
           );
           return;

@@ -6,7 +6,7 @@ import {
 } from "./supabase-profile-repository.js";
 
 describe("createPostgresProfileRepository", () => {
-  it("filters through SQL and maps only matching published evidence-backed claims", async () => {
+  it("filters through SQL and maps the complete safe assistant snapshot", async () => {
     const calls: Array<{ text: string; values: unknown[] }> = [];
     const repository = createPostgresProfileRepository({
       async query(text, values) {
@@ -37,9 +37,7 @@ describe("createPostgresProfileRepository", () => {
       },
     });
 
-    await expect(
-      repository.retrieveForAssistant("technische Wartungsprozess Verbesserung", 6),
-    ).resolves.toEqual([
+    await expect(repository.retrieveForAssistant("beliebige Frage", 6)).resolves.toEqual([
       {
         claimId: "11111111-1111-4111-8111-111111111111",
         statement: "Die fiktive Person dokumentierte einen technischen Wartungsprozess.",
@@ -48,6 +46,17 @@ describe("createPostgresProfileRepository", () => {
             evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
             label: "Synthetischer Arbeitsnachweis",
             relevance: "Belegt die Verbesserung des Wartungsprozesses.",
+          },
+        ],
+      },
+      {
+        claimId: "99999999-9999-4999-8999-999999999999",
+        statement: "Diese Zeile passt nicht zur Frage.",
+        evidence: [
+          {
+            evidenceId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            label: "Irrelevanter Nachweis",
+            relevance: "Ohne passende Begriffe.",
           },
         ],
       },

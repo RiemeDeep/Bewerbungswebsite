@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   apiErrorResponseSchema,
+  assistantErrorCodeSchema,
   assistantMessageRequestSchema,
   assistantResponseSchema,
 } from "./assistant.js";
@@ -66,6 +67,21 @@ describe("assistantResponseSchema", () => {
     expect(assistantResponseSchema.parse(response)).toEqual(response);
   });
 
+  it("accepts evidence-backed inferred and partial responses", () => {
+    for (const classification of ["inferred", "partial"] as const) {
+      expect(
+        assistantResponseSchema.parse({
+          answer: "Die Antwort kombiniert freigegebene Belege.",
+          classification,
+          confidence: "medium",
+          evidence: [{ evidenceId, label: "Test", relevance: "Test" }],
+          openQuestions: [],
+          safetyFlags: [],
+        }).classification,
+      ).toBe(classification);
+    }
+  });
+
   it("rejects invalid classifications", () => {
     expect(() =>
       assistantResponseSchema.parse({
@@ -112,5 +128,11 @@ describe("apiErrorResponseSchema", () => {
         retryable: false,
       },
     });
+  });
+
+  it("accepts the fail-closed snapshot limit error", () => {
+    expect(assistantErrorCodeSchema.parse("ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED")).toBe(
+      "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED",
+    );
   });
 });

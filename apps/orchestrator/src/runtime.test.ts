@@ -11,6 +11,14 @@ describe("orchestrator runtime dependencies", () => {
     await expect(runtime.close()).resolves.toBeUndefined();
   });
 
+  it("accepts an explicitly disabled profile assistant staging flag", async () => {
+    const runtime = createRuntimeApp({ ENABLE_PROFILE_ASSISTANT_STAGING: "0" });
+
+    expect(runtime.dependencies.profileAssistant).toBeUndefined();
+    expect(runtime.dependencies.profileAssistantAccess).toBeUndefined();
+    await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
   it("enables the synthetic assistant runtime only when explicitly flagged", async () => {
     const runtime = createRuntimeApp({
       ENABLE_SYNTHETIC_ASSISTANT_TEST: "1",

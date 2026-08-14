@@ -13,7 +13,14 @@ export const assistantMessageRequestSchema = z
 export const assistantResponseSchema = z
   .object({
     answer: nonEmptyText(4_000),
-    classification: z.enum(["direct", "transferable", "unclear", "not_available"]),
+    classification: z.enum([
+      "direct",
+      "inferred",
+      "partial",
+      "transferable",
+      "unclear",
+      "not_available",
+    ]),
     confidence: z.enum(["high", "medium", "low", "insufficient"]),
     evidence: z
       .array(
@@ -35,6 +42,7 @@ export const assistantErrorCodeSchema = z.enum([
   "INVALID_REQUEST",
   "ASSISTANT_PROVIDER_INVALID_RESPONSE",
   "ASSISTANT_EVIDENCE_VIOLATION",
+  "ASSISTANT_SNAPSHOT_LIMIT_EXCEEDED",
   "ASSISTANT_RATE_LIMITED",
   "ASSISTANT_TIMEOUT",
   "ASSISTANT_INTERNAL_ERROR",

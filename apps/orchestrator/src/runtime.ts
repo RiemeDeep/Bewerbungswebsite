@@ -19,6 +19,7 @@ import {
 import { createOpenAiJobContextExtractor } from "./openai-job-context-extractor.js";
 import { createOpenAiMatchAnalysisProvider } from "./openai-match-analysis-provider.js";
 import { createOpenAiStructuredModelProvider } from "./openai-structured-provider.js";
+import { createOpenAiProfileAssistantSupportVerifier } from "./openai-profile-assistant-support-verifier.js";
 import {
   createDeterministicMockProvider,
   createProfileAssistantService,
@@ -29,7 +30,7 @@ import { createPostgresPoolProfileRepository } from "./supabase-profile-reposito
 const runtimeEnvironmentSchema = z
   .object({
     ENABLE_SYNTHETIC_ASSISTANT_TEST: z.literal("1").optional(),
-    ENABLE_PROFILE_ASSISTANT_STAGING: z.literal("1").optional(),
+    ENABLE_PROFILE_ASSISTANT_STAGING: z.enum(["0", "1"]).optional(),
     ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
     ENABLE_MATCH_ANALYSIS: z.literal("1").optional(),
     ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
@@ -198,6 +199,11 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
         timeoutMs: environment.LLM_REQUEST_TIMEOUT_MS,
         repairAttempts: environment.LLM_REPAIR_ATTEMPTS,
         profileMode: "released-profile",
+      }),
+      supportVerifier: createOpenAiProfileAssistantSupportVerifier({
+        apiKey: environment.LLM_API_KEY ?? environment.OPENAI_API_KEY ?? "",
+        model: environment.LLM_ASSISTANT_MODEL,
+        timeoutMs: environment.LLM_REQUEST_TIMEOUT_MS,
       }),
     });
     dependencies.profileAssistantAccess = {
