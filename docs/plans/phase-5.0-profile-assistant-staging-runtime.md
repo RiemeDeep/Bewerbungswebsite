@@ -2,7 +2,11 @@
 
 Stand: 2026-08-08
 
-Status: lokal implementiert und standardmaessig deaktiviert; kein VPS-Apply, kein oeffentlicher Go-live
+Status: intern auf dem VPS aktiviert und per SSH-Tunnel geschuetzt; kein oeffentlicher Go-live
+
+Qualitaetsentscheidung 2026-08-11: Der technische Staging-Pfad ist funktionsfaehig, aber die
+Keyword-Vorfilterung und serverseitige Antwortkanonisierung sind nicht als Zielarchitektur akzeptiert.
+Der verbindliche Umbau ist in `docs/plans/phase-5.1-ai-first-profile-assistant.md` beschrieben.
 
 ## Ziel
 
@@ -159,17 +163,48 @@ Klassen abdecken:
 Der echte Evaluationssatz darf nur freigegebene, minimierte Fragen und erwartete Klassen enthalten. Keine
 vollstaendigen Prompts oder privaten Quellen werden als Testartefakt gespeichert.
 
+Technischer Startstand fuer Paket 5.0b:
+
+- `tests/fixtures/profile-assistant-evaluation.minimal.json` enthaelt einen kleinen, versionierten
+  Startsatz mit freigegebenen Fragen, erwarteter Klassifikation, maximaler Konfidenz, erlaubten
+  Evidence-IDs und verbotenen Antwortmustern.
+- `pnpm profile-assistant:evaluate` fuehrt den Satz spaeter gegen einen internen HTTP-Endpunkt aus.
+- Der Runner erzeugt pro Fall eine opaque Session-ID und gibt nur Fall-IDs, Kategorien, Check-Booleans und
+  Zaehler aus.
+- Fragen, Antworttexte, Evidence Labels, Provider-Rohantworten, Secrets und Connection Strings duerfen
+  nicht im Report erscheinen.
+- Der CLI-Pfad ist lokal mit gemocktem HTTP erfolgreich und fehlerhaft getestet; der Report bleibt in
+  beiden Faellen payloadfrei.
+
+Ausfuehrung erst gegen eine geschuetzte interne Runtime:
+
+```powershell
+$env:PROFILE_ASSISTANT_EVALUATION_FILE = 'tests/fixtures/profile-assistant-evaluation.minimal.json'
+$env:PROFILE_ASSISTANT_EVALUATION_ENDPOINT = 'http://127.0.0.1:4000/api/internal/profile-assistant/messages'
+$env:ORCHESTRATOR_REQUEST_SECRET = '<internal-secret-for-current-process-only>'
+pnpm profile-assistant:evaluate
+```
+
+Der minimale Startsatz ersetzt nicht die fachliche Freigabe des vollstaendigen Evaluationssatzes vor VPS-
+Staging oder oeffentlicher Produktivierung.
+
 ## Deployment-Reihenfolge
 
 1. Vor DB-bezogener VPS-Abnahme Backup und Restore-Test ausfuehren.
 2. Root-only `.env.orchestrator` und `.env.web` aus den deaktivierten Beispielen ableiten.
-3. Read-only `PROFILE_DATABASE_URL`, Provider-Key, Modell und eindeutiges Bearer-Secret setzen.
-4. Orchestrator-Flag aktivieren, Web-Flag zunaechst deaktiviert lassen.
-5. Healthcheck und unauthorisierten 401-Negativtest ausfuehren.
-6. Web-Flag aktivieren und nur per SSH-Tunnel auf `127.0.0.1:3100` pruefen.
-7. Evaluationssatz, Injection-, Missing-Evidence- und Withdrawal-Gates ausfuehren.
-8. Logs per Canary auf verbotene Inhalte pruefen.
-9. Flags bei jeder Abweichung wieder deaktivieren; kein oeffentlicher Reverse-Proxy-Pfad.
+3. Offline-Preflight ohne Secret-Ausgabe ausfuehren:
+
+```powershell
+pnpm profile-assistant:staging:preflight -- --web-env <path-to-env.web> --orchestrator-env <path-to-env.orchestrator> --backup-restore-verified 1
+```
+
+4. Read-only `PROFILE_DATABASE_URL`, Provider-Key, Modell und eindeutiges Bearer-Secret setzen.
+5. Orchestrator-Flag aktivieren, Web-Flag zunaechst deaktiviert lassen.
+6. Healthcheck und unauthorisierten 401-Negativtest ausfuehren.
+7. Web-Flag aktivieren und nur per SSH-Tunnel auf `127.0.0.1:3100` pruefen.
+8. Evaluationssatz, Injection-, Missing-Evidence- und Withdrawal-Gates ausfuehren.
+9. Logs per Canary auf verbotene Inhalte pruefen.
+10. Flags bei jeder Abweichung wieder deaktivieren; kein oeffentlicher Reverse-Proxy-Pfad.
 
 ## Abnahme Paket 5.0
 

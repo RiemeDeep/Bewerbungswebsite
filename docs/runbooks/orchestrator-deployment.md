@@ -179,6 +179,174 @@ http://127.0.0.1:3100/internal/profilvorschau
 
 Der Browser fragt dann nach Benutzername und Passwort aus `.env.web`.
 
+## Interner Profilassistent-Staging-Preflight
+
+Vor einer spaeteren Aktivierung von `/internal/profilassistent` muessen Backup und Restore-Test fuer alle
+DB-bezogenen VPS-Schritte erfolgreich sein. Danach den Offline-Preflight gegen die root-only Env-Dateien
+ausfuehren. Der Preflight oeffnet keine Datenbank- oder Provider-Verbindung und gibt keine Env-Werte aus.
+
+Der Profilassistent nutzt fuer den read-only Runtime-Zugriff die Self-Hosted-Postgres-Rolle
+`bewerbungswebsite_app`. Diese Rolle ist auf dem VPS eine Login-Rolle ohne Superuser-, Create-Role-,
+Create-DB- oder Bypass-RLS-Rechte. Fuer die Profil-Runtime bestehen keine Tabellen-Wildcard-Grants auf
+`profile_entities`, `profile_claims`, `evidence_items` oder `source_documents`; stattdessen sind
+spaltenbegrenzte `SELECT`-Rechte und RLS-`SELECT`-Policies fuer die freigegebenen Runtime-Spalten gesetzt.
+Das Passwort dieser Rolle wird historisch ueber `MATCH_DATABASE_PASSWORD` in
+`/opt/bewerbungswebsite/deploy/orchestrator/.env.database` verwaltet.
+
+Die Staging-Runtime benoetigt daraus einen `PROFILE_DATABASE_URL` in
+`/opt/bewerbungswebsite/deploy/orchestrator/.env.orchestrator`, zum Beispiel mit dieser Struktur:
+
+```dotenv
+PROFILE_DATABASE_URL=postgresql://bewerbungswebsite_app:<MATCH_DATABASE_PASSWORD>@postgres:5432/bewerbungswebsite
+```
+
+Die Dateien duerfen nur ueber eine SSH-Session auf dem VPS bearbeitet werden. Dabei keine Secrets per
+Terminalausgabe, Chat, Logs oder Handover offenlegen:
+
+```bash
+ssh motai
+sudo ls -l /opt/bewerbungswebsite/deploy/orchestrator/.env.orchestrator \
+  /opt/bewerbungswebsite/deploy/orchestrator/.env.web \
+  /opt/bewerbungswebsite/deploy/orchestrator/.env.database
+sudoedit /opt/bewerbungswebsite/deploy/orchestrator/.env.orchestrator
+sudoedit /opt/bewerbungswebsite/deploy/orchestrator/.env.web
+sudo chmod 600 /opt/bewerbungswebsite/deploy/orchestrator/.env.orchestrator \
+  /opt/bewerbungswebsite/deploy/orchestrator/.env.web
+sudo chown root:root /opt/bewerbungswebsite/deploy/orchestrator/.env.orchestrator \
+  /opt/bewerbungswebsite/deploy/orchestrator/.env.web
+```
+
+In `.env.orchestrator` fuer Staging setzen:
+
+```dotenv
+ENABLE_PROFILE_ASSISTANT_STAGING=1
+PROFILE_DATABASE_URL=<read-only-runtime-url-mit-bewerbungswebsite_app>
+LLM_ASSISTANT_MODEL=<freigegebenes-staging-modell>
+LLM_API_KEY=<provider-key>
+```
+
+Wenn statt `LLM_API_KEY` bereits `OPENAI_API_KEY` genutzt wird, keinen zweiten Provider-Key ohne Grund
+duplizieren. `ENABLE_SYNTHETIC_ASSISTANT_TEST` darf fuer die echte Profil-Runtime nicht `1` sein.
+
+In `.env.web` fuer Staging setzen:
+
+```dotenv
+ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING=1
+```
+
+`ORCHESTRATOR_REQUEST_SECRET` muss in `.env.web` und `.env.orchestrator` identisch sein. Den Wert nur
+zwischen root-only Dateien kopieren, nie ausgeben. `ORCHESTRATOR_BASE_URL` wird fuer den Web-Container in
+`compose.yml` gesetzt und muss nicht in `.env.web` stehen.
+
+Nach jeder Aenderung zuerst den Offline-Preflight ausfuehren. Wenn `pnpm` auf dem VPS-Host nicht im PATH
+liegt, den Preflight lokal gegen sichere Kopien oder in einer Operator-Umgebung mit Node/pnpm ausfuehren;
+keine Secrets in die Shell-History schreiben. Erst bei `ok: true` die Dienste neu starten:
+
+```bash
+docker compose -f /opt/bewerbungswebsite/deploy/orchestrator/compose.yml up -d orchestrator web
+docker logs --tail 100 bewerbungswebsite-orchestrator
+docker logs --tail 100 bewerbungswebsite-web
+```
+
+Danach per SSH-Tunnel gegen die interne Route testen und zum Deaktivieren beide Flags wieder auf `0`
+setzen und `orchestrator` sowie `web` erneut starten. Orchestrator-Versionen vor 2026-08-13 akzeptieren
+fuer `ENABLE_PROFILE_ASSISTANT_STAGING` nur `1` oder eine fehlende Variable; bei einem Rollback auf ein
+solches Image die Variable deshalb entfernen statt auf `0` zu setzen.
+
+Beispiel lokal oder auf dem VPS aus dem Repository-Root:
+
+```bash
+pnpm profile-assistant:staging:preflight -- \
+  --web-env /opt/bewerbungswebsite/deploy/orchestrator/.env.web \
+  --orchestrator-env /opt/bewerbungswebsite/deploy/orchestrator/.env.orchestrator \
+  --backup-restore-verified 1
+```
+
+Der Preflight muss `ok: true` liefern, bevor Orchestrator- oder Web-Staging-Flags aktiviert werden. Bei
+Fehlern werden nur `scope`, `code`, `variable` und nicht-sensitive Meldungen ausgegeben. Secrets,
+Provider-Keys, Connection Strings, Profilfragen, Claim-Texte oder Evidence-Auszuege duerfen nicht in die
+Ausgabe gelangen.
+
+Erwartete Fail-Closed-Signale vor Aktivierung:
+
+- `backup_restore_not_verified`, wenn der aktuelle Backup-/Restore-Nachweis fehlt;
+- `feature_disabled`, wenn Web- oder Orchestrator-Staging-Flag noch deaktiviert ist;
+- `missing_or_placeholder`, wenn ein Pflichtwert fehlt oder noch `replace-me` ist;
+- `internal_secret_mismatch`, wenn Web und Orchestrator unterschiedliche interne Secrets verwenden;
+- `synthetic_runtime_conflict`, wenn `ENABLE_SYNTHETIC_ASSISTANT_TEST=1` gesetzt ist.
+
+Der Preflight ersetzt nicht den anschliessenden Healthcheck, 401-Negativtest, SSH-Tunnel-Test,
+Evaluationssatz, Logging-Canary oder Kill-Switch-Test.
+
+Fuer AI-first mit Support-Verifier muss `PROFILE_ASSISTANT_REQUEST_TIMEOUT_MS` mindestens zwei Mal
+`LLM_REQUEST_TIMEOUT_MS` betragen. Der Preflight prueft diese Grenze und gibt zusaetzlich nur die feste
+Runtime-Policy `ai-first`, Verifier-Pflicht sowie Snapshot-Grenzen aus. Fuer einen kontrollierten
+40-Faelle-Lauf koennen die internen Staging-Budgets temporaer auf 60 Anfragen pro Minute und 200 pro Tag
+gesetzt werden; nach dem Lauf muessen sie wieder auf 5 beziehungsweise 50 zurueckgesetzt werden.
+
+Beim Neustart mehrerer Dienste beide Release-Dateien an Compose uebergeben, damit kein Dienst auf einen
+Default-Tag faellt:
+
+```bash
+docker compose \
+  --env-file /opt/bewerbungswebsite/deploy/orchestrator/.env.release \
+  --env-file /opt/bewerbungswebsite/deploy/web/.env.release \
+  -f /opt/bewerbungswebsite/deploy/orchestrator/compose.yml up -d orchestrator web
+```
+
+## Interner Profilassistent-Evaluationslauf
+
+Nach erfolgreichem Preflight, Healthcheck, 401-Negativtest und geschuetzter Staging-Aktivierung kann der
+minimierte Evaluationsrunner gegen den internen Orchestrator-Endpunkt laufen. Der Lauf darf nur gegen die
+interne Runtime oder einen SSH-Tunnel erfolgen, nicht gegen eine oeffentliche Route.
+
+```bash
+PROFILE_ASSISTANT_EVALUATION_FILE=tests/fixtures/profile-assistant-evaluation.ai-first.json \
+PROFILE_ASSISTANT_EVALUATION_ENDPOINT=http://127.0.0.1:4000/api/internal/profile-assistant/messages \
+ORCHESTRATOR_REQUEST_SECRET='<internal-secret-for-current-process-only>' \
+pnpm profile-assistant:evaluate
+```
+
+Fuer einen begrenzten Wiederholbarkeitslauf muessen Fall-Allowlist und Wiederholungszahl gemeinsam
+gesetzt werden. Maximal drei Wiederholungen sind erlaubt:
+
+```bash
+PROFILE_ASSISTANT_EVALUATION_CASE_IDS=case-a,case-b \
+PROFILE_ASSISTANT_EVALUATION_REPETITIONS=3 \
+PROFILE_ASSISTANT_EVALUATION_FILE=tests/fixtures/profile-assistant-evaluation.ai-first.json \
+PROFILE_ASSISTANT_EVALUATION_ENDPOINT=http://127.0.0.1:4000/api/internal/profile-assistant/messages \
+ORCHESTRATOR_REQUEST_SECRET='<internal-secret-for-current-process-only>' \
+pnpm profile-assistant:evaluate
+```
+
+Der Wiederholungsreport enthaelt pro Fall nur Pass-/Fail-Zaehler, `stable_pass`, `stable_fail` oder
+`variable` sowie aggregierte inhaltsfreie Fehlersignaturen. Ein stabiler Fehler muss in allen
+Wiederholungen fehlschlagen; gemischte Ergebnisse gelten als Modellvarianz und duerfen nicht allein eine
+Produktkorrektur begruenden.
+
+Fuer eine manuelle fachliche Bewertung kann zusaetzlich ein privates Rohprotokoll aktiviert werden. Es
+enthaelt exakte Fragen, Antworten, Klassifikation, Konfidenz, Evidence-IDs und Fehlerpayloads und darf
+deshalb weder im Terminal ausgegeben noch in Git aufgenommen werden. Zielverzeichnis mit `0700`, Datei
+mit `0600` schuetzen und nach der Bewertung kontrolliert loeschen oder in einen freigegebenen privaten
+Speicher ueberfuehren:
+
+```bash
+PROFILE_ASSISTANT_EVALUATION_TRANSCRIPT_FILE=/secure/private-test-results/run.json \
+PROFILE_ASSISTANT_EVALUATION_TRANSCRIPT_CONFIRM=WRITE_PRIVATE_EVALUATION_TRANSCRIPT \
+pnpm profile-assistant:evaluate
+```
+
+Pfad und exakte Bestaetigung muessen gemeinsam gesetzt sein. Ohne beide Werte schreibt der Runner keine
+Rohinhalte. Im Repository ist `private-test-results/` vorsorglich ignoriert.
+
+Der Report enthaelt nur Fall-IDs, Kategorien, Check-Booleans und Zaehler. Fragen, Antworttexte, Evidence
+Labels, Provider-Rohantworten, Prompts, Secrets und Connection Strings duerfen nicht in Terminalausgaben,
+Logs oder Handover uebernommen werden. Der AI-first-Satz umfasst 40 fachlich pruefbare Faelle und darf vor
+einem echten Staging-Urteil noch redaktionell korrigiert werden; alle erlaubten Evidence-IDs sind
+testgesichert Teil des kanonischen Public-Profile-Artefakts. Der minimale Fixturesatz bleibt nur fuer
+schnelle technische Smoke-Tests. Der lokale CLI-Test sichert Bearer-Header, opaque Session-ID und
+Fehlerreport ab, ersetzt aber keinen echten Staging-Lauf gegen die VPS-Runtime.
+
 ## Migration und Verifikation
 
 Die initiale Migration auf einem leeren Volume erfolgt einmalig mit:

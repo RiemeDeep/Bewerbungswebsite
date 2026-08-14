@@ -310,6 +310,20 @@ Fortschritt Paket 5.0 am 2026-08-08:
   `docs/plans/phase-5.0-profile-assistant-staging-runtime.md`.
 - Kein VPS-Apply und keine oeffentliche KI-Aktivierung wurden durchgefuehrt.
 
+Neuausrichtung nach interner Staging-Abnahme am 2026-08-11:
+
+- Die geschuetzte Staging-Runtime ist auf dem VPS aktiv und technisch erreichbar.
+- Die erste echte Evaluation zeigt eine inakzeptable Qualitaetsgrenze: Der exakte Tokenfilter kann
+  semantisch einfache, durch mehrere Claims belegbare Fragen vor dem KI-Aufruf mit `not_available`
+  abbrechen.
+- Der freigegebene Assistant-Snapshot umfasst nur 65 Claims, 66 Evidence-Zeilen und rund 15.866
+  Textzeichen. Er wird deshalb in Phase 5.1 vollstaendig an die KI gegeben, statt vorab durch den
+  verlustbehafteten Tokenfilter reduziert zu werden.
+- Die neue Zielarchitektur erlaubt belegte Multi-Claim- und Chronologie-Inferenz, behaelt aber RLS,
+  Freigabefilter, Evidence-Allowlist, Privacy-Gates, minimierte Logs und Withdrawal fail-closed bei.
+- Verbindlicher Umbauplan:
+  `docs/plans/phase-5.1-ai-first-profile-assistant.md`.
+
 Aufgaben:
 
 1. Oeffentliche Assistenten-UI und BFF aus dem `/test`-Namespace herausloesen.
@@ -411,15 +425,28 @@ Abnahme:
 
 ## Naechste kleine Umsetzungseinheit
 
-Die unmittelbar naechste Einheit ist **Umsetzungspaket 1: Release-Baseline herstellen**.
+Die unmittelbar naechste Einheit ist **Paket 5.1a: AI-first Qualitaetsbaseline und neue Contracts**.
 
-Sie umfasst ausschliesslich:
+Sie umfasst:
 
-- Dokumentations- und Statuskonsolidierung;
-- Bereinigung historischer Content-Statuswerte;
-- Aktualisierung veralteter Tests;
-- vollstaendiges lokales Qualitaetsgate;
-- kontrollierte Sichtung des Dirty Worktree.
+- den Referenzfall `Was war Michaels erster Job nach dem Studium?` und alltagssprachliche Paraphrasen;
+- weitere zeitliche, relationale, Multi-Claim- und partielle Antwortfaelle;
+- reproduzierbaren Nachweis, dass die bestehende Keyword-Pipeline diese Qualitaetsfaelle verfehlt;
+- Trennung von internem Provider-Draft und oeffentlichem Browsercontract;
+- Contractentwurf fuer direkte, abgeleitete, partielle und nicht verfuegbare Antworten;
+- Abnahmekriterien fuer Antwortnutzen, Belegtreue, Unsicherheit und Privacy.
 
-Sie aktiviert keine produktiven KI-, Crawl-, Match- oder Kontaktfunktionen und entfernt nicht das
-globale `noindex,nofollow`.
+Sie aendert noch nicht die aktive Staging-Runtime. Die eigentliche Laufzeitumstellung folgt in Paket
+5.1b und 5.1c nach einer testgesicherten Baseline.
+
+Folgeeinheit ist **Paket 5.1b: Vollstaendiger sicherer Kontext-Snapshot**.
+
+Sie umfasst:
+
+- Entfernung des lokalen Tokenfilters aus dem produktiven Profilrepository;
+- vollstaendige, kompakte und stabil sortierte Projektion aller freigegebenen Assistant-Claims;
+- harte Snapshot-Groessenlimits und fail-closed Verhalten;
+- erneute Visibility-, Context-, Review-, Withdrawal- und Privacy-Gates.
+
+Danach folgen AI-Antwortsynthese, Support-Verifier, erweiterte Evaluation und kontrollierter
+Staging-Rollout gemaess Phase-5.1-Plan.

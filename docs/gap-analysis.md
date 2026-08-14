@@ -122,16 +122,17 @@ Ziel:
 
 ## Naechstes Gate
 
-Das naechste Gate ist **Umsetzungspaket 1: Release-Baseline herstellen** aus
-`docs/plans/public-mvp-release-roadmap.md`.
+Das naechste Gate ist **Paket 5.0a: Staging-Preflight, CLI-Canary und Dokumentationskonsolidierung** aus
+`docs/plans/public-mvp-release-roadmap.md` und
+`docs/plans/phase-5.0-profile-assistant-staging-runtime.md`.
 
-Es aktiviert keine produktiven KI-, Crawl-, Match- oder Kontaktfunktionen und entfernt nicht das
-globale `noindex,nofollow`.
+Es aktiviert keine produktiven KI-, Crawl-, Match- oder Kontaktfunktionen, fuehrt keinen VPS-Apply aus
+und entfernt nicht das globale `noindex,nofollow`.
 
 Abnahme:
 
 - Dokumentation und Code beschreiben denselben Stand;
-- veraltete Tests sind aktualisiert;
+- der Preflight erkennt deaktivierte oder unvollstaendige Staging-Konfiguration fail-closed;
+- CLI-Ausgaben enthalten keine Secrets, Provider-Keys oder Connection Strings;
 - alle beabsichtigten Dateien sind bewusst versioniert oder ignoriert;
-- Formatierung, Linting, TypeScript, Tests, SQL-Gates, Playwright und Build sind erfolgreich;
-- ein reproduzierbarer Release-Kandidat kann gebildet werden.
+- Formatierung, Linting, TypeScript, Tests und Build sind erfolgreich.
