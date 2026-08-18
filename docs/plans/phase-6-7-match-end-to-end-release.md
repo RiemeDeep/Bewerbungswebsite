@@ -1,7 +1,7 @@
 # Phase 6/7: Match-End-to-End-Release
 
 Stand: 2026-08-14
-Status: angenommen; Pakete M1 und M2 abgeschlossen
+Status: angenommen; Pakete M1 bis M3 abgeschlossen
 
 Die fachliche Source of Truth bleibt `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`. Dieses Dokument
 zerlegt die bestehenden Roadmap-Pakete 6 und 7 in kleine, einzeln pruefbare Einheiten. Produktive
@@ -128,6 +128,26 @@ Abnahme:
 - keine Crawl-Inhalte werden als HTML gerendert oder als Anweisungen behandelt;
 - Komponenten-, BFF- und Accessibility-Tests bestehen.
 
+Abschluss 2026-08-18:
+
+- `/match` stellt URL- und Texteingabe, klare Verarbeitungshinweise, einen jederzeit sichtbaren
+  Login-/Paywall-Fallback sowie editierbare Unternehmen-, Rollen-, Aufgaben- und Anforderungsfelder
+  bereit.
+- Der neue BFF `POST /api/match/job-context-preview` validiert Eingaben serverseitig und spricht nur
+  ueber die interne Bearer-Grenze mit dem Orchestrator. Browserzugriff auf Orchestrator, Crawl-Provider
+  oder Datenbank findet nicht statt.
+- Lade-, kontrollierte Fehler-, Retry-, Abbruch- und Bestaetigungszustaende sind umgesetzt. Ein Abbruch
+  erhaelt die Formulareingaben; eine Bestaetigung startet weder Analyse noch Match-Assistent.
+- Quellen-URLs, Abrufzeitpunkte und Quellenauszuege bleiben nicht editierbar und werden ausschliesslich
+  als Text gerendert.
+- Der globale Header fuehrt jetzt auf `/match`. Die bisherige synthetische Teststrecke bleibt getrennt
+  und unveraendert feature-flag-geschuetzt.
+- Web-Unit-/Routentests: 98 bestanden. Playwright-Navigation inklusive `/match`: 13 bestanden, mit
+  Axe-Smoke und Breakpoint-Pruefung bei 375, 768 und 1440 Pixeln. Der vollstaendige `pnpm check` bestand
+  mit 82 Contract-, 259 Orchestrator- und 98 Web-Tests sowie allen Typechecks und Builds.
+- Es erfolgten keine VPS-Aktivierung, kein Provideraufruf, kein PostgreSQL-Schreibzugriff und keine
+  Freigabe von Analyseerzeugung oder Match-Assistent.
+
 ## Paket M4: Vollstaendige Ergebnisansicht
 
 Ziel: Die tokenisierte Ergebnisroute bildet den gesamten `MatchAnalysis`-Vertrag verstaendlich ab.
@@ -210,7 +230,7 @@ Abnahme:
 
 ## Verbindliche Reihenfolge
 
-`M1 (abgeschlossen) -> M2 (abgeschlossen) -> M3 -> M4 -> M5 -> M6 -> M7 -> Umsetzungspaket 8`
+`M1 (abgeschlossen) -> M2 (abgeschlossen) -> M3 (abgeschlossen) -> M4 -> M5 -> M6 -> M7 -> Umsetzungspaket 8`
 
 Ein Paket darf keine oeffentliche Aktivierung vorziehen. VPS-PostgreSQL-Schreibzugriffe erfolgen nur nach
 dem dokumentierten Backup- und Restore-Test; M1 benoetigt keinen Remote-Schreibzugriff.

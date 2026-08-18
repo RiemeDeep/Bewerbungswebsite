@@ -6,6 +6,7 @@ const routes = [
   "/profil",
   "/werdegang",
   "/projekte",
+  "/match",
   "/kontakt",
   "/impressum",
   "/datenschutz",
@@ -46,8 +47,10 @@ test("skip link and reduced keyboard navigation reach the central interactions",
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Finden Sie heraus");
 
   await page.getByRole("link", { name: "Passung prüfen" }).click();
-  await expect(page).toHaveURL(/\/#passung$/u);
-  await expect(page.getByRole("heading", { level: 2, name: /konkrete Analyse/i })).toBeVisible();
+  await expect(page).toHaveURL(/\/match$/u);
+  await expect(
+    page.getByRole("heading", { level: 1, name: /für Ihre Stelle relevant/i }),
+  ).toBeVisible();
 });
 
 test("profile detail routes remain reachable from the footer", async ({ page }) => {

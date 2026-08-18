@@ -10,7 +10,7 @@ export function SiteHeader() {
         <Link className="assistant-nav-link" href="/#profilassistent">
           Frage stellen
         </Link>
-        <Link className="header-cta" href="/#passung">
+        <Link className="header-cta" href="/match">
           Passung prüfen
         </Link>
       </nav>

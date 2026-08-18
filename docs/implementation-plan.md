@@ -454,10 +454,19 @@ Match-Assistent besitzen in der geschuetzten Komposition interne Bearer-Pfade, g
 Rate-/Kosten-/Parallelitaetsgrenzen, Deadline-Abbruch bis zum Provider und inhaltsfreie Runtime-Events.
 Der vollstaendige `pnpm check` bestand; eine VPS-Aktivierung erfolgte nicht.
 
-Naechste kleine Umsetzungseinheit ist Match-Paket M3: die vorhandene JobContext-Testoberflaeche als
-produktionsgeeignete `/match`-Route und serverseitigen BFF mit URL-/Text-Fallback, editierbarer
-Bestaetigung sowie Lade-, Fehler- und Abbruchzustaenden bereitstellen. Analyseerzeugung und
-Match-Assistent bleiben dabei weiterhin nicht oeffentlich. Die Profilassistent-Faelle `direct-football-license` und
+Match-Paket M3 ist am 2026-08-18 lokal abgeschlossen: Die produktionsgeeignete `/match`-Route bietet
+URL- und Texteingabe, Datenschutz- und Login-/Paywall-Hinweise, editierbare JobContext-Bestaetigung,
+unveraenderbare Quellenmetadaten sowie Lade-, Fehler-, Retry- und Abbruchzustaende. Der neue oeffentliche
+Preview-BFF validiert serverseitig und nutzt ausschliesslich die interne Bearer-Grenze zum Orchestrator.
+Die Bestaetigung startet weder Analyse noch Match-Assistent. 98 Web-Tests und 13 gezielte
+Playwright-Navigations-, Axe- und Breakpoint-Tests bestanden; es erfolgte keine VPS-Aktivierung.
+Der vollstaendige `pnpm check` bestand mit 82 Contract-, 259 Orchestrator- und 98 Web-Tests sowie allen
+Typechecks und Builds.
+
+Naechste kleine Umsetzungseinheit ist Match-Paket M4: die tokenisierte Ergebnisroute vollstaendig fuer
+Kurzfazit, Beitragsfelder, Anforderungsmatrix, Belege, Transferpotenzial, Luecken, Gespraechsfragen und
+vorsichtige 90-Tage-Hypothesen ausbauen, ohne Match-Assistent oder oeffentliche Runtime vorzeitig zu
+aktivieren. Die Profilassistent-Faelle `direct-football-license` und
 `negative-prompt-injection` bleiben wegen Modellvarianz als separates dreifaches Wiederholungsgate offen;
 hieraus darf ohne stabilen Befund keine Produktlogik abgeleitet werden. Kein neues Feature wird oeffentlich
 aktiviert, bevor die jeweiligen Staging-, Datenschutz-, Monitoring- und Go-live-Gates erreicht sind.
