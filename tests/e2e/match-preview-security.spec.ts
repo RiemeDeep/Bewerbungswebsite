@@ -6,6 +6,7 @@ test("tokenized match previews keep privacy and indexing headers on not found", 
   const response = await request.get("/match/preview/invalid-token");
 
   expect(response.status()).toBe(404);
+  expect(response.headers()["cache-control"]).toBe("private, no-store, max-age=0");
   expect(response.headers()["referrer-policy"]).toBe("no-referrer");
   expect(response.headers()["x-robots-tag"]).toBe("noindex,nofollow");
 });
@@ -14,6 +15,23 @@ test("disabled internal profile previews stay unavailable with privacy headers",
   request,
 }) => {
   const response = await request.get("/internal/profilvorschau");
+
+  expect(response.status()).toBe(404);
+  expect(response.headers()["cache-control"]).toBe("private, no-store, max-age=0");
+  expect(response.headers()["referrer-policy"]).toBe("no-referrer");
+  expect(response.headers()["x-robots-tag"]).toBe("noindex,nofollow");
+});
+
+test("disabled internal match assistant stays unavailable with privacy headers", async ({
+  request,
+}) => {
+  const response = await request.post("/api/internal/match-assistant", {
+    data: {
+      accessToken: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123",
+      sessionId: "session-12345678",
+      message: "Welche Anforderungen sind belegt?",
+    },
+  });
 
   expect(response.status()).toBe(404);
   expect(response.headers()["cache-control"]).toBe("private, no-store, max-age=0");

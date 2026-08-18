@@ -11,13 +11,19 @@ import {
   createDeterministicMockMatchAnalyzer,
   createMatchAnalyzerService,
 } from "./match-analyzer.js";
-import { createDeterministicMockMatchAssistantService } from "./match-assistant.js";
+import {
+  createDeterministicMockMatchAssistantService,
+  createMatchAssistantService,
+} from "./match-assistant.js";
+import { createPostgresPoolMatchAssistantEvidenceRepository } from "./match-assistant-evidence-repository.js";
 import {
   createPostgresPoolMatchEvidenceRepository,
   createSyntheticMatchEvidenceRepository,
 } from "./match-evidence-repository.js";
 import { createOpenAiJobContextExtractor } from "./openai-job-context-extractor.js";
 import { createOpenAiMatchAnalysisProvider } from "./openai-match-analysis-provider.js";
+import { createOpenAiMatchAssistantProvider } from "./openai-match-assistant-provider.js";
+import { createOpenAiMatchAssistantSupportVerifier } from "./openai-match-assistant-support-verifier.js";
 import { createOpenAiStructuredModelProvider } from "./openai-structured-provider.js";
 import { createOpenAiProfileAssistantSupportVerifier } from "./openai-profile-assistant-support-verifier.js";
 import {
@@ -33,6 +39,7 @@ const runtimeEnvironmentSchema = z
     ENABLE_PROFILE_ASSISTANT_STAGING: z.enum(["0", "1"]).optional(),
     ENABLE_JOB_CONTEXT_PREVIEW: z.literal("1").optional(),
     ENABLE_MATCH_ANALYSIS: z.literal("1").optional(),
+    ENABLE_MATCH_ASSISTANT_STAGING: z.enum(["0", "1"]).optional(),
     ENABLE_MATCH_RUNTIME_STAGING: z.enum(["0", "1"]).optional(),
     ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: z.literal("1").optional(),
     ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: z.literal("1").optional(),
@@ -141,6 +148,17 @@ const runtimeEnvironmentSchema = z
     }
 
     if (
+      environment.ENABLE_MATCH_ASSISTANT_STAGING === "1" &&
+      environment.ENABLE_MATCH_RUNTIME_STAGING !== "1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ASSISTANT_STAGING requires ENABLE_MATCH_RUNTIME_STAGING.",
+        path: ["ENABLE_MATCH_RUNTIME_STAGING"],
+      });
+    }
+
+    if (
       environment.ENABLE_MATCH_RUNTIME_STAGING === "1" &&
       (!environment.ORCHESTRATOR_REQUEST_SECRET ||
         environment.ORCHESTRATOR_REQUEST_SECRET === "replace-me" ||
@@ -179,12 +197,13 @@ const runtimeEnvironmentSchema = z
     if (
       environment.ENABLE_MATCH_RUNTIME_STAGING === "1" &&
       environment.ENABLE_JOB_CONTEXT_PREVIEW !== "1" &&
-      environment.ENABLE_MATCH_ANALYSIS !== "1"
+      environment.ENABLE_MATCH_ANALYSIS !== "1" &&
+      environment.ENABLE_MATCH_ASSISTANT_STAGING !== "1"
     ) {
       context.addIssue({
         code: "custom",
         message:
-          "ENABLE_MATCH_RUNTIME_STAGING requires ENABLE_JOB_CONTEXT_PREVIEW or ENABLE_MATCH_ANALYSIS.",
+          "ENABLE_MATCH_RUNTIME_STAGING requires a JobContext, analysis or assistant service.",
         path: ["ENABLE_MATCH_RUNTIME_STAGING"],
       });
     }
@@ -210,6 +229,22 @@ const runtimeEnvironmentSchema = z
       });
     }
 
+    if (environment.ENABLE_MATCH_ASSISTANT_STAGING === "1" && !environment.MATCH_DATABASE_URL) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ASSISTANT_STAGING requires MATCH_DATABASE_URL.",
+        path: ["MATCH_DATABASE_URL"],
+      });
+    }
+
+    if (environment.ENABLE_MATCH_ASSISTANT_STAGING === "1" && !environment.PROFILE_DATABASE_URL) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ASSISTANT_STAGING requires PROFILE_DATABASE_URL.",
+        path: ["PROFILE_DATABASE_URL"],
+      });
+    }
+
     if (environment.ENABLE_MATCH_ANALYSIS === "1" && !environment.PROFILE_DATABASE_URL) {
       context.addIssue({
         code: "custom",
@@ -226,6 +261,18 @@ const runtimeEnvironmentSchema = z
       context.addIssue({
         code: "custom",
         message: "ENABLE_MATCH_ANALYSIS requires LLM_API_KEY or OPENAI_API_KEY.",
+        path: ["LLM_API_KEY"],
+      });
+    }
+
+    if (
+      environment.ENABLE_MATCH_ASSISTANT_STAGING === "1" &&
+      !environment.LLM_API_KEY?.trim() &&
+      !environment.OPENAI_API_KEY?.trim()
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "ENABLE_MATCH_ASSISTANT_STAGING requires LLM_API_KEY or OPENAI_API_KEY.",
         path: ["LLM_API_KEY"],
       });
     }
@@ -366,6 +413,31 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     dependencies.matchAnalysisStore = store;
     dependencies.matchAssistant = createDeterministicMockMatchAssistantService({ store });
     closeHandlers.push(() => store.close());
+  }
+
+  if (environment.ENABLE_MATCH_ASSISTANT_STAGING === "1") {
+    const store = dependencies.matchAnalysisStore;
+    if (!store) {
+      throw new Error("ENABLE_MATCH_ASSISTANT_STAGING requires a match analysis store.");
+    }
+    const evidenceRepository = createPostgresPoolMatchAssistantEvidenceRepository(
+      environment.PROFILE_DATABASE_URL ?? "",
+    );
+    dependencies.matchAssistant = createMatchAssistantService({
+      store,
+      evidenceRepository,
+      provider: createOpenAiMatchAssistantProvider({
+        apiKey: environment.LLM_API_KEY ?? environment.OPENAI_API_KEY ?? "",
+        model: environment.LLM_ASSISTANT_MODEL,
+        timeoutMs: environment.LLM_REQUEST_TIMEOUT_MS,
+      }),
+      supportVerifier: createOpenAiMatchAssistantSupportVerifier({
+        apiKey: environment.LLM_API_KEY ?? environment.OPENAI_API_KEY ?? "",
+        model: environment.LLM_ASSISTANT_MODEL,
+        timeoutMs: environment.LLM_REQUEST_TIMEOUT_MS,
+      }),
+    });
+    closeHandlers.push(() => evidenceRepository.close());
   }
 
   if (environment.ENABLE_MATCH_RUNTIME_STAGING === "1") {

@@ -5,8 +5,13 @@ import type { JobContext, MatchAssistantMessageRequest } from "@bewerbungswebsit
 import { createDeterministicMockMatchAnalyzer } from "./match-analyzer.js";
 import {
   createDeterministicMockMatchAssistantService,
+  createMatchAssistantService,
   MatchAssistantAccessError,
+  MatchAssistantError,
+  type MatchAssistantProviderInput,
 } from "./match-assistant.js";
+import { createInMemoryMatchAssistantEvidenceRepository } from "./match-assistant-evidence-repository.js";
+import { createDeterministicMatchSupportVerifier } from "./match-assistant-support-verifier.js";
 import { createSyntheticMatchEvidenceRepository } from "./match-evidence-repository.js";
 
 const accessToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123";
@@ -56,6 +61,22 @@ async function createService() {
 
   return {
     getByAccessToken,
+    matchAnalysis,
+    store: {
+      async create() {
+        throw new Error("Not used in this test.");
+      },
+      getByAccessToken,
+      async expireDue() {
+        return 0;
+      },
+      async hardDeleteExpired() {
+        return 0;
+      },
+      async deleteByAnalysisId() {
+        return false;
+      },
+    },
     service: createDeterministicMockMatchAssistantService({
       store: {
         async create() {
@@ -116,5 +137,240 @@ describe("createDeterministicMockMatchAssistantService", () => {
     await expect(
       service.answer(createRequest("Frage", "zyxwvutsrqponmlkjihgfedcbaABCDEFGHIJKLMNO_123")),
     ).rejects.toBeInstanceOf(MatchAssistantAccessError);
+  });
+});
+
+describe("createMatchAssistantService", () => {
+  it("uses only server-loaded context and canonicalizes active evidence metadata", async () => {
+    const { matchAnalysis, store } = await createService();
+    const supportedRequirement = matchAnalysis.requirements.find((requirement) =>
+      requirement.evidenceIds.includes(matchAnalysis.evidence[0]!.evidenceId),
+    );
+    expect(supportedRequirement).toBeDefined();
+    const providerInputs: MatchAssistantProviderInput[] = [];
+    const provider = {
+      generateObject: vi.fn(async (input: MatchAssistantProviderInput) => {
+        providerInputs.push(input);
+        return {
+          answer: "Die technische Anforderung ist durch freigegebene Erfahrung gestuetzt.",
+          classification: "direct",
+          confidence: "medium",
+          referencedRequirements: [supportedRequirement!.requirementId],
+          evidence: [
+            {
+              evidenceId: matchAnalysis.evidence[0]!.evidenceId,
+              publicLabel: "Vom Provider manipulierter Titel",
+              relevance: "Vom Provider formulierter Relevanztext.",
+            },
+          ],
+          openQuestions: ["Providerfrage darf nicht ungeprueft passieren."],
+          safetyFlags: ["provider-flag"],
+        };
+      }),
+    };
+    const service = createMatchAssistantService({
+      store,
+      evidenceRepository: createInMemoryMatchAssistantEvidenceRepository(matchAnalysis.evidence),
+      provider,
+      supportVerifier: createDeterministicMatchSupportVerifier(),
+    });
+
+    const response = await service.answer(createRequest("Wie passt die technische Anforderung?"));
+
+    expect(provider.generateObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        question: "Wie passt die technische Anforderung?",
+        jobContext,
+        allowedEvidenceIds: matchAnalysis.evidence.map((item) => item.evidenceId),
+      }),
+      undefined,
+    );
+    expect(providerInputs[0]!.gaps).toEqual([]);
+    expect(providerInputs[0]!.requirements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          requirementId: supportedRequirement!.requirementId,
+          status: "partially_supported",
+          explanation: expect.stringContaining("aktuell freigegebene Belege"),
+        }),
+      ]),
+    );
+    expect(providerInputs[0]!.requirements).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ explanation: supportedRequirement!.explanation }),
+      ]),
+    );
+    expect(response).toMatchObject({
+      classification: "direct",
+      evidence: [
+        {
+          evidenceId: matchAnalysis.evidence[0]!.evidenceId,
+          publicLabel: matchAnalysis.evidence[0]!.publicLabel,
+          relevance: expect.stringContaining(supportedRequirement!.label),
+        },
+      ],
+      openQuestions: [],
+      safetyFlags: [],
+    });
+  });
+
+  it("returns a canonical unavailable response when all stored evidence was withdrawn", async () => {
+    const { store } = await createService();
+    const provider = { generateObject: vi.fn() };
+    const service = createMatchAssistantService({
+      store,
+      evidenceRepository: createInMemoryMatchAssistantEvidenceRepository([]),
+      provider,
+      supportVerifier: createDeterministicMatchSupportVerifier(),
+    });
+
+    await expect(
+      service.answer(createRequest("Wie passt die Anforderung?")),
+    ).resolves.toMatchObject({
+      classification: "not_available",
+      confidence: "insufficient",
+      evidence: [],
+    });
+    expect(provider.generateObject).not.toHaveBeenCalled();
+  });
+
+  it("does not release an answer when evidence is withdrawn during provider processing", async () => {
+    const { matchAnalysis, store } = await createService();
+    const supportedRequirement = matchAnalysis.requirements.find((requirement) =>
+      requirement.evidenceIds.includes(matchAnalysis.evidence[0]!.evidenceId),
+    );
+    expect(supportedRequirement).toBeDefined();
+    const loadCurrentlyAllowedEvidence = vi
+      .fn()
+      .mockResolvedValueOnce(matchAnalysis.evidence)
+      .mockResolvedValueOnce([]);
+    const service = createMatchAssistantService({
+      store,
+      evidenceRepository: { loadCurrentlyAllowedEvidence },
+      provider: {
+        async generateObject() {
+          return {
+            answer: "Zum Providerzeitpunkt belegte Aussage.",
+            classification: "direct",
+            confidence: "medium",
+            referencedRequirements: [supportedRequirement!.requirementId],
+            evidence: [
+              {
+                evidenceId: matchAnalysis.evidence[0]!.evidenceId,
+                publicLabel: matchAnalysis.evidence[0]!.publicLabel,
+                relevance: "Belegt.",
+              },
+            ],
+            openQuestions: [],
+            safetyFlags: [],
+          };
+        },
+      },
+      supportVerifier: createDeterministicMatchSupportVerifier(),
+    });
+
+    await expect(
+      service.answer(createRequest("Wie passt die Anforderung?")),
+    ).resolves.toMatchObject({
+      classification: "not_available",
+      confidence: "insufficient",
+      evidence: [],
+    });
+    expect(loadCurrentlyAllowedEvidence).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects evidence that is active but unrelated to the referenced requirement", async () => {
+    const { matchAnalysis, store } = await createService();
+    const unsupportedRequirement = matchAnalysis.requirements.find(
+      (requirement) => requirement.status === "not_supported",
+    );
+    expect(unsupportedRequirement).toBeDefined();
+    const service = createMatchAssistantService({
+      store,
+      evidenceRepository: createInMemoryMatchAssistantEvidenceRepository(matchAnalysis.evidence),
+      provider: {
+        async generateObject() {
+          return {
+            answer: "Falsch verknuepfte Aussage.",
+            classification: "direct",
+            confidence: "medium",
+            referencedRequirements: [unsupportedRequirement!.requirementId],
+            evidence: [
+              {
+                evidenceId: matchAnalysis.evidence[0]!.evidenceId,
+                publicLabel: matchAnalysis.evidence[0]!.publicLabel,
+                relevance: "Falsch verknuepft.",
+              },
+            ],
+            openQuestions: [],
+            safetyFlags: [],
+          };
+        },
+      },
+      supportVerifier: createDeterministicMatchSupportVerifier(),
+    });
+
+    await expect(
+      service.answer(createRequest("Wie passt die Zertifizierung?")),
+    ).rejects.toMatchObject({
+      code: "ASSISTANT_EVIDENCE_VIOLATION",
+      violationReason: "evidence_relation",
+    });
+  });
+
+  it("allows one verifier-directed repair and rejects a second failed verification", async () => {
+    const { matchAnalysis, store } = await createService();
+    const supportedRequirement = matchAnalysis.requirements.find((requirement) =>
+      requirement.evidenceIds.includes(matchAnalysis.evidence[0]!.evidenceId),
+    );
+    expect(supportedRequirement).toBeDefined();
+    const response = {
+      answer: "Belegte technische Aussage.",
+      classification: "direct" as const,
+      confidence: "medium" as const,
+      referencedRequirements: [supportedRequirement!.requirementId],
+      evidence: [
+        {
+          evidenceId: matchAnalysis.evidence[0]!.evidenceId,
+          publicLabel: matchAnalysis.evidence[0]!.publicLabel,
+          relevance: "Belegt.",
+        },
+      ],
+      openQuestions: [],
+      safetyFlags: [],
+    };
+    const provider = {
+      generateObject: vi.fn(async (...args: [MatchAssistantProviderInput]) => {
+        void args;
+        return response;
+      }),
+    };
+    const supportVerifier = {
+      verify: vi
+        .fn()
+        .mockResolvedValueOnce({
+          verdict: "repair",
+          issues: [{ assertionIndex: 0, code: "overstated_claim" }],
+        })
+        .mockResolvedValueOnce({
+          verdict: "repair",
+          issues: [{ assertionIndex: 0, code: "missing_uncertainty" }],
+        }),
+    };
+    const service = createMatchAssistantService({
+      store,
+      evidenceRepository: createInMemoryMatchAssistantEvidenceRepository(matchAnalysis.evidence),
+      provider,
+      supportVerifier,
+    });
+
+    await expect(
+      service.answer(createRequest("Wie passt die Anforderung?")),
+    ).rejects.toBeInstanceOf(MatchAssistantError);
+    expect(provider.generateObject).toHaveBeenCalledTimes(2);
+    expect(provider.generateObject.mock.calls[1]?.[0]).toMatchObject({
+      repairIssueCodes: ["overstated_claim"],
+    });
+    expect(supportVerifier.verify).toHaveBeenCalledTimes(2);
   });
 });

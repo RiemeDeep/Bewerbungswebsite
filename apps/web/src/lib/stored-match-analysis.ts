@@ -21,18 +21,22 @@ export async function loadStoredMatchAnalysis(
     return null;
   }
 
-  const response = await (options.fetcher ?? fetch)(
-    new URL(`/api/v1/match/analyses/${encodeURIComponent(accessToken)}`, baseUrl).toString(),
-    {
-      cache: "no-store",
-      headers: { accept: "application/json" },
-    },
-  );
+  try {
+    const response = await (options.fetcher ?? fetch)(
+      new URL(`/api/v1/match/analyses/${encodeURIComponent(accessToken)}`, baseUrl).toString(),
+      {
+        cache: "no-store",
+        headers: { accept: "application/json" },
+      },
+    );
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return null;
+    }
+
+    const parsed = accessibleMatchAnalysisSchema.safeParse(await response.json());
+    return parsed.success ? parsed.data : null;
+  } catch {
     return null;
   }
-
-  const parsed = accessibleMatchAnalysisSchema.safeParse(await response.json());
-  return parsed.success ? parsed.data : null;
 }

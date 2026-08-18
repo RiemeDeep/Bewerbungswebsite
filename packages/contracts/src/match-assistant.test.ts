@@ -126,6 +126,80 @@ describe("matchAssistantResponseSchema", () => {
     ).toThrow();
   });
 
+  it("rejects positive responses without a requirement reference", () => {
+    expect(() =>
+      matchAssistantResponseSchema.parse({
+        answer: "Unzureichend verknuepfte Antwort.",
+        classification: "direct",
+        confidence: "medium",
+        referencedRequirements: [],
+        evidence: [
+          {
+            evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            publicLabel: "Synthetischer Profilbeleg",
+            relevance: "Stuetzzusammenhang.",
+          },
+        ],
+        openQuestions: [],
+        safetyFlags: [],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects positive responses with insufficient confidence", () => {
+    expect(() =>
+      matchAssistantResponseSchema.parse({
+        answer: "Widerspruechliche positive Antwort.",
+        classification: "direct",
+        confidence: "insufficient",
+        referencedRequirements: ["req-technische-anforderungen-11111111"],
+        evidence: [
+          {
+            evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            publicLabel: "Synthetischer Profilbeleg",
+            relevance: "Stuetzzusammenhang.",
+          },
+        ],
+        openQuestions: [],
+        safetyFlags: [],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects duplicate references and invalid not-available confidence", () => {
+    expect(() =>
+      matchAssistantResponseSchema.parse({
+        answer: "Doppelte Referenzen.",
+        classification: "direct",
+        confidence: "medium",
+        referencedRequirements: [
+          "req-technische-anforderungen-11111111",
+          "req-technische-anforderungen-11111111",
+        ],
+        evidence: [
+          {
+            evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            publicLabel: "Synthetischer Profilbeleg",
+            relevance: "Stuetzzusammenhang.",
+          },
+        ],
+        openQuestions: [],
+        safetyFlags: [],
+      }),
+    ).toThrow();
+    expect(() =>
+      matchAssistantResponseSchema.parse({
+        answer: "Nicht verfuegbar.",
+        classification: "not_available",
+        confidence: "medium",
+        referencedRequirements: [],
+        evidence: [],
+        openQuestions: [],
+        safetyFlags: [],
+      }),
+    ).toThrow();
+  });
+
   it("rejects evidence outside the supplied match analysis", () => {
     expect(() =>
       validateMatchAssistantResponseReferences(
@@ -133,7 +207,7 @@ describe("matchAssistantResponseSchema", () => {
           answer: "Fremder Beleg.",
           classification: "direct",
           confidence: "medium",
-          referencedRequirements: [],
+          referencedRequirements: ["req-technische-anforderungen-11111111"],
           evidence: [
             {
               evidenceId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -147,5 +221,84 @@ describe("matchAssistantResponseSchema", () => {
         matchAnalysis,
       ),
     ).toThrow("Unknown or manipulated evidenceId");
+  });
+
+  it("rejects known evidence unrelated to the referenced requirement", () => {
+    const analysisWithSecondRequirement = matchAnalysisSchema.parse({
+      ...matchAnalysis,
+      requirements: [
+        ...matchAnalysis.requirements,
+        {
+          requirementId: "req-zweite-anforderung-22222222",
+          label: "Zweite Anforderung",
+          importance: "should",
+          status: "unclear",
+          explanation: "Ohne direkte Evidence.",
+          evidenceIds: [],
+        },
+      ],
+    });
+
+    expect(() =>
+      validateMatchAssistantResponseReferences(
+        {
+          answer: "Falsch zugeordneter Beleg.",
+          classification: "direct",
+          confidence: "medium",
+          referencedRequirements: ["req-zweite-anforderung-22222222"],
+          evidence: [
+            {
+              evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              publicLabel: "Synthetischer Profilbeleg",
+              relevance: "Nicht fuer diese Anforderung erlaubt.",
+            },
+          ],
+          openQuestions: [],
+          safetyFlags: [],
+        },
+        analysisWithSecondRequirement,
+      ),
+    ).toThrow("not related to a referenced requirement");
+  });
+
+  it("requires evidence for every referenced requirement", () => {
+    const analysisWithSecondRequirement = matchAnalysisSchema.parse({
+      ...matchAnalysis,
+      requirements: [
+        ...matchAnalysis.requirements,
+        {
+          requirementId: "req-zweite-anforderung-22222222",
+          label: "Zweite Anforderung",
+          importance: "should",
+          status: "unclear",
+          explanation: "Ohne direkte Evidence.",
+          evidenceIds: [],
+        },
+      ],
+    });
+
+    expect(() =>
+      validateMatchAssistantResponseReferences(
+        {
+          answer: "Nur teilweise belegte Mehrfachantwort.",
+          classification: "direct",
+          confidence: "medium",
+          referencedRequirements: [
+            "req-technische-anforderungen-11111111",
+            "req-zweite-anforderung-22222222",
+          ],
+          evidence: [
+            {
+              evidenceId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              publicLabel: "Synthetischer Profilbeleg",
+              relevance: "Nur zur ersten Anforderung.",
+            },
+          ],
+          openQuestions: [],
+          safetyFlags: [],
+        },
+        analysisWithSecondRequirement,
+      ),
+    ).toThrow("Referenced requirement has no supporting evidence");
   });
 });

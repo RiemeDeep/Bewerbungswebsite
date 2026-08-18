@@ -304,6 +304,7 @@ Orchestrator-Konfiguration in der root-only `.env.orchestrator`:
 
 ```dotenv
 ENABLE_MATCH_RUNTIME_STAGING=1
+ENABLE_MATCH_ASSISTANT_STAGING=1
 MATCH_RUNTIME_REQUEST_TIMEOUT_MS=45000
 MATCH_RUNTIME_REQUESTS_PER_MINUTE=10
 MATCH_RUNTIME_REQUESTS_PER_DAY=100
@@ -320,8 +321,8 @@ Geschuetzte Orchestrator-Pfade:
 - `POST /api/internal/match/job-context/preview`
 - `POST /api/internal/match/analyze`
 - `POST /api/internal/match/analyses`
-- `POST /api/internal/match/assistant/messages` (wird erst mit dem produktiven Service aus Paket M5
-  registriert)
+- `POST /api/internal/match/assistant/messages` (nur mit `ENABLE_MATCH_ASSISTANT_STAGING=1` und den
+  zusaetzlichen Datenbank-/Provider-Voraussetzungen registriert)
 
 Die vorhandenen Web-Test-BFFs verwenden diese Pfade im Orchestrator-Modus mit
 `MATCH_RUNTIME_BFF_TIMEOUT_MS=55000`. Die BFF-Deadline muss oberhalb der Orchestrator-Deadline plus der
@@ -329,6 +330,11 @@ maximalen Datenbank-Query-Zeit liegen. Dies ist noch keine oeffentliche `/match`
 muessen die internen Pfade `401` liefern; die entsprechenden ungeschuetzten `/api/v1`-Schreibpfade sind
 in der geschuetzten Komposition nicht registriert. Runtime-Logs duerfen nur Request-ID, Operation, Status,
 Dauer und feste Limitklassen enthalten.
+
+Die serverseitige Web-Umgebung benoetigt fuer das interne Assistentenformular zusaetzlich
+`ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING=1`. Dadurch wird keine oeffentliche Route freigegeben:
+Ergebnisroute und BFF bleiben hinter Basic Auth, und das Flag muss beim Kill-Switch gemeinsam mit
+`ENABLE_MATCH_ASSISTANT_STAGING` wieder auf `0` gesetzt werden.
 
 ## Interner Profilassistent-Evaluationslauf
 

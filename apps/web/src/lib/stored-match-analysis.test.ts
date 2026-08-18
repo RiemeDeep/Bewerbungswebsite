@@ -106,4 +106,22 @@ describe("loadStoredMatchAnalysis", () => {
       }),
     ).resolves.toBeNull();
   });
+
+  it("returns null for network and invalid-json failures", async () => {
+    await expect(
+      loadStoredMatchAnalysis(accessToken, {
+        baseUrl: "http://localhost:4000",
+        fetcher: async () => {
+          throw new Error("connection failed");
+        },
+      }),
+    ).resolves.toBeNull();
+
+    await expect(
+      loadStoredMatchAnalysis(accessToken, {
+        baseUrl: "http://localhost:4000",
+        fetcher: async () => new Response("not-json", { status: 200 }),
+      }),
+    ).resolves.toBeNull();
+  });
 });

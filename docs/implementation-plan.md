@@ -463,10 +463,30 @@ Playwright-Navigations-, Axe- und Breakpoint-Tests bestanden; es erfolgte keine 
 Der vollstaendige `pnpm check` bestand mit 82 Contract-, 259 Orchestrator- und 98 Web-Tests sowie allen
 Typechecks und Builds.
 
-Naechste kleine Umsetzungseinheit ist Match-Paket M4: die tokenisierte Ergebnisroute vollstaendig fuer
-Kurzfazit, Beitragsfelder, Anforderungsmatrix, Belege, Transferpotenzial, Luecken, Gespraechsfragen und
-vorsichtige 90-Tage-Hypothesen ausbauen, ohne Match-Assistent oder oeffentliche Runtime vorzeitig zu
-aktivieren. Die Profilassistent-Faelle `direct-football-license` und
+Match-Paket M4 ist am 2026-08-18 lokal abgeschlossen: Die tokenisierte Server-Component-Ergebnisroute
+bildet den vollstaendigen `MatchAnalysis`-Vertrag mit Subjekt- und Zeitmetadaten, Kurzfazit,
+Belegkonfidenz, Beitragsfeldern, priorisierter Anforderungsmatrix, Evidence, Transferstatus, Luecken,
+Gespraechsfragen, 90-Tage-Hypothesen und Warnungen ab. Interne IDs und Zugriffstoken werden nicht
+gerendert; der vorgezogene Match-Assistent wurde aus der Route entfernt und bleibt M5 vorbehalten.
+Loader-Fehler liefern einheitlich Nichtfund, und der deaktivierte Preview-Pfad antwortet bereits im Proxy
+mit privaten `no-store`-/`noindex`-Headern. Der vollstaendige `pnpm check` bestand mit 82 Contract-, 259
+Orchestrator- und 100 Web-Tests sowie allen Typechecks und Builds; der gezielte Playwright-Privacy-Lauf
+bestand mit 2/2 Tests. Es erfolgte keine VPS-Aktivierung.
+
+Match-Paket M5 ist am 2026-08-18 lokal abgeschlossen: Der produktive Match-Assistent laedt Stellenkontext
+und Analyse ausschliesslich serverseitig, revalidiert referenzierte Evidence bei jeder Antwort gegen die
+aktuelle `job_analysis`-Freigabe und kanonisiert alle Clientmetadaten. Structured Provider und separater
+Support-Verifier erlauben hoechstens einen kontrollierten Repair-Versuch. Der Browserrequest bleibt auf
+Token, Session-ID und Frage begrenzt; interner BFF, Ergebnisformular und Orchestrator-Service besitzen
+getrennte, standardmaessig deaktivierte Staging-Schalter sowie Basic- und Bearer-Schutz. Der vollstaendige
+`pnpm check` bestand mit 87 Contract-, 272 Orchestrator- und 107 Web-Tests sowie allen Typechecks und Builds;
+der gezielte Playwright-Privacy-Lauf bestand mit 3/3 Tests und der aktivierte Basic-Auth-Pfad mit 1/1 Test.
+Es erfolgten keine Provideraufrufe, keine VPS-Aktivierung und kein PostgreSQL-Schreibzugriff.
+
+Naechste kleine Umsetzungseinheit ist Match-Paket M6: Persistenz, sichtbare Aufbewahrung und Loeschung des
+Stellenkontexts mit Cleanup, Backup und Withdrawal-Verhalten konsistent nachweisen. Eine oeffentliche
+Aktivierung erfolgt weiterhin nicht. Die
+Profilassistent-Faelle `direct-football-license` und
 `negative-prompt-injection` bleiben wegen Modellvarianz als separates dreifaches Wiederholungsgate offen;
 hieraus darf ohne stabilen Befund keine Produktlogik abgeleitet werden. Kein neues Feature wird oeffentlich
 aktiviert, bevor die jeweiligen Staging-, Datenschutz-, Monitoring- und Go-live-Gates erreicht sind.

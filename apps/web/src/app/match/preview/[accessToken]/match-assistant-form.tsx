@@ -12,7 +12,13 @@ type State =
   | { status: "success"; response: MatchAssistantResponse }
   | { status: "error"; message: string };
 
-export function MatchAssistantForm({ accessToken }: { accessToken: string }) {
+export function MatchAssistantForm({
+  accessToken,
+  endpoint = "/api/test/match-assistant",
+}: {
+  accessToken: string;
+  endpoint?: string;
+}) {
   const [message, setMessage] = useState(
     "Welche Anforderung sollte im Gespraech zuerst geklaert werden?",
   );
@@ -23,7 +29,7 @@ export function MatchAssistantForm({ accessToken }: { accessToken: string }) {
     setState({ status: "loading" });
 
     try {
-      const response = await fetch("/api/test/match-assistant", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -54,8 +60,12 @@ export function MatchAssistantForm({ accessToken }: { accessToken: string }) {
   }
 
   return (
-    <section aria-labelledby="stored-match-assistant-title">
+    <section className="match-assistant-panel" aria-labelledby="stored-match-assistant-title">
       <h2 id="stored-match-assistant-title">Frage zur gespeicherten Analyse</h2>
+      <p>
+        Der Assistent nutzt ausschliesslich den serverseitig gespeicherten Stellenkontext und
+        aktuell freigegebene Profilbelege.
+      </p>
       <form className="assistant-form" onSubmit={submit}>
         <label htmlFor="stored-match-assistant-question">Ihre Frage</label>
         <textarea

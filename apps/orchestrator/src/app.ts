@@ -704,13 +704,12 @@ export function createApp(dependencies: AppDependencies = {}): Express {
 
         response.status(error instanceof MatchAssistantError ? 502 : 500).json(
           createErrorResponse({
-            code:
-              error instanceof MatchAssistantError
-                ? "ASSISTANT_EVIDENCE_VIOLATION"
-                : "ASSISTANT_INTERNAL_ERROR",
-            message: "Die synthetische Match-Assistentenantwort konnte nicht verarbeitet werden.",
+            code: error instanceof MatchAssistantError ? error.code : "ASSISTANT_INTERNAL_ERROR",
+            message: "Die Match-Assistentenantwort konnte nicht sicher verarbeitet werden.",
             requestId: context.requestId,
-            retryable: !(error instanceof MatchAssistantError),
+            retryable:
+              !(error instanceof MatchAssistantError) ||
+              error.code === "ASSISTANT_PROVIDER_INVALID_RESPONSE",
           }),
         );
       }

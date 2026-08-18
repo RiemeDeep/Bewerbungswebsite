@@ -1,7 +1,7 @@
 # Phase 6/7: Match-End-to-End-Release
 
-Stand: 2026-08-14
-Status: angenommen; Pakete M1 bis M3 abgeschlossen
+Stand: 2026-08-18
+Status: angenommen; Pakete M1 bis M5 lokal abgeschlossen
 
 Die fachliche Source of Truth bleibt `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`. Dieses Dokument
 zerlegt die bestehenden Roadmap-Pakete 6 und 7 in kleine, einzeln pruefbare Einheiten. Produktive
@@ -168,6 +168,25 @@ Abnahme:
 - Ergebnis ist mobil, per Tastatur und mit Screenreader nachvollziehbar;
 - `noindex`, `no-store` und Zugriffstoken-Grenze bleiben erhalten.
 
+Abschluss 2026-08-18:
+
+- Die dynamische tokenisierte Ergebnisroute rendert jetzt Subjekt und Zeitmetadaten, Kurzfazit,
+  Belegkonfidenz, Beitragsfelder, priorisierte Anforderungsmatrix, freigegebene Evidence, Transferstatus,
+  Luecken, Gespraechsfragen, drei vorsichtige 90-Tage-Phasen und Warnungen.
+- Status, Prioritaet, Konfidenz und Lueckenschwere werden mit deutscher Textsprache dargestellt; Farbe ist
+  kein alleiniger Informationstraeger. Muss-Luecken und Transferpotenzial bleiben explizit sichtbar.
+- Evidence- und Requirement-Referenzen werden serverseitig aufgeloest. Interne IDs, Zugriffstoken und
+  technische Access-Metadaten werden nicht gerendert; HTML-artige Evidence-Auszüge bleiben escaped.
+- Der vorgezogene Match-Assistent wurde aus der Ergebnisroute entfernt und bleibt Paket M5 vorbehalten.
+  Die Route besteht ausschliesslich aus Server Components und uebergibt keinen Token an den Browsercode.
+- Der Loader behandelt Netzwerk-, JSON-, Schema-, Ablauf- und Nichtfundfehler einheitlich als nicht
+  verfuegbare Analyse. Der Proxy liefert bei deaktiviertem Preview-Flag unmittelbar ein privates `404`
+  mit `no-store`, `no-referrer` und `noindex,nofollow`.
+- Der vollstaendige `pnpm check` bestand mit 82 Contract-, 259 Orchestrator- und 100 Web-Tests sowie allen
+  Typechecks und Builds. Der gezielte Playwright-Privacy-Lauf bestand mit 2/2 Tests.
+- Es erfolgten keine VPS-Aktivierung, kein Provideraufruf, kein PostgreSQL-Zugriff und keine Freigabe des
+  Match-Assistenten.
+
 ## Paket M5: Match-Assistent Im Stellenkontext
 
 Ziel: Rueckfragen nutzen serverseitig geladenen JobContext, MatchAnalysis und freigegebene Evidence.
@@ -187,6 +206,34 @@ Abnahme:
   freigegebenen Retrieval-Set;
 - abgelaufene oder geloeschte Analysen liefern einheitlich Nichtfund;
 - keine Provider-Rohantwort erreicht den Client.
+
+Abschluss 2026-08-18:
+
+- `ENABLE_MATCH_ASSISTANT_STAGING=1` registriert den produktiven Service nur zusammen mit der geschuetzten
+  Match-Runtime, beiden read-only Datenbankverbindungen und einem realen Structured Provider. Unvollstaendige
+  oder synthetisch gemischte Konfigurationen stoppen den Start fail-closed.
+- Der Service laedt Analyse und JobContext ausschliesslich serverseitig ueber den Zugriffstoken. Der
+  Browser-BFF akzeptiert nur Zugriffstoken, Session-ID und Frage und reicht das interne Bearer-Secret nie an
+  den Client weiter.
+- Jede referenzierte Evidence wird unmittelbar vor der Antwort gegen veroeffentlichte Claims, Evidence,
+  Quellen und die aktuelle `job_analysis`-Freigabe revalidiert. Rueckgezogene Evidence kann dadurch nicht
+  aus einer alten gespeicherten Analyse weiterverwendet werden. Vor dem Providerlauf werden
+  Anforderungsstatus und Erklaerungen konservativ aus der aktuellen Allowlist neu aufgebaut; gespeicherte
+  Lueckentexte werden nicht an den Provider weitergereicht. Direkt vor der Auslieferung erfolgt eine zweite
+  Revalidierung gegen zwischenzeitliche Withdrawals.
+- Requirement- und Evidence-Referenzen werden gegen die gespeicherte Analyse geprueft. Labels und Relevanz
+  werden serverseitig kanonisiert; positive Antworten ohne Beleg, doppelte oder fachfremde Referenzen und
+  Provider-Rohmetadaten werden verworfen.
+- Structured OpenAI Provider und separater Support-Verifier behandeln Frage, Stellenkontext und Belegtexte
+  nur als Daten. Ein Verifier darf genau einen Repair mit strukturierten Issue-Codes ausloesen; ein zweiter
+  Fehlschlag endet kontrolliert.
+- Das interne Formular ist nur mit `ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING=1` auf der bereits
+  Basic-Auth-geschuetzten Tokenroute sichtbar. Der neue interne Web-BFF und der Orchestratorpfad bleiben
+  hinter getrennten Kill-Switches, Privacy-Headern und der gemeinsamen Match-Rate-/Kostenbegrenzung.
+- Der vollstaendige `pnpm check` bestand mit 87 Contract-, 272 Orchestrator- und 107 Web-Tests sowie allen
+  Typechecks und Builds. Der gezielte Playwright-Privacy-Lauf bestand mit 3/3 Tests; ein separater Lauf der
+  aktivierten Basic-Auth-Grenze bestand mit 1/1 Test.
+- Es erfolgten keine VPS-Aktivierung, kein realer Provideraufruf und kein PostgreSQL-Schreibzugriff.
 
 ## Paket M6: Datenschutz Und Lebenszyklus
 
@@ -230,7 +277,7 @@ Abnahme:
 
 ## Verbindliche Reihenfolge
 
-`M1 (abgeschlossen) -> M2 (abgeschlossen) -> M3 (abgeschlossen) -> M4 -> M5 -> M6 -> M7 -> Umsetzungspaket 8`
+`M1 (abgeschlossen) -> M2 (abgeschlossen) -> M3 (abgeschlossen) -> M4 (abgeschlossen) -> M5 (lokal abgeschlossen) -> M6 -> M7 -> Umsetzungspaket 8`
 
 Ein Paket darf keine oeffentliche Aktivierung vorziehen. VPS-PostgreSQL-Schreibzugriffe erfolgen nur nach
 dem dokumentierten Backup- und Restore-Test; M1 benoetigt keinen Remote-Schreibzugriff.

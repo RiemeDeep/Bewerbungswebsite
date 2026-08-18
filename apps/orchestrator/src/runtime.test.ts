@@ -139,7 +139,7 @@ describe("orchestrator runtime dependencies", () => {
         ENABLE_MATCH_RUNTIME_STAGING: "1",
         ORCHESTRATOR_REQUEST_SECRET: "strong-internal-match-runtime-secret",
       }),
-    ).toThrow("requires ENABLE_JOB_CONTEXT_PREVIEW or ENABLE_MATCH_ANALYSIS");
+    ).toThrow("requires a JobContext, analysis or assistant service");
     expect(() =>
       createRuntimeApp({
         ENABLE_MATCH_RUNTIME_STAGING: "1",
@@ -259,6 +259,56 @@ describe("orchestrator runtime dependencies", () => {
     expect(() =>
       createRuntimeApp({
         ENABLE_MATCH_ANALYSIS: "1",
+        ENABLE_MATCH_RUNTIME_STAGING: "1",
+        ORCHESTRATOR_REQUEST_SECRET: "strong-internal-match-runtime-secret",
+        MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+        PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+      }),
+    ).toThrow("requires LLM_API_KEY or OPENAI_API_KEY");
+  });
+
+  it("registers the real match assistant only behind its separate staging flag", async () => {
+    const runtime = createRuntimeApp({
+      ENABLE_MATCH_ASSISTANT_STAGING: "1",
+      ENABLE_MATCH_RUNTIME_STAGING: "1",
+      ORCHESTRATOR_REQUEST_SECRET: "strong-internal-match-runtime-secret",
+      MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+      PROFILE_DATABASE_URL: "postgresql://profile:secret@postgres:5432/bewerbungswebsite",
+      LLM_API_KEY: "sk-test",
+      LLM_ASSISTANT_MODEL: "test-model",
+    });
+
+    expect(runtime.dependencies.matchAnalysisStore).toBeDefined();
+    expect(runtime.dependencies.matchAssistant).toBeDefined();
+    expect(runtime.dependencies.matchRuntimeAccess).toBeDefined();
+    expect(runtime.dependencies.matchAnalyzer).toBeUndefined();
+    await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
+  it("rejects match assistant staging without runtime, databases or provider", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ASSISTANT_STAGING: "1",
+      }),
+    ).toThrow("requires ENABLE_MATCH_RUNTIME_STAGING");
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ASSISTANT_STAGING: "1",
+        ENABLE_MATCH_RUNTIME_STAGING: "1",
+        ORCHESTRATOR_REQUEST_SECRET: "strong-internal-match-runtime-secret",
+      }),
+    ).toThrow("requires MATCH_DATABASE_URL");
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ASSISTANT_STAGING: "1",
+        ENABLE_MATCH_RUNTIME_STAGING: "1",
+        ORCHESTRATOR_REQUEST_SECRET: "strong-internal-match-runtime-secret",
+        MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+      }),
+    ).toThrow("requires PROFILE_DATABASE_URL");
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_MATCH_ASSISTANT_STAGING: "1",
         ENABLE_MATCH_RUNTIME_STAGING: "1",
         ORCHESTRATOR_REQUEST_SECRET: "strong-internal-match-runtime-secret",
         MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",

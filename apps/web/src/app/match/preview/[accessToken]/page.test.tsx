@@ -20,6 +20,153 @@ import StoredMatchAnalysisPage from "./page";
 
 const accessToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123";
 const previousFlag = process.env.ENABLE_MATCH_PREVIEW_TEST;
+const previousAssistantFlag = process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING;
+const firstEvidenceId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const secondEvidenceId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+
+const storedAnalysis = {
+  analysisId: "99999999-9999-4999-8999-999999999999",
+  jobContext: {
+    company: {
+      name: "Beispiel GmbH",
+      description: "Technischer Dienstleister.",
+      industrySignals: ["Technische Services"],
+      sizeSignals: [],
+      valuesSignals: [],
+    },
+    job: {
+      title: "Technische Projektleitung",
+      location: "Saarland",
+      workModel: "Hybrid",
+      employmentType: "Vollzeit",
+      responsibilities: ["Technische Anforderungen strukturieren"],
+      mustRequirements: ["Technische Projektarbeit", "Spezialzertifizierung"],
+      shouldRequirements: ["Teamkoordination"],
+      benefits: [],
+    },
+    ambiguities: [],
+    sourceSections: [],
+    sources: [
+      {
+        url: "https://example.com/jobs/technische-projektleitung",
+        retrievedAt: "2026-08-18T10:00:00.000Z",
+        title: "Stellenanzeige",
+      },
+    ],
+  },
+  matchAnalysis: {
+    schemaVersion: "1.0",
+    subject: {
+      companyName: "Beispiel GmbH",
+      jobTitle: "Technische Projektleitung",
+      sourceUrl: "https://example.com/jobs/technische-projektleitung",
+      retrievedAt: "2026-08-18T10:00:00.000Z",
+    },
+    summary: {
+      headline: "Technische Basis mit klaren offenen Punkten",
+      rationale:
+        "Die freigegebenen Belege zeigen technische Projektarbeit und übertragbare Koordinationserfahrung.",
+      confidence: "medium",
+    },
+    contributionAreas: [
+      {
+        title: "Technische Anforderungen strukturieren",
+        description: "Direkte Erfahrung kann für die Anforderung anschlussfähig sein.",
+        requirementIds: ["req-technische-projektarbeit"],
+        evidenceIds: [firstEvidenceId],
+        confidence: "high",
+      },
+      {
+        title: "Schnittstellen koordinieren",
+        description: "Die Erfahrung ist in den Zielkontext übertragbar.",
+        requirementIds: ["req-teamkoordination"],
+        evidenceIds: [secondEvidenceId],
+        confidence: "medium",
+      },
+    ],
+    requirements: [
+      {
+        requirementId: "req-technische-projektarbeit",
+        label: "Technische Projektarbeit",
+        importance: "must",
+        status: "supported",
+        explanation: "Die technische Projektarbeit ist direkt belegt.",
+        evidenceIds: [firstEvidenceId],
+      },
+      {
+        requirementId: "req-teamkoordination",
+        label: "Teamkoordination",
+        importance: "should",
+        status: "transferable",
+        explanation: "Die belegte Koordination stammt aus einem anderen Kontext.",
+        evidenceIds: [secondEvidenceId],
+      },
+      {
+        requirementId: "req-spezialzertifizierung",
+        label: "Spezialzertifizierung",
+        importance: "must",
+        status: "not_supported",
+        explanation: "Dafür liegt kein freigegebener Beleg vor.",
+        evidenceIds: [],
+      },
+      {
+        requirementId: "req-branchentiefe",
+        label: "Branchenspezifische Tiefe",
+        importance: "unknown",
+        status: "unclear",
+        explanation: "Die Stellenquelle bleibt an dieser Stelle unklar.",
+        evidenceIds: [],
+      },
+    ],
+    gaps: [
+      {
+        label: "Formale Spezialzertifizierung",
+        explanation: "Eine passende Zertifizierung ist nicht belegt.",
+        severity: "material",
+        question: "Ist die Zertifizierung zwingende Einstellungsvoraussetzung?",
+      },
+    ],
+    first90Days: [
+      {
+        phase: "days_1_30",
+        hypothesis: "Stakeholder und technische Anforderungen erfassen.",
+        evidenceIds: [firstEvidenceId],
+        assumptions: ["Zugang zu den relevanten Ansprechpartnern ist möglich."],
+      },
+      {
+        phase: "days_31_60",
+        hypothesis: "Erste priorisierte Abläufe strukturieren.",
+        evidenceIds: [secondEvidenceId],
+        assumptions: ["Verbesserungsfelder werden gemeinsam priorisiert."],
+      },
+      {
+        phase: "days_61_90",
+        hypothesis: "Offene Formalanforderungen gemeinsam bewerten.",
+        evidenceIds: [],
+        assumptions: [],
+      },
+    ],
+    interviewQuestions: ["Welche Formalanforderungen sind zum Start zwingend?"],
+    evidence: [
+      {
+        evidenceId: firstEvidenceId,
+        publicLabel: "Technische Projektarbeit",
+        publicExcerpt: "Freigegebener Auszug zur strukturierten technischen Bearbeitung.",
+        sourceType: "Arbeitszeugnis",
+      },
+      {
+        evidenceId: secondEvidenceId,
+        publicLabel: "Team- und Schnittstellenkoordination",
+        publicExcerpt: "<script>Dieser Text wird nicht als HTML ausgeführt.</script>",
+        sourceType: "Projektbeleg",
+      },
+    ],
+    warnings: ["Die Branchentiefe konnte aus der Stellenquelle nicht eindeutig abgeleitet werden."],
+  },
+  createdAt: "2026-08-18T10:05:00.000Z",
+  expiresAt: "2026-08-19T10:05:00.000Z",
+  robotsDirective: "noindex,nofollow",
+};
 
 function restoreFlag() {
   if (previousFlag === undefined) {
@@ -27,6 +174,14 @@ function restoreFlag() {
     return;
   }
   process.env.ENABLE_MATCH_PREVIEW_TEST = previousFlag;
+}
+
+function restoreAssistantFlag() {
+  if (previousAssistantFlag === undefined) {
+    delete process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING;
+    return;
+  }
+  process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING = previousAssistantFlag;
 }
 
 beforeEach(() => {
@@ -40,6 +195,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   restoreFlag();
+  restoreAssistantFlag();
 });
 
 describe("StoredMatchAnalysisPage", () => {
@@ -62,40 +218,58 @@ describe("StoredMatchAnalysisPage", () => {
     expect(loadStoredMatchAnalysisMock).toHaveBeenCalledWith(accessToken);
   });
 
-  it("renders the server-loaded analysis and passes only the token to the assistant", async () => {
+  it("renders the complete server-loaded analysis without exposing token or assistant", async () => {
     process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
-    loadStoredMatchAnalysisMock.mockResolvedValue({
-      matchAnalysis: {
-        summary: {
-          headline: "Synthetische gespeicherte Analyse",
-          rationale: "Ausschliesslich synthetische Testdaten.",
-        },
-        requirements: [
-          {
-            requirementId: "req-technische-anforderungen-11111111",
-            label: "Technische Anforderungen klaeren",
-            status: "not_supported",
-            explanation: "Kein freigegebener Beleg.",
-          },
-        ],
-        gaps: [
-          {
-            label: "Technische Anforderungen klaeren",
-            question: "Wie kritisch ist diese Anforderung?",
-          },
-        ],
-      },
-      expiresAt: "2026-07-31T12:00:00.000Z",
-    });
+    delete process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING;
+    loadStoredMatchAnalysisMock.mockResolvedValue(storedAnalysis);
+
+    const { container } = render(
+      await StoredMatchAnalysisPage({ params: Promise.resolve({ accessToken }) }),
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Technische Basis mit klaren offenen Punkten",
+      }),
+    ).toBeTruthy();
+    expect(screen.getAllByText("Mittlere Belegkonfidenz").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Technische Anforderungen strukturieren" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Direkt belegt")).toBeTruthy();
+    expect(screen.getByText("Transferpotenzial")).toBeTruthy();
+    expect(screen.getAllByText("Muss-Anforderung", { selector: "span" })).toHaveLength(2);
+    expect(screen.getByText("Wesentliche Lücke")).toBeTruthy();
+    expect(screen.getByText(/zwingende Einstellungsvoraussetzung/u)).toBeTruthy();
+    expect(screen.getByText("Tag 1–30")).toBeTruthy();
+    expect(screen.getByText("Tag 31–60")).toBeTruthy();
+    expect(screen.getByText("Tag 61–90")).toBeTruthy();
+    expect(screen.getByText(/Zugang zu den relevanten Ansprechpartnern/u)).toBeTruthy();
+    expect(screen.getByText(/Welche Formalanforderungen sind zum Start zwingend/u)).toBeTruthy();
+    expect(screen.getByText(/Branchentiefe konnte/u)).toBeTruthy();
+    expect(screen.getAllByText("Technische Projektarbeit").length).toBeGreaterThan(1);
+    expect(
+      screen.getAllByText(/Dieser Text wird nicht als HTML ausgeführt/u).length,
+    ).toBeGreaterThan(0);
+    expect(container.querySelector("script")).toBeNull();
+    expect(container.querySelectorAll("time")).toHaveLength(3);
+    expect(container.textContent).not.toContain(accessToken);
+    expect(container.textContent).not.toContain(firstEvidenceId);
+    expect(container.textContent).not.toContain("req-technische-projektarbeit");
+    expect(screen.queryByLabelText("Ihre Frage")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Match-Assistent/u })).toBeNull();
+    expect(loadStoredMatchAnalysisMock).toHaveBeenCalledWith(accessToken);
+  });
+
+  it("renders the match assistant only for protected internal staging", async () => {
+    process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
+    process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING = "1";
+    loadStoredMatchAnalysisMock.mockResolvedValue(storedAnalysis);
 
     render(await StoredMatchAnalysisPage({ params: Promise.resolve({ accessToken }) }));
 
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Synthetische gespeicherte Analyse" }),
-    ).toBeTruthy();
-    expect(screen.getAllByText(/Technische Anforderungen klaeren/u)).toHaveLength(2);
-    expect(screen.getByText(/Wie kritisch ist diese Anforderung/u)).toBeTruthy();
     expect(screen.getByLabelText("Ihre Frage")).toBeTruthy();
-    expect(loadStoredMatchAnalysisMock).toHaveBeenCalledWith(accessToken);
+    expect(screen.getByText(/serverseitig gespeicherten Stellenkontext/u)).toBeTruthy();
   });
 });

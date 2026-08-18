@@ -52,6 +52,31 @@ describe("MatchAssistantForm", () => {
     expect(JSON.parse(String(request?.[1]?.body))).not.toHaveProperty("jobContext");
   });
 
+  it("can use the protected internal staging BFF", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          answer: "Nicht verfuegbar.",
+          classification: "not_available",
+          confidence: "insufficient",
+          referencedRequirements: [],
+          evidence: [],
+          openQuestions: [],
+          safetyFlags: [],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    render(
+      <MatchAssistantForm accessToken={accessToken} endpoint="/api/internal/match-assistant" />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Frage stellen" }));
+
+    await waitFor(() => expect(screen.getByText("Nicht verfuegbar.")).toBeTruthy());
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/internal/match-assistant");
+  });
+
   it("shows a uniform not-found state for missing or expired analyses", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 404 }));
 

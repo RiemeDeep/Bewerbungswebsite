@@ -37,19 +37,53 @@ export const matchAssistantResponseSchema = z
   })
   .strict()
   .superRefine((response, context) => {
-    if (positiveClassifications.has(response.classification) && response.evidence.length === 0) {
+    if (
+      positiveClassifications.has(response.classification) &&
+      (response.evidence.length === 0 || response.referencedRequirements.length === 0)
+    ) {
       context.addIssue({
         code: "custom",
-        path: ["evidence"],
-        message: "Positive match assistant responses require evidence.",
+        path: ["referencedRequirements"],
+        message: "Positive match assistant responses require requirements and evidence.",
       });
     }
 
-    if (response.classification === "not_available" && response.evidence.length > 0) {
+    if (
+      positiveClassifications.has(response.classification) &&
+      response.confidence === "insufficient"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["confidence"],
+        message: "Positive match assistant responses cannot have insufficient confidence.",
+      });
+    }
+
+    if (
+      response.classification === "not_available" &&
+      (response.evidence.length > 0 || response.confidence !== "insufficient")
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["confidence"],
+        message: "not_available responses require insufficient confidence and no evidence.",
+      });
+    }
+
+    if (new Set(response.referencedRequirements).size !== response.referencedRequirements.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["referencedRequirements"],
+        message: "Duplicate requirement references are not allowed.",
+      });
+    }
+
+    const evidenceIds = response.evidence.map((evidence) => evidence.evidenceId);
+    if (new Set(evidenceIds).size !== evidenceIds.length) {
       context.addIssue({
         code: "custom",
         path: ["evidence"],
-        message: "not_available responses must not reference evidence.",
+        message: "Duplicate evidence references are not allowed.",
       });
     }
   });
@@ -62,6 +96,9 @@ export function validateMatchAssistantResponseReferences(
   const matchAnalysis = matchAnalysisSchema.parse(matchAnalysisInput);
   const requirementIds = new Set(
     matchAnalysis.requirements.map((requirement) => requirement.requirementId),
+  );
+  const requirementsById = new Map(
+    matchAnalysis.requirements.map((requirement) => [requirement.requirementId, requirement]),
   );
   const evidenceById = new Map(
     matchAnalysis.evidence.map((evidence) => [evidence.evidenceId, evidence]),
@@ -82,7 +119,22 @@ export function validateMatchAssistantResponseReferences(
     if (referencedEvidenceIds.has(evidence.evidenceId)) {
       throw new Error(`Duplicate evidenceId: ${evidence.evidenceId}`);
     }
+    const isRelatedToReferencedRequirement = response.referencedRequirements.some((requirementId) =>
+      requirementsById.get(requirementId)?.evidenceIds.includes(evidence.evidenceId),
+    );
+    if (!isRelatedToReferencedRequirement) {
+      throw new Error(
+        `Evidence is not related to a referenced requirement: ${evidence.evidenceId}`,
+      );
+    }
     referencedEvidenceIds.add(evidence.evidenceId);
+  }
+
+  for (const requirementId of response.referencedRequirements) {
+    const requirement = requirementsById.get(requirementId)!;
+    if (!requirement.evidenceIds.some((evidenceId) => referencedEvidenceIds.has(evidenceId))) {
+      throw new Error(`Referenced requirement has no supporting evidence: ${requirementId}`);
+    }
   }
 
   return response;
