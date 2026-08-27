@@ -5,7 +5,8 @@ import { z } from "zod";
 
 import {
   accessibleMatchAnalysisSchema,
-  jobContextSchema,
+  createPersistedJobContext,
+  persistedJobContextSchema,
   matchAnalysisAccessMetadataSchema,
   matchAnalysisSchema,
   type AccessibleMatchAnalysis,
@@ -37,6 +38,7 @@ export interface MatchAnalysisStore {
   expireDue(now: string): Promise<number>;
   hardDeleteExpired(before: string): Promise<number>;
   deleteByAnalysisId(analysisId: string, deletedAt: string): Promise<boolean>;
+  hardDeleteByAccessToken(accessToken: string): Promise<boolean>;
 }
 
 type MatchAnalysisStoreOptions = {
@@ -111,6 +113,11 @@ const hardDeleteExpiredSql = `
     and expires_at <= $1::timestamptz
 `;
 
+const hardDeleteByAccessTokenSql = `
+  delete from public.match_analyses
+  where access_token_hash = $1
+`;
+
 export function hashMatchAnalysisAccessToken(accessToken: string): string {
   const token = z
     .string()
@@ -127,7 +134,7 @@ export function createPostgresMatchAnalysisStore(
 
   return {
     async create(input) {
-      const jobContext = jobContextSchema.parse(input.jobContext);
+      const jobContext = createPersistedJobContext(input.jobContext);
       const matchAnalysis = matchAnalysisSchema.parse(input.matchAnalysis);
       if (
         options.defaultTtlHours !== undefined &&
@@ -174,7 +181,7 @@ export function createPostgresMatchAnalysisStore(
       const row = accessibleRowSchema.parse(rawRow);
       return accessibleMatchAnalysisSchema.parse({
         analysisId: row.analysis_id,
-        jobContext: jobContextSchema.parse(row.job_context),
+        jobContext: persistedJobContextSchema.parse(row.job_context),
         matchAnalysis: matchAnalysisSchema.parse(row.match_analysis),
         createdAt: row.created_at,
         expiresAt: row.expires_at,
@@ -201,6 +208,12 @@ export function createPostgresMatchAnalysisStore(
         parsedAnalysisId,
         parsedDeletedAt,
       ]);
+      return (result.rowCount ?? 0) > 0;
+    },
+
+    async hardDeleteByAccessToken(accessToken) {
+      const accessTokenHash = hashMatchAnalysisAccessToken(accessToken);
+      const result = await client.query(hardDeleteByAccessTokenSql, [accessTokenHash]);
       return (result.rowCount ?? 0) > 0;
     },
   };

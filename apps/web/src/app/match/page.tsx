@@ -8,6 +8,22 @@ export const metadata: Metadata = {
     "Öffentliche Stelleninformationen prüfen und vor einer beleggestützten Analyse kontrollieren.",
 };
 
-export default function MatchPage() {
-  return <MatchContextForm />;
+type MatchPageProps = {
+  searchParams: Promise<{ analysisDeleted?: string }>;
+};
+
+export default async function MatchPage({ searchParams }: MatchPageProps) {
+  const { analysisDeleted } = await searchParams;
+
+  return (
+    <>
+      {analysisDeleted === "1" ? (
+        <p className="match-deletion-confirmation" role="status">
+          Die Analyse wurde aus der aktiven Datenbank gelöscht und ist über den bisherigen Link
+          nicht mehr erreichbar.
+        </p>
+      ) : null}
+      <MatchContextForm />
+    </>
+  );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { loadStoredMatchAnalysis } from "./stored-match-analysis";
+import { deleteStoredMatchAnalysis, loadStoredMatchAnalysis } from "./stored-match-analysis";
 
 const accessToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO_123";
 const storedAnalysis = {
@@ -123,5 +123,42 @@ describe("loadStoredMatchAnalysis", () => {
         fetcher: async () => new Response("not-json", { status: 200 }),
       }),
     ).resolves.toBeNull();
+  });
+});
+
+describe("deleteStoredMatchAnalysis", () => {
+  it("deletes by token without caching and accepts the idempotent response", async () => {
+    const fetcher = vi.fn(async () => new Response(null, { status: 204 }));
+
+    await expect(
+      deleteStoredMatchAnalysis(accessToken, {
+        baseUrl: "http://localhost:4000",
+        fetcher,
+      }),
+    ).resolves.toBe(true);
+    expect(fetcher).toHaveBeenCalledWith(
+      `http://localhost:4000/api/v1/match/analyses/${accessToken}`,
+      { method: "DELETE", cache: "no-store" },
+    );
+  });
+
+  it("fails closed for malformed tokens, unavailable configuration and network errors", async () => {
+    const fetcher = vi.fn(async () => new Response(null, { status: 204 }));
+
+    await expect(
+      deleteStoredMatchAnalysis("short", { baseUrl: "http://localhost:4000", fetcher }),
+    ).resolves.toBe(false);
+    expect(fetcher).not.toHaveBeenCalled();
+    await expect(deleteStoredMatchAnalysis(accessToken, { baseUrl: "", fetcher })).resolves.toBe(
+      false,
+    );
+    await expect(
+      deleteStoredMatchAnalysis(accessToken, {
+        baseUrl: "http://localhost:4000",
+        fetcher: async () => {
+          throw new Error("connection failed");
+        },
+      }),
+    ).resolves.toBe(false);
   });
 });

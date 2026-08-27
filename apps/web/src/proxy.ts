@@ -26,15 +26,24 @@ export function proxy(request?: NextRequest) {
   const isInternalMatchAssistant =
     request?.nextUrl.pathname.startsWith("/api/internal/match-assistant") ||
     (Boolean(isMatchPreview) && process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING === "1");
+  const isSyntheticMatchTest =
+    request?.nextUrl.pathname.startsWith("/test/match") ||
+    request?.nextUrl.pathname.startsWith("/api/test/job-context-preview") ||
+    request?.nextUrl.pathname.startsWith("/api/test/match-analysis") ||
+    request?.nextUrl.pathname.startsWith("/api/test/match-assistant");
   const isProtectedInternalProfileRoute =
     Boolean(isInternalProfilePreview) ||
     Boolean(isInternalProfileAssistant) ||
-    Boolean(isInternalMatchAssistant);
-  const featureEnabled = isInternalMatchAssistant
-    ? process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING === "1"
-    : isInternalProfileAssistant
-      ? process.env.ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING === "1"
-      : process.env.ENABLE_INTERNAL_PROFILE_PREVIEW === "1";
+    Boolean(isInternalMatchAssistant) ||
+    Boolean(isSyntheticMatchTest);
+  const featureEnabled = isSyntheticMatchTest
+    ? process.env.ENABLE_MATCH_PREVIEW_TEST === "1" &&
+      process.env.NEXT_PUBLIC_ENABLE_MATCH_PREVIEW_TEST === "1"
+    : isInternalMatchAssistant
+      ? process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING === "1"
+      : isInternalProfileAssistant
+        ? process.env.ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING === "1"
+        : process.env.ENABLE_INTERNAL_PROFILE_PREVIEW === "1";
 
   if (isMatchPreview && process.env.ENABLE_MATCH_PREVIEW_TEST !== "1") {
     return withPrivatePreviewHeaders(new NextResponse("Not Found", { status: 404 }));
@@ -60,7 +69,7 @@ export function proxy(request?: NextRequest) {
       const response = new NextResponse("Anmeldung erforderlich.", { status: 401 });
       response.headers.set(
         "WWW-Authenticate",
-        `Basic realm="${isInternalMatchAssistant ? "Interner Match-Assistent" : isInternalProfileAssistant ? "Interner Profilassistent" : "Interne Profilvorschau"}", charset="UTF-8"`,
+        `Basic realm="${isSyntheticMatchTest ? "Synthetischer Match-Test" : isInternalMatchAssistant ? "Interner Match-Assistent" : isInternalProfileAssistant ? "Interner Profilassistent" : "Interne Profilvorschau"}", charset="UTF-8"`,
       );
       return withPrivatePreviewHeaders(response);
     }
@@ -76,5 +85,9 @@ export const config = {
     "/internal/profilassistent/:path*",
     "/api/internal/profile-assistant/:path*",
     "/api/internal/match-assistant/:path*",
+    "/test/match/:path*",
+    "/api/test/job-context-preview/:path*",
+    "/api/test/match-analysis/:path*",
+    "/api/test/match-assistant/:path*",
   ],
 };

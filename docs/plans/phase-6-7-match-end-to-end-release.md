@@ -1,7 +1,7 @@
 # Phase 6/7: Match-End-to-End-Release
 
-Stand: 2026-08-18
-Status: angenommen; Pakete M1 bis M5 lokal abgeschlossen
+Stand: 2026-08-27
+Status: Pakete M1 bis M6 abgeschlossen; M7 internes Staging aktiv, oeffentliche Gates offen
 
 Die fachliche Source of Truth bleibt `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md`. Dieses Dokument
 zerlegt die bestehenden Roadmap-Pakete 6 und 7 in kleine, einzeln pruefbare Einheiten. Produktive
@@ -255,6 +255,21 @@ Abnahme:
 - Standardlogs enthalten keine Stellenbeschreibung oder Chatfrage;
 - Cleanup entfernt abgelaufene Daten nach dokumentierter Frist.
 
+Lokaler Stand vom 2026-08-27:
+
+- der persistierte JobContext enthaelt keine Rohtexte oder Quellenauszuege; Contract, Store und
+  vorbereitete Self-Hosted-Migration sichern die Grenze ab;
+- die Ergebnisroute erklaert Ablauf, regulaeren Cleanup, Backup-Restfrist und bietet eine sofortige
+  tokengebundene Loeschaktion;
+- gespeicherte Ergebnisse werden vor Auslieferung gegen aktuell freigegebene Evidence revalidiert und
+  bei Withdrawal fail-closed physisch geloescht;
+- Cleanup-, Backup-, Loesch- und Withdrawal-Zusammenspiel ist in
+  `docs/runbooks/match-analysis-retention-and-deletion.md` dokumentiert;
+- gezielte Contract-, Orchestrator- und Web-Tests, Typechecks, der SQL-Negativtest und der opt-in
+  PostgreSQL-Runtime-Durchstich sind lokal erfolgreich;
+- Migration `040` wurde nach frischem Backup und isoliertem Restore-Test auf dem VPS angewendet; eine
+  oeffentliche Runtime wurde nicht aktiviert.
+
 ## Paket M7: Staging- Und Release-Gate
 
 Ziel: Der vollstaendige Flow wird intern realistisch abgenommen, ohne vorzeitig oeffentlich aktiviert zu
@@ -275,9 +290,89 @@ Abnahme:
 - Backup, Restore-Test und Rollback sind aktuell nachgewiesen;
 - erst danach darf Paket 8 das oeffentliche Go-live bewerten.
 
+Lokaler Zwischenstand M7.1 vom 2026-08-27:
+
+- `pnpm match:staging:preflight` prueft vorbereitete Web- und Orchestrator-Env-Dateien fail-closed und
+  gibt keine konfigurierten Werte aus;
+- das Gate verlangt aktivierte interne Match-Pfade, Basic Auth, ein gemeinsames mindestens 32-stelliges
+  Bearer-Secret, beide erforderlichen Datenbank-URLs und ausgeschaltete synthetische Modi;
+- Providerwahl, deaktivierter Firecrawl-Cache, TTL, Request-Limits, Parallelitaet und gestaffelte
+  Timeout-Budgets werden gegen konservative Policy-Maxima geprueft;
+- Backup/Restore, Migration `040` sowie Providerregion, AVV, Caching und Aufbewahrung muessen explizit
+  attestiert sein;
+- Ablauf und Issue-Codes sind in `docs/runbooks/match-staging-release-gate.md` dokumentiert;
+- M7 bleibt offen, bis Browser-, Sicherheitskorpus-, Accessibility-/Mobile-, Latenz-/Kosten-/Logging-
+  und Staging-Rollback-Gates ebenfalls nachgewiesen sind.
+
+Lokaler Zwischenstand M7.2 vom 2026-08-27:
+
+- `tests/fixtures/m7-match-security-corpus.v1.json` versioniert URL-, DNS-Rebinding-, Injection- und
+  XSS-Faelle mit stabilen eindeutigen IDs;
+- URL-Validierung blockiert nun scheme-fremde Ports, IPv4-kompatible beziehungsweise eingebettete
+  private IPv6-Adressen und nicht global routbare IPv6-Netze; DNS-Fehler enden als kontrollierte
+  Sicherheitsablehnung;
+- die Abschlussquelle wird nach dem Crawl erneut aufgeloest, Firecrawl-Antworten ohne explizite finale
+  URL werden verworfen;
+- Providerquellen werden gegen die vertrauenswuerdigen Eingabedokumente kanonisiert und erfundene
+  Quellenauszuege fail-closed abgelehnt;
+- Korpus-XSS-Payloads bleiben in der Match-Ergebnisansicht inerte React-Textknoten;
+- Prompt-Injection-Tests pruefen die Daten-/Instruktionsgrenze und den strukturierten Vertrag lokal,
+  ersetzen aber keinen adversarial Test mit dem freigegebenen echten Staging-Modell;
+- offen bleibt der externe Nachweis, dass Firecrawl private Ziele bereits vor jedem Redirect-Hop
+  blockiert; eine reine Abschlusspruefung kann einen beim Provider schon erfolgten Abruf nicht
+  verhindern.
+
+Lokaler Zwischenstand M7.3 vom 2026-08-27:
+
+- der opt-in Playwright-Lauf baut und startet die Webanwendung im Produktionsmodus und prueft den
+  synthetischen Match-Fluss hinter beiden Testflags und Basic Auth;
+- ungueltige Zugangsdaten werden auf der Testseite und allen drei Test-BFFs mit `401` abgewiesen;
+- URL- und reiner Textpfad durchlaufen Vorschau, Korrektur, Analyse und Assistent ohne Provider- oder
+  Datenbankzugriff;
+- private Cache-, Referrer- und Indexing-Header sowie Tastaturbedienung, `axe` und 375 px sind im
+  Browser nachgewiesen;
+- der separate opt-in Runtime-Test weist Speicherung, Abruf, sofortige Loeschung, automatischen Ablauf
+  und physische Entfernung nach 30 Tagen gegen PostgreSQL auf `127.0.0.1:54322` nach;
+- ein separater opt-in Playwright-Lauf verbindet Browser, Web-Server, Orchestrator und lokale
+  PostgreSQL-Persistenz; die Ergebnisansicht laedt den Datensatz serverseitig, die sichtbare
+  Loeschaktion entfernt ihn physisch und der alte Link liefert danach `404`;
+- derselbe persistierte Nachweis auf Staging bleibt offen; echte Provider wurden lokal nicht
+  aufgerufen.
+
+Lokaler Zwischenstand M7.4 vom 2026-08-27:
+
+- `pnpm match:runtime:canary` prueft die echten internen Match-Routen mit deterministischen Diensten
+  ohne Netzwerk-, Datenbank- oder Providerzugriff;
+- die drei Operationen Vorschau, Analyse und Assistent muessen erfolgreiche inhaltsfreie
+  `match_runtime_event`-Logs mit gueltiger Request-ID und Dauer erzeugen;
+- Erfolg, ungueltige Anfrage, fehlende Berechtigung, Rate-Limit und Upstream-Fehler sind abgedeckt;
+- Stellenrohtext, Chatfrage, Zugriffstoken, Bearer-Secret, Datenbankmarker und Providerfehler duerfen
+  weder im Event noch im tatsaechlichen Console-Serializer erscheinen;
+- lokale P95-Regressionsgrenzen und konservative Service-Aufrufbudgets dienen als Kostenproxy;
+  echte Providerlatenz, Tokenverbrauch und Geldkosten bleiben als Staging-Canary offen.
+
+Interner VPS-Staging-Nachweis vom 2026-08-27:
+
+- Backup, isolierter Restore desselben Dumps, Migration `040`, Constraint, Ledger und Runtime-Rollen-
+  beziehungsweise RLS-Pruefung bestanden;
+- Orchestrator- und Web-Images wurden versioniert released und bleiben ausschliesslich intern
+  beziehungsweise an `127.0.0.1:3100` gebunden;
+- das aktive Preflight bestand mit null Issues; alle geschuetzten Pfade lieferten ohne Zugangsdaten
+  `401`;
+- der echte Durchstich bestand fuer Firecrawl, OpenAI-Extraktion, Analyse, Speicherung, geschuetzte
+  Web-Ergebnisroute, Assistent, physische Loeschung und anschliessendes `404`;
+- echte Analyselatenzen lagen nach Structured-Output-Warmup zwischen rund 51 und 119 Sekunden und damit
+  innerhalb der aktiven 180-/190-Sekunden-Budgets; Token- und Geldkosten bleiben separat zu erfassen;
+- Datenbank und Logs blieben nach dem Canary inhaltsfrei beziehungsweise leer;
+- Kill-Switch, Wiederanlauf, Rollback auf beide vorherigen Images, Post-Rollback-Healthcheck und
+  Roll-forward bestanden;
+- Firecrawl Self-Service ist ausdruecklich nur fuer internes Staging mit oeffentlichen Test-URLs
+  akzeptiert. Der oeffentliche URL-Abruf bleibt bis zu einem belastbaren Redirect-/Private-Netz-Nachweis
+  gesperrt.
+
 ## Verbindliche Reihenfolge
 
-`M1 (abgeschlossen) -> M2 (abgeschlossen) -> M3 (abgeschlossen) -> M4 (abgeschlossen) -> M5 (lokal abgeschlossen) -> M6 -> M7 -> Umsetzungspaket 8`
+`M1 (abgeschlossen) -> M2 (abgeschlossen) -> M3 (abgeschlossen) -> M4 (abgeschlossen) -> M5 (abgeschlossen) -> M6 (abgeschlossen) -> M7 (internes Staging aktiv, oeffentliche Gates offen) -> Umsetzungspaket 8`
 
 Ein Paket darf keine oeffentliche Aktivierung vorziehen. VPS-PostgreSQL-Schreibzugriffe erfolgen nur nach
 dem dokumentierten Backup- und Restore-Test; M1 benoetigt keinen Remote-Schreibzugriff.

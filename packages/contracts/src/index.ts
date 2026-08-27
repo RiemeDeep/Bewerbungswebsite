@@ -16,11 +16,13 @@ export {
   crawlDocumentSchema,
   crawlResultSchema,
   createJobContextExpiresAt,
+  createPersistedJobContext,
   isJobContextStorageRecordExpired,
   jobContextInputSchema,
   jobContextRetentionPolicySchema,
   jobContextSchema,
   jobContextStorageRecordSchema,
+  persistedJobContextSchema,
 } from "./job-context.js";
 export type {
   CrawlDocument,
@@ -29,6 +31,7 @@ export type {
   JobContextInput,
   JobContextRetentionPolicy,
   JobContextStorageRecord,
+  PersistedJobContext,
 } from "./job-context.js";
 export { matchAnalysisSchema } from "./match-analysis.js";
 export type { MatchAnalysis } from "./match-analysis.js";

@@ -32,7 +32,13 @@ const jobContext: JobContext = {
     benefits: [],
   },
   ambiguities: [],
-  sourceSections: [],
+  sourceSections: [
+    {
+      label: "Aufgaben",
+      excerpt: "Dieser Quellenauszug darf nicht persistiert werden.",
+      sourceUrl: "https://example.com/jobs",
+    },
+  ],
   sources: [
     {
       url: "https://example.com/jobs",
@@ -120,6 +126,8 @@ describe("createPostgresMatchAnalysisStore", () => {
     expect(calls[0]?.text).toContain("insert into public.match_analyses");
     expect(calls[0]?.values[1]).toBe(accessTokenHash);
     expect(JSON.stringify(calls[0]?.values)).not.toContain(accessToken);
+    expect(JSON.parse(String(calls[0]?.values[2]))).toMatchObject({ sourceSections: [] });
+    expect(String(calls[0]?.values[2])).not.toContain("Dieser Quellenauszug");
   });
 
   it("uses the configured default TTL unless a create call overrides it", async () => {
@@ -159,7 +167,7 @@ describe("createPostgresMatchAnalysisStore", () => {
             rows: [
               {
                 analysis_id: accessMetadata.analysisId,
-                job_context: jobContext,
+                job_context: { ...jobContext, sourceSections: [] },
                 match_analysis: matchAnalysis,
                 created_at: new Date(accessMetadata.createdAt),
                 expires_at: new Date(accessMetadata.expiresAt),
@@ -174,7 +182,7 @@ describe("createPostgresMatchAnalysisStore", () => {
 
     await expect(store.getByAccessToken(accessToken)).resolves.toMatchObject({
       analysisId: accessMetadata.analysisId,
-      jobContext,
+      jobContext: { ...jobContext, sourceSections: [] },
       matchAnalysis,
       robotsDirective: "noindex,nofollow",
     });
@@ -193,7 +201,7 @@ describe("createPostgresMatchAnalysisStore", () => {
     await expect(store.getByAccessToken(accessToken)).resolves.toBeNull();
   });
 
-  it("expires due records, hard-deletes old expired records and soft-deletes individual analyses", async () => {
+  it("expires due records and supports scheduled and token-bound deletion", async () => {
     const calls: Array<{ text: string; values: unknown[] }> = [];
     const store = createPostgresMatchAnalysisStore({
       async query(text, values) {
@@ -212,9 +220,12 @@ describe("createPostgresMatchAnalysisStore", () => {
     await expect(
       store.deleteByAnalysisId(accessMetadata.analysisId, "2026-07-29T12:00:00.000Z"),
     ).resolves.toBe(true);
+    await expect(store.hardDeleteByAccessToken(accessToken)).resolves.toBe(true);
     expect(calls[0]?.text).toContain("expires_at <= $1::timestamptz");
     expect(calls[1]?.text).toContain("status in ('expired', 'deleted')");
     expect(calls[2]?.text).toContain("status = 'deleted'");
+    expect(calls[3]?.text).toContain("where access_token_hash = $1");
+    expect(calls[3]?.values).toEqual([accessTokenHash]);
   });
 });
 
@@ -242,12 +253,10 @@ describe.skipIf(!process.env.LOCAL_SUPABASE_DATABASE_URL)(
         const access = await store.create({ jobContext, matchAnalysis, ttlHours: 72 });
         await expect(store.getByAccessToken(access.accessToken)).resolves.toMatchObject({
           analysisId: access.analysisId,
-          jobContext,
+          jobContext: { ...jobContext, sourceSections: [] },
           matchAnalysis,
         });
-        await expect(
-          store.deleteByAnalysisId(access.analysisId, "2026-07-29T12:00:00.000Z"),
-        ).resolves.toBe(true);
+        await expect(store.hardDeleteByAccessToken(access.accessToken)).resolves.toBe(true);
         await expect(store.getByAccessToken(access.accessToken)).resolves.toBeNull();
       } finally {
         await store.close();

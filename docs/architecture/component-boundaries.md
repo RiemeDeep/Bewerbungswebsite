@@ -26,11 +26,16 @@ Der Orchestrator ist nicht fuer langlaufende Integrationsketten gedacht.
 `packages/contracts` enthaelt Zod-Schemas und daraus abgeleitete Typen fuer API-Ein- und
 Ausgaben. Externe Daten gelten bis zur erfolgreichen Validierung als `unknown`.
 
-## Supabase
+## PostgreSQL
 
-Supabase wird die Source of Truth fuer Profilentitaeten, Claims, Belege, Dokumentmetadaten,
-Retrieval-Chunks und kurzlebige Analyseobjekte. Schemaaenderungen erfolgen ausschliesslich als
-versionierte Migrationen mit restriktiven RLS-Policies.
+Self-Hosted PostgreSQL auf dem Hostinger-VPS ist die Source of Truth fuer Profilentitaeten, Claims,
+Belege, Dokumentmetadaten, Retrieval-Chunks und kurzlebige Analyseobjekte. Schemaaenderungen erfolgen
+ausschliesslich als versionierte Migrationen mit restriktiven Rollen und RLS-Policies. Der
+Orchestrator greift serverseitig ueber `pg` zu; es gibt keine Supabase-Produktionsruntime.
+
+Die Supabase CLI dient vorerst nur als lokale Testhuelle. Der historisch benannte Ordner `supabase/`
+enthaelt weiterhin produktionsrelevante PostgreSQL-Migrationen und darf nicht ohne eine separat
+getestete Pfadmigration entfernt oder umbenannt werden.
 
 Kurzlebige Analyseobjekte speichern keine Klartext-Zugriffstoken. Persistiert werden nur Hashes,
 Status, Expiry, consent scope, normalisierte Kontexte und validierte Analyseobjekte. Anonyme direkte

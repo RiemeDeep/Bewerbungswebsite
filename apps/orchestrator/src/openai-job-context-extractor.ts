@@ -199,6 +199,36 @@ function normalizeRequestError(error: unknown): TransientProviderError {
   return new TransientProviderError("The provider request failed.");
 }
 
+function canonicalizeProviderContext(
+  context: z.infer<typeof jobContextSchema>,
+  input: JobContextExtractorInput,
+) {
+  const documentsByUrl = new Map(
+    input.documents.map((document) => [document.source.url, document]),
+  );
+  for (const section of context.sourceSections) {
+    const document = section.sourceUrl ? documentsByUrl.get(section.sourceUrl) : undefined;
+    if (!document || !document.markdown.includes(section.excerpt)) {
+      throw new JobContextExtractionError(
+        "The provider returned a source section that is not present in the supplied documents.",
+      );
+    }
+  }
+
+  return jobContextSchema.parse({
+    ...context,
+    company: {
+      ...context.company,
+      name: input.suppliedCompanyName ?? context.company.name,
+    },
+    job: {
+      ...context.job,
+      title: input.suppliedJobTitle ?? context.job.title,
+    },
+    sources: input.documents.map((document) => document.source),
+  });
+}
+
 export function createOpenAiJobContextExtractor(
   options: OpenAiJobContextExtractorOptions,
 ): JobContextExtractor {
@@ -254,7 +284,7 @@ export function createOpenAiJobContextExtractor(
             throw new JobContextExtractionError("The provider returned an invalid JobContext.");
           }
 
-          return parsedContext.data;
+          return canonicalizeProviderContext(parsedContext.data, input);
         } catch (error) {
           if (signal?.aborted) {
             throw new JobContextExtractionError(

@@ -40,3 +40,26 @@ export async function loadStoredMatchAnalysis(
     return null;
   }
 }
+
+export async function deleteStoredMatchAnalysis(
+  accessToken: string,
+  options: {
+    baseUrl?: string;
+    fetcher?: typeof fetch;
+  } = {},
+): Promise<boolean> {
+  if (!accessTokenPattern.test(accessToken)) return false;
+
+  const baseUrl = options.baseUrl ?? process.env.ORCHESTRATOR_BASE_URL;
+  if (!baseUrl) return false;
+
+  try {
+    const response = await (options.fetcher ?? fetch)(
+      new URL(`/api/v1/match/analyses/${encodeURIComponent(accessToken)}`, baseUrl).toString(),
+      { method: "DELETE", cache: "no-store" },
+    );
+    return response.status === 204;
+  } catch {
+    return false;
+  }
+}

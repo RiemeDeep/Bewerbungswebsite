@@ -5,3 +5,4 @@
 20260730143000_profile_review_provenance|/migrations/supabase/20260730143000_profile_review_provenance.sql
 020_match_analysis_runtime_access|/migrations/self-hosted/020_match_analysis_runtime_access.sql
 030_profile_runtime_access|/migrations/self-hosted/030_profile_runtime_access.sql
+040_match_analysis_job_context_retention|/migrations/self-hosted/040_match_analysis_job_context_retention.sql

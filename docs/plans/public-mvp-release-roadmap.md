@@ -12,7 +12,7 @@ Werdegangs-Checkliste und der ersten oeffentlichen Werdegangsfassung.
 Das Ziel bleibt eine beleggestuetzte, interaktive Bewerbungswebsite mit:
 
 - kuratiertem oeffentlichem Profil, Werdegang und Projekten;
-- Supabase/PostgreSQL als fachlicher Source of Truth fuer Claims und Evidence;
+- Self-Hosted PostgreSQL auf dem Hostinger-VPS als fachlicher Source of Truth fuer Claims und Evidence;
 - Profilassistent mit kontrolliertem Retrieval und sichtbarer Beleglage;
 - sicherer Stellenextraktion mit editierbarer Bestaetigung;
 - transparenter Match-Analyse ohne dominante Prozentzahl;
@@ -43,8 +43,8 @@ Die Prozentwerte sind Planungsschaetzungen und keine automatisierten Messwerte.
 | Oeffentliche Profil-, Werdegangs- und Projektinhalte |                              90 % | datenbankgestuetzte Arbeitsfassung vorhanden, redaktionelles Release-Gate offen |
 | Wissensbasis, Import und Review                      |                              90 % | freigegebener Bestand importiert und kontrolliertes Publish-Artefakt aktiv      |
 | Produktiver Profilassistent                          |                              50 % | Technikpfad vorhanden, oeffentliche Runtime und Evaluation offen                |
-| Stellenkontext und Crawling                          | 65 % technisch / 30 % oeffentlich | Preview vorhanden, produktiver Flow und Providerfreigabe offen                  |
-| Match-Analyse                                        |  75 % Backend / 40 % Besucherflow | Persistenz und Analyzer weit vorbereitet, oeffentlicher End-to-End-Flow offen   |
+| Stellenkontext und Crawling                          | 90 % technisch / 30 % oeffentlich | Interner echter Staging-Flow bestanden, oeffentliche Providerfreigabe offen     |
+| Match-Analyse                                        |  95 % Backend / 75 % Besucherflow | Interner End-to-End-Flow bestanden, oeffentliche Betriebsabnahme offen          |
 | Kontakt, Recht und oeffentlicher Betrieb             |                              25 % | Platzhalter und Betriebsbausteine vorhanden, Go-live-Paket offen                |
 | Gesamt bis zum interaktiven oeffentlichen MVP        |                          ca. 65 % | groesste Luecken liegen in interaktiver Integration, Recht und Betrieb          |
 
@@ -428,27 +428,13 @@ Abnahme:
 
 ## Naechste kleine Umsetzungseinheit
 
-**Paket M1: URL- und TTL-Invarianten** aus
-`docs/plans/phase-6-7-match-end-to-end-release.md`.
+Die Match-Pakete M1 bis M6 sind abgeschlossen. Das interne M7-Staging ist seit dem 2026-08-27 aktiv und
+hat den echten Firecrawl-/OpenAI-, Persistenz-, Ergebnis-, Assistenten-, Loesch-, Kill-Switch- und
+Rollbackpfad bestanden. Die naechste kleine Einheit schliesst die verbleibenden M7-Gates:
 
-Abgeschlossen am 2026-08-14:
+1. manuelle Accessibility-, Tastatur- und Mobile-Abnahme fuer den Match-Flow;
+2. belastbare Token- und Geldkostenmessung der echten Providerlaeufe;
+3. Redirect-Hop-/Private-Netz-Garantie von Firecrawl klaeren oder den URL-Abruf vor einem oeffentlichen
+   Betrieb deaktiviert lassen.
 
-- erneute URL-Sicherheitspruefung jeder vom Crawl-Provider zurueckgegebenen Quelle;
-- Ablehnung privater, lokaler und reservierter Provider-Ziele vor Extraktion;
-- validierte Runtime-Konfiguration von `ANALYSIS_TTL_HOURS`;
-- Weitergabe der konfigurierten Default-TTL an produktive und synthetische Match-Stores;
-- Unit- und Runtime-Tests ohne VPS-, Datenbank- oder Provideraktivierung;
-- vollstaendiger `pnpm check` erfolgreich.
-
-**Paket M2: Interne Match-Runtime-Grenze** ist am 2026-08-14 lokal abgeschlossen:
-
-- geschuetzte `/api/internal/match/...`-Pfade mit Bearer-Authentisierung;
-- gemeinsames Minute-/Tagesbudget, Parallelitaetsgrenze und Deadline;
-- Abort-Signal bis Crawl-, Extraktions- und Analyseprovider;
-- inhaltsfreie Runtime-Events und kontrollierte Limit-/Timeoutcodes;
-- serverseitige Test-BFFs mit Secret, `no-store` und eigener Deadline;
-- vollstaendiger `pnpm check` erfolgreich; keine VPS-Aktivierung.
-
-Die unmittelbar naechste Einheit ist **Paket M3: Oeffentliche JobContext-Strecke**. Sie ueberfuehrt die
-vorhandene Testoberflaeche in eine produktionsgeeignete `/match`-Route und einen serverseitigen BFF, ohne
-bereits Analyseerzeugung oder Match-Assistent oeffentlich zu aktivieren.
+Eine oeffentliche Aktivierung oder Indexierung ist dadurch weiterhin nicht freigegeben.

@@ -46,32 +46,83 @@ function isBlockedIpv4(address: string): boolean {
     (first === 172 && second >= 16 && second <= 31) ||
     (first === 192 && second === 168) ||
     (first === 100 && second >= 64 && second <= 127) ||
-    (first === 192 && second === 0) ||
-    (first === 198 && (second === 18 || second === 19 || second === 51)) ||
-    (first === 203 && second === 0) ||
+    (first === 192 && second === 0 && (octets[2] ?? 0) === 0) ||
+    (first === 192 && second === 0 && (octets[2] ?? 0) === 2) ||
+    (first === 192 && second === 88 && (octets[2] ?? 0) === 99) ||
+    (first === 198 && (second === 18 || second === 19)) ||
+    (first === 198 && second === 51 && (octets[2] ?? 0) === 100) ||
+    (first === 203 && second === 0 && (octets[2] ?? 0) === 113) ||
     first >= 224
   );
 }
 
-function isBlockedIpv6(address: string): boolean {
+function parseIpv6Groups(address: string): number[] | null {
   const normalized = address.toLowerCase();
+  const compressionParts = normalized.split("::");
+  if (compressionParts.length > 2) return null;
 
-  if (normalized === "::" || normalized === "::1") {
-    return true;
-  }
-  if (normalized.startsWith("::ffff:")) {
-    return isBlockedIpv4(normalized.slice("::ffff:".length));
-  }
+  const parsePart = (part: string): number[] | null => {
+    if (!part) return [];
+    const tokens = part.split(":");
+    const groups: number[] = [];
+    for (const [index, token] of tokens.entries()) {
+      if (token.includes(".")) {
+        if (index !== tokens.length - 1 || isIP(token) !== 4) return null;
+        const octets = token.split(".").map((value) => Number.parseInt(value, 10));
+        if (
+          octets.length !== 4 ||
+          octets.some((value) => !Number.isInteger(value) || value < 0 || value > 255)
+        ) {
+          return null;
+        }
+        groups.push(((octets[0] ?? 0) << 8) | (octets[1] ?? 0));
+        groups.push(((octets[2] ?? 0) << 8) | (octets[3] ?? 0));
+        continue;
+      }
+      if (!/^[0-9a-f]{1,4}$/u.test(token)) return null;
+      groups.push(Number.parseInt(token, 16));
+    }
+    return groups;
+  };
 
-  const firstGroup = Number.parseInt(normalized.split(":")[0] ?? "0", 16);
-  if (!Number.isInteger(firstGroup)) {
-    return true;
+  const left = parsePart(compressionParts[0] ?? "");
+  const right = parsePart(compressionParts[1] ?? "");
+  if (!left || !right) return null;
+
+  if (compressionParts.length === 1) return left.length === 8 ? left : null;
+  const omittedGroupCount = 8 - left.length - right.length;
+  if (omittedGroupCount < 1) return null;
+  return [...left, ...Array<number>(omittedGroupCount).fill(0), ...right];
+}
+
+function embeddedIpv4(groups: number[], offset: number) {
+  return [groups[offset] ?? 0, groups[offset + 1] ?? 0]
+    .flatMap((group) => [(group >> 8) & 0xff, group & 0xff])
+    .join(".");
+}
+
+function isBlockedIpv6(address: string): boolean {
+  const groups = parseIpv6Groups(address);
+  if (!groups) return true;
+
+  const first = groups[0] ?? 0;
+  const firstSixAreZero = groups.slice(0, 6).every((group) => group === 0);
+  const mappedPrefix = groups.slice(0, 5).every((group) => group === 0) && groups[5] === 0xffff;
+  if (firstSixAreZero || mappedPrefix) return isBlockedIpv4(embeddedIpv4(groups, 6));
+
+  if (
+    first === 0x0064 &&
+    groups[1] === 0xff9b &&
+    groups.slice(2, 6).every((group) => group === 0)
+  ) {
+    return isBlockedIpv4(embeddedIpv4(groups, 6));
   }
+  if (first === 0x2002) return isBlockedIpv4(embeddedIpv4(groups, 1));
 
   return (
-    (firstGroup & 0xfe00) === 0xfc00 ||
-    (firstGroup & 0xffc0) === 0xfe80 ||
-    (firstGroup & 0xff00) === 0xff00
+    (first & 0xe000) !== 0x2000 ||
+    (first === 0x2001 && groups[1] === 0) ||
+    (first === 0x2001 && groups[1] === 0x0db8)
   );
 }
 
@@ -104,7 +155,11 @@ export async function validatePublicHttpUrl(
   if (url.username || url.password) {
     throw new UrlSecurityError("URLs must not contain credentials.");
   }
-  if (url.port && url.port !== "80" && url.port !== "443") {
+  if (
+    url.port &&
+    ((url.protocol === "http:" && url.port !== "80") ||
+      (url.protocol === "https:" && url.port !== "443"))
+  ) {
     throw new UrlSecurityError("Only default http and https ports are allowed.");
   }
   if (!url.hostname) {
@@ -113,9 +168,14 @@ export async function validatePublicHttpUrl(
 
   const hostname = url.hostname.toLowerCase().replace(/^\[/u, "").replace(/\]$/u, "");
   const literalFamily = isIP(hostname);
-  const addresses = literalFamily
-    ? [{ address: hostname, family: literalFamily as 4 | 6 }]
-    : await resolver(hostname);
+  let addresses: ResolvedAddress[];
+  try {
+    addresses = literalFamily
+      ? [{ address: hostname, family: literalFamily as 4 | 6 }]
+      : await resolver(hostname);
+  } catch {
+    throw new UrlSecurityError("URL hostname could not be resolved safely.");
+  }
 
   if (addresses.length === 0) {
     throw new UrlSecurityError("URL hostname did not resolve.");

@@ -184,9 +184,12 @@ export function MatchContextForm() {
         <div className="match-privacy-note" role="note">
           <strong>Was wird verarbeitet?</strong>
           <p>
-            URLs und eingefügter Text werden ausschließlich zur Erkennung des Stellenkontexts
-            verwendet. Geschützte Seiten werden nicht umgangen. Bei Login oder Paywall nutzen Sie
-            bitte die Texteingabe.
+            URLs und eingefügter Text werden zur Erkennung und späteren Analyse des Stellenkontexts
+            verarbeitet. Bei einer Analyse wird nur der von Ihnen bestätigte strukturierte Kontext
+            gespeichert; eingefügter Rohtext und angezeigte Quellenauszüge werden nicht
+            mitgespeichert. Das Ergebnis ist bis zum dort genannten Zeitpunkt abrufbar und kann
+            vorher gelöscht werden. Geschützte Seiten werden nicht umgangen; bei Login oder Paywall
+            nutzen Sie bitte die Texteingabe.
           </p>
         </div>
 

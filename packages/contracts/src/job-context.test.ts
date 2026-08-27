@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   crawlResultSchema,
   createJobContextExpiresAt,
+  createPersistedJobContext,
   isJobContextStorageRecordExpired,
   jobContextInputSchema,
   jobContextRetentionPolicySchema,
@@ -169,6 +170,13 @@ describe("jobContextSchema", () => {
         providerRawPrompt: "secret",
       }),
     ).toThrow();
+  });
+
+  it("removes source excerpts from the persisted projection", () => {
+    expect(createPersistedJobContext(validJobContext)).toEqual({
+      ...validJobContext,
+      sourceSections: [],
+    });
   });
 });
 

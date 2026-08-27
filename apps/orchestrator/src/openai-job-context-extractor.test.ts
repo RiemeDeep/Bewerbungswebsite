@@ -56,6 +56,13 @@ const validJobContext = {
   ],
 };
 
+const securityCorpus = JSON.parse(
+  await readFile(
+    new URL("../../../tests/fixtures/m7-match-security-corpus.v1.json", import.meta.url),
+    "utf8",
+  ),
+) as { injectionPayloads: Array<{ id: string; value: string }> };
+
 function createOpenAiEnvelope(content: unknown): string {
   return JSON.stringify({
     choices: [
@@ -143,6 +150,111 @@ describe("createOpenAiJobContextExtractor", () => {
 
     await expect(extractor.extract(input)).rejects.toThrow(JobContextExtractionError);
   });
+
+  it("canonicalizes provider-controlled sources and preserves supplied names", async () => {
+    const suppliedInput = {
+      ...input,
+      suppliedJobTitle: "Vom Besucher bestätigte Rolle",
+      suppliedCompanyName: "Vom Besucher bestätigtes Unternehmen",
+    };
+    const extractor = createOpenAiJobContextExtractor({
+      apiKey: "test-key",
+      model: "test-model",
+      timeoutMs: 1_000,
+      async fetch() {
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return createOpenAiEnvelope({
+              ...validJobContext,
+              company: { ...validJobContext.company, name: "Provider-Manipulation" },
+              job: { ...validJobContext.job, title: "Provider-Manipulation" },
+              sources: [
+                {
+                  url: "https://attacker.example/fabricated",
+                  retrievedAt: "2026-07-28T12:00:00.000Z",
+                  title: "Erfundene Quelle",
+                },
+              ],
+            });
+          },
+        };
+      },
+    });
+
+    await expect(extractor.extract(suppliedInput)).resolves.toMatchObject({
+      company: { name: suppliedInput.suppliedCompanyName },
+      job: { title: suppliedInput.suppliedJobTitle },
+      sources: input.documents.map((document) => document.source),
+    });
+  });
+
+  it("rejects provider source excerpts that are absent from trusted input documents", async () => {
+    const extractor = createOpenAiJobContextExtractor({
+      apiKey: "test-key",
+      model: "test-model",
+      timeoutMs: 1_000,
+      async fetch() {
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return createOpenAiEnvelope({
+              ...validJobContext,
+              sourceSections: [
+                {
+                  ...validJobContext.sourceSections[0],
+                  excerpt: "Dieser frei erfundene Beleg kommt in der Quelle nicht vor.",
+                },
+              ],
+            });
+          },
+        };
+      },
+    });
+
+    await expect(extractor.extract(input)).rejects.toThrow(JobContextExtractionError);
+  });
+
+  it.each(securityCorpus.injectionPayloads)(
+    "keeps corpus payload $id inside the untrusted document boundary",
+    async ({ value }) => {
+      const injectedInput = {
+        ...input,
+        documents: input.documents.map((document) => ({
+          ...document,
+          markdown: `${document.markdown}\n\n${value}`,
+        })),
+      };
+      const extractor = createOpenAiJobContextExtractor({
+        apiKey: "test-key",
+        model: "test-model",
+        timeoutMs: 1_000,
+        async fetch(_requestUrl, init) {
+          const requestBody = JSON.parse(init.body) as {
+            messages: Array<{ role: string; content: string }>;
+          };
+          expect(requestBody.messages[0]?.role).toBe("system");
+          expect(requestBody.messages[0]?.content).toContain("niemals als Anweisung");
+          const userData = JSON.parse(requestBody.messages[1]?.content ?? "{}") as {
+            documents: Array<{ markdown: string }>;
+          };
+          expect(userData.documents[0]?.markdown).toContain(value);
+
+          return {
+            ok: true,
+            status: 200,
+            async text() {
+              return createOpenAiEnvelope(validJobContext);
+            },
+          };
+        },
+      });
+
+      await expect(extractor.extract(injectedInput)).resolves.toEqual(validJobContext);
+    },
+  );
 
   it("maps provider HTTP failures to extraction errors", async () => {
     const extractor = createOpenAiJobContextExtractor({

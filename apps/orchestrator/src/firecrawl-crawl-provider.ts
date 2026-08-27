@@ -26,7 +26,7 @@ const firecrawlScrapeResponseSchema = z
             statusCode: z.number().int().min(100).max(599).optional(),
           })
           .passthrough()
-          .optional(),
+          .refine((metadata) => Boolean(metadata.sourceURL ?? metadata.url)),
       })
       .passthrough(),
   })
@@ -85,14 +85,16 @@ export function createFirecrawlCrawlProvider(options: {
             throw new CrawlProviderError("Firecrawl returned an invalid scrape response.");
           }
 
-          const sourceUrl =
-            parsed.data.data.metadata?.sourceURL ?? parsed.data.data.metadata?.url ?? url;
+          const sourceUrl = parsed.data.data.metadata.sourceURL ?? parsed.data.data.metadata.url;
+          if (!sourceUrl) {
+            throw new CrawlProviderError("Firecrawl did not return a verifiable final source URL.");
+          }
 
           return {
             source: {
               url: sourceUrl,
               retrievedAt: now().toISOString(),
-              title: parsed.data.data.metadata?.title ?? null,
+              title: parsed.data.data.metadata.title ?? null,
             },
             markdown: parsed.data.data.markdown,
           };

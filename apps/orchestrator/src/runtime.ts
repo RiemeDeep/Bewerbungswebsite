@@ -33,6 +33,25 @@ import {
 import { createPostgresPoolProfileReviewRepository } from "./profile-review-repository.js";
 import { createPostgresPoolProfileRepository } from "./supabase-profile-repository.js";
 
+import type { MatchRuntimeEvent } from "./app.js";
+
+export function logMatchRuntimeEvent(event: MatchRuntimeEvent) {
+  console.info("match_runtime_event", JSON.stringify(event));
+}
+
+function isLocalSyntheticMatchDatabaseUrl(value: string): boolean {
+  try {
+    const databaseUrl = new URL(value);
+    return (
+      (databaseUrl.protocol === "postgres:" || databaseUrl.protocol === "postgresql:") &&
+      ["127.0.0.1", "localhost", "[::1]"].includes(databaseUrl.hostname) &&
+      databaseUrl.port === "54322"
+    );
+  } catch {
+    return false;
+  }
+}
+
 const runtimeEnvironmentSchema = z
   .object({
     ENABLE_SYNTHETIC_ASSISTANT_TEST: z.literal("1").optional(),
@@ -132,6 +151,25 @@ const runtimeEnvironmentSchema = z
         code: "custom",
         message: "MATCH_DATABASE_URL cannot be combined with synthetic match runtime flags.",
         path: ["MATCH_DATABASE_URL"],
+      });
+    }
+
+    if (environment.MATCH_DATABASE_URL && !environment.PROFILE_DATABASE_URL) {
+      context.addIssue({
+        code: "custom",
+        message: "MATCH_DATABASE_URL requires PROFILE_DATABASE_URL for evidence revalidation.",
+        path: ["PROFILE_DATABASE_URL"],
+      });
+    }
+
+    if (
+      environment.ENABLE_SYNTHETIC_MATCH_STORAGE_TEST === "1" &&
+      !isLocalSyntheticMatchDatabaseUrl(environment.SYNTHETIC_MATCH_DATABASE_URL)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Synthetic match storage requires loopback PostgreSQL on port 54322.",
+        path: ["SYNTHETIC_MATCH_DATABASE_URL"],
       });
     }
 
@@ -382,6 +420,17 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     closeHandlers.push(() => profileReviewRepository.close());
   }
 
+  let matchAssistantEvidenceRepository:
+    ReturnType<typeof createPostgresPoolMatchAssistantEvidenceRepository> | undefined;
+  if (environment.MATCH_DATABASE_URL && environment.PROFILE_DATABASE_URL) {
+    matchAssistantEvidenceRepository = createPostgresPoolMatchAssistantEvidenceRepository(
+      environment.PROFILE_DATABASE_URL,
+      { statementTimeoutMs: Math.min(5_000, environment.MATCH_RUNTIME_REQUEST_TIMEOUT_MS) },
+    );
+    dependencies.matchResultEvidenceRepository = matchAssistantEvidenceRepository;
+    closeHandlers.push(() => matchAssistantEvidenceRepository?.close() ?? Promise.resolve());
+  }
+
   if (environment.ENABLE_MATCH_ANALYSIS === "1") {
     const evidenceRepository = createPostgresPoolMatchEvidenceRepository(
       environment.PROFILE_DATABASE_URL ?? "",
@@ -420,9 +469,10 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
     if (!store) {
       throw new Error("ENABLE_MATCH_ASSISTANT_STAGING requires a match analysis store.");
     }
-    const evidenceRepository = createPostgresPoolMatchAssistantEvidenceRepository(
-      environment.PROFILE_DATABASE_URL ?? "",
-    );
+    const evidenceRepository = matchAssistantEvidenceRepository;
+    if (!evidenceRepository) {
+      throw new Error("ENABLE_MATCH_ASSISTANT_STAGING requires an evidence repository.");
+    }
     dependencies.matchAssistant = createMatchAssistantService({
       store,
       evidenceRepository,
@@ -437,7 +487,6 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
         timeoutMs: environment.LLM_REQUEST_TIMEOUT_MS,
       }),
     });
-    closeHandlers.push(() => evidenceRepository.close());
   }
 
   if (environment.ENABLE_MATCH_RUNTIME_STAGING === "1") {
@@ -449,9 +498,7 @@ export function createRuntimeApp(environmentInput: NodeJS.ProcessEnv = process.e
         maxConcurrentRequests: environment.MATCH_RUNTIME_MAX_CONCURRENCY,
         timeoutMs: environment.MATCH_RUNTIME_REQUEST_TIMEOUT_MS,
       }),
-      logEvent(event) {
-        console.info("match_runtime_event", JSON.stringify(event));
-      },
+      logEvent: logMatchRuntimeEvent,
     };
   }
 

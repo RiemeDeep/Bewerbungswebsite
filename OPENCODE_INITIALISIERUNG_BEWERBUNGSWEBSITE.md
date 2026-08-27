@@ -4,8 +4,10 @@
 > Zielsystem: Webanwendung mit KI-Assistent, dynamischem Unternehmens- und Stellenbezug sowie beleggestütztem Profil  
 > Primäre Sprache: Deutsch  
 > Zielgruppe: Recruiter, Fachbereichsleiter, Gründer, Geschäftsführer und andere Entscheider  
-> Dokumentversion: 1.0  
-> Stand: 22. Juli 2026
+> Dokumentversion: 1.1
+> Stand: 27. August 2026
+> Architekturentscheid: Self-Hosted PostgreSQL statt Supabase-Plattform gemaess
+> `docs/decisions/2026-08-27-self-hosted-postgresql-instead-of-supabase.md`
 
 ---
 
@@ -226,7 +228,7 @@ Bedürfnisse:
 - Lebenslauf-Download nur nach ausdrücklicher Freigabe des Dokuments;
 - Impressum und Datenschutzerklärung jederzeit erreichbar;
 - datensparsame Telemetrie für technische Qualität;
-- redaktionell gepflegte Wissensbasis in Supabase;
+- redaktionell gepflegte Wissensbasis im Self-Hosted PostgreSQL;
 - serverseitige Validierung aller KI-Ausgaben;
 - Lade-, Fehler-, Leer- und Unsicherheitszustände;
 - grundlegende automatisierte Tests.
@@ -883,7 +885,7 @@ Die vorhandene Infrastruktur wird genutzt:
 
 - Next.js stellt Website, serverseitige UI-Logik und eine schlanke Backend-for-Frontend-Schicht bereit.
 - Der vorhandene Node/Express-Orchestrator ist die zentrale Entscheidungs- und Routing-Schicht für Analyse, Retrieval und KI-Aufrufe.
-- Supabase ist die zentrale Datenquelle.
+- Das Self-Hosted PostgreSQL auf dem Hostinger-VPS ist die zentrale Datenquelle.
 - n8n führt klar definierte, deterministische und gegebenenfalls asynchrone Workflows aus.
 - Firecrawl oder ein vergleichbarer kontrollierter Dienst extrahiert öffentliche Unternehmens- und Stelleninhalte.
 - Ein LLM erzeugt ausschließlich schema-konforme Analyse- und Antwortobjekte.
@@ -895,7 +897,7 @@ Die vorhandene Infrastruktur wird genutzt:
 | Next.js | Seiten, UI, Validierung im Client, BFF, Streaming-Darstellung | Geschäftslogik, private Quellen, freie Toolauswahl |
 | Orchestrator | Authentisierung interner Aufrufe, Routing, Retrieval-Entscheidung, Modellaufrufe, Schema- und Belegprüfung | Langlaufende Workflow-Orchestrierung mit vielen Integrationen |
 | n8n | Ingestion, wiederholbare Importe, Hintergrundjobs, Benachrichtigungen | spontane Chatentscheidungen und fachliche Source of Truth |
-| Supabase | Postgres, pgvector, Storage, RLS, Auditdaten | ungeprüfte öffentliche Direktabfragen privater Inhalte |
+| Self-Hosted PostgreSQL | Postgres, pgvector, RLS, Profil-, Match- und Auditdaten | ungeprüfte öffentliche Direktabfragen privater Inhalte |
 | Crawl-Dienst | Abruf und Extraktion erlaubter öffentlicher Seiten | Login-Umgehung, gesamte Domain spiegeln, Entscheidungen treffen |
 | LLM | Extraktion, Zusammenfassung, kontrollierte Schlussfolgerung | Faktenquelle, dauerhafter Speicher, Autorisierung |
 
@@ -906,7 +908,7 @@ Browser
   -> Next.js BFF
     -> Orchestrator
       -> URL-Sicherheitsprüfung / Crawl-Dienst
-      -> Supabase / pgvector
+      -> Self-Hosted PostgreSQL / pgvector
       -> LLM mit Schemaausgabe
       -> n8n für asynchrone Nebenprozesse
     <- validiertes JSON
@@ -930,9 +932,9 @@ Backend:
 
 - bestehender Node/Express-Orchestrator;
 - Zod oder JSON Schema für alle Ein- und Ausgaben;
-- Supabase Postgres;
+- Self-Hosted PostgreSQL 16 mit pgvector;
 - pgvector;
-- Supabase Storage für freigegebene und private Dokumente in getrennten Buckets;
+- private Dokumente ausserhalb der oeffentlichen Runtime; separater Objektspeicher nur nach konkreter Freigabe;
 - n8n für Ingestion und Benachrichtigungen;
 - Firecrawl nur über serverseitige, abgesicherte Aufrufe;
 - LLM-Anbieter hinter einer kleinen Provider-Schnittstelle.
@@ -961,7 +963,7 @@ Falls noch kein Monorepo vorhanden ist, ist folgende Struktur sinnvoll:
 │  ├─ ui/                     # gemeinsame UI-Komponenten, falls nötig
 │  ├─ config/                 # geteilte Lint-/TS-Konfiguration
 │  └─ prompts/                # versionierte Prompt-Templates ohne Secrets
-├─ supabase/
+├─ supabase/                   # historisch benannte PostgreSQL-Artefakte und lokale Testhuelle
 │  ├─ migrations/
 │  ├─ seed/
 │  └─ tests/
@@ -1482,7 +1484,7 @@ Re-Indexierung wird ausgelöst durch:
 - Wechsel des Embedding-Modells;
 - Fehlerkorrektur in Metadaten.
 
-n8n kann die deterministischen Schritte ausführen. Supabase bleibt die Source of Truth; der Orchestrator entscheidet bei Anfragen über Retrieval und Zugriff.
+n8n kann die deterministischen Schritte ausführen. Das Self-Hosted PostgreSQL bleibt die Source of Truth; der Orchestrator entscheidet bei Anfragen über Retrieval und Zugriff.
 
 ---
 
@@ -1609,7 +1611,7 @@ Standard:
 
 ### 16.5 Rechtliche Seiten
 
-Impressum und Datenschutz müssen im Footer jeder Seite erreichbar sein. Die finalen Texte sind vor Veröffentlichung auf die tatsächlich verwendeten Dienste, Hostingstandorte, Logdaten, KI-Anbieter, Supabase, Firecrawl, n8n und Kontaktwege abzustimmen. Dieses technische Dokument ersetzt keine Rechtsberatung.
+Impressum und Datenschutz müssen im Footer jeder Seite erreichbar sein. Die finalen Texte sind vor Veröffentlichung auf die tatsächlich verwendeten Dienste, Hostingstandorte, Logdaten, KI-Anbieter, Self-Hosted PostgreSQL, Firecrawl, n8n und Kontaktwege abzustimmen. Dieses technische Dokument ersetzt keine Rechtsberatung.
 
 ### 16.6 Cookies und lokale Speicherung
 
@@ -1906,7 +1908,7 @@ Zusätzlich:
 
 ### 22.1 MVP-Variante
 
-Im ersten Schritt kann die Pflege über Supabase Studio und versionierte Seed-/Importskripte erfolgen, sofern:
+Im ersten Schritt kann die Pflege über kontrollierte PostgreSQL-Administrations- und versionierte Seed-/Importskripte erfolgen, sofern:
 
 - keine privaten Tabellen öffentlich lesbar sind;
 - Veröffentlichungsstatus bewusst gesetzt wird;
@@ -2003,10 +2005,9 @@ NEXT_PUBLIC_SITE_NAME=Michael Flatau
 ORCHESTRATOR_BASE_URL=http://localhost:4000
 ORCHESTRATOR_REQUEST_SECRET=replace-me
 
-# Supabase - server/public separation beachten
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+# Self-Hosted PostgreSQL - ausschliesslich serverseitig
+PROFILE_DATABASE_URL=
+MATCH_DATABASE_URL=
 
 # Model provider
 LLM_PROVIDER=
@@ -2061,7 +2062,7 @@ N8N_WEBHOOK_SECRET=
 ### 25.2 Integrationstests
 
 - Next.js BFF zu Orchestrator;
-- Orchestrator zu Supabase mit RLS;
+- Orchestrator zu Self-Hosted PostgreSQL mit RLS;
 - Crawl-Adapter mit Fixtures;
 - Modell-Adapter mit deterministischen Mockantworten;
 - n8n-Webhook-Signatur;
@@ -2203,7 +2204,7 @@ Akzeptanz:
 
 Ergebnisse:
 
-- Supabase-Migrationen;
+- PostgreSQL-Migrationen;
 - RLS;
 - Profilentitäten, Claims, Belege und Dokumente;
 - Seed mit ausschließlich freigegebenen Inhalten;
@@ -2306,7 +2307,7 @@ Akzeptanz:
 - [ ] Design-Tokens und Layout-Grundlagen
 - [ ] Startseite mit zwei Einstiegen
 - [ ] Profil-, Werdegang- und Projektansicht
-- [ ] Supabase-Schema und RLS
+- [ ] PostgreSQL-Schema und RLS
 - [ ] freigegebene Profil-Claims importieren
 - [ ] Orchestrator-Vertrag definieren
 - [ ] Profilassistent mit RAG und Evidence-Prüfung
@@ -2601,7 +2602,7 @@ Einschätzung der Qualität und Nähe der vorhandenen Belege, nicht der persönl
 Strukturierte Darstellung einer Stelle und des öffentlich erkennbaren Unternehmenskontexts.
 
 **Orchestrator**  
-Zentrale serverseitige Entscheidungs- und Routing-Schicht zwischen Webanwendung, Supabase, RAG, Modell und Workflows.
+Zentrale serverseitige Entscheidungs- und Routing-Schicht zwischen Webanwendung, PostgreSQL, RAG, Modell und Workflows.
 
 **n8n**  
 System für deterministische, wiederholbare und gegebenenfalls asynchrone Abläufe.

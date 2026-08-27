@@ -106,7 +106,7 @@ describe("createFirecrawlCrawlProvider", () => {
       new Response(
         JSON.stringify({
           success: true,
-          data: { markdown: "# Unternehmen", metadata: {} },
+          data: { markdown: "# Unternehmen", metadata: { url: "https://example.com" } },
         }),
         { status: 200, headers: { "content-type": "application/json" } },
       ),
@@ -198,6 +198,25 @@ describe("createFirecrawlCrawlProvider", () => {
         jobUrl: "https://example.com/jobs/technische-projektrolle",
         companyUrl: null,
       }),
+    ).rejects.toThrow(CrawlProviderError);
+  });
+
+  it("rejects scrape responses without a verifiable final source URL", async () => {
+    const provider = createFirecrawlCrawlProvider({
+      apiKey: "fc-test",
+      fetcher: vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: { markdown: "# Redirected content", metadata: { statusCode: 200 } },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      ),
+    });
+
+    await expect(
+      provider.crawl({ jobUrl: "https://example.com/jobs/role", companyUrl: null }),
     ).rejects.toThrow(CrawlProviderError);
   });
 

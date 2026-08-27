@@ -25,6 +25,12 @@ export const securityHeaders = [
   },
 ];
 
+export const privateRuntimeHeaders = [
+  { key: "Cache-Control", value: "private, no-store, max-age=0" },
+  { key: "Referrer-Policy", value: "no-referrer" },
+  { key: "X-Robots-Tag", value: "noindex,nofollow" },
+];
+
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
@@ -34,6 +40,18 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+      {
+        source: "/match/preview/:path*",
+        headers: privateRuntimeHeaders,
+      },
+      {
+        source: "/test/match/:path*",
+        headers: privateRuntimeHeaders,
+      },
+      {
+        source: "/api/test/:path*",
+        headers: privateRuntimeHeaders,
       },
     ];
   },

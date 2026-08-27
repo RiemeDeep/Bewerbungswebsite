@@ -21,8 +21,8 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
 - `expires_at` muss nach `created_at` liegen;
 - RLS ist aktiv; `anon` und `authenticated` besitzen keine direkten Tabellenrechte;
 - Cleanup-Index liegt auf `(status, expires_at)`;
-- `MatchAnalysisStore` bietet nur `create`, `getByAccessToken`, `expireDue` und
-  `deleteByAnalysisId`, keine Listenfunktion;
+- `MatchAnalysisStore` bietet nur `create`, `getByAccessToken`, `expireDue`,
+  `hardDeleteByAccessToken` und `deleteByAnalysisId`, keine Listenfunktion;
 - Store-Inputs und geladene JSONB-Daten werden gegen die gemeinsamen Zod-Contracts validiert;
 - `getByAccessToken` hasht den Token serverseitig und filtert auf `status=active` plus nicht
   abgelaufene Records;
@@ -32,9 +32,11 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
   `ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST=1`;
 - `POST /api/v1/match/analyses` erzeugt und speichert eine synthetische Analyse;
 - `GET /api/v1/match/analyses/:accessToken` liefert nur aktive, nicht abgelaufene Analysen;
+- `DELETE /api/v1/match/analyses/:accessToken` loescht tokengebunden sofort physisch und bleibt fuer
+  unbekannte Tokens idempotent;
 - der Match-Assistent akzeptiert nur Zugriffstoken plus Frage und laedt JobContext/MatchAnalysis
   serverseitig;
-- Creation, Retrieval und Assistant setzen `Cache-Control: private, no-store, max-age=0`,
+- Creation, Retrieval, Deletion und Assistant setzen `Cache-Control: private, no-store, max-age=0`,
   `Referrer-Policy: no-referrer` und `X-Robots-Tag: noindex,nofollow`.
 
 ## Lokale Verifikation
@@ -67,6 +69,9 @@ Browser ist keine Autoritaet fuer gespeicherten JobContext, MatchAnalysis oder E
   auszufuehren;
 - ein minimaler lokaler Release-/Rollback-Pfad fuer den Orchestrator ist versioniert und auf dem VPS
   getestet.
+
+Der aktuelle M6-Lebenszyklus und die Abgrenzung zwischen aktiver Datenbank, Cleanup, Backups und
+Evidence-Withdrawal stehen in `docs/runbooks/match-analysis-retention-and-deletion.md`.
 
 ## Nicht Enthalten
 

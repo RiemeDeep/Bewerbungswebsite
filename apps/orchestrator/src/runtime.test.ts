@@ -200,16 +200,36 @@ describe("orchestrator runtime dependencies", () => {
     ).toThrow("requires ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST");
   });
 
-  it("enables production match storage without synthetic analysis services", async () => {
+  it("rejects a non-local database for synthetic match storage", () => {
+    expect(() =>
+      createRuntimeApp({
+        ENABLE_SYNTHETIC_MATCH_ANALYSIS_TEST: "1",
+        ENABLE_SYNTHETIC_MATCH_STORAGE_TEST: "1",
+        SYNTHETIC_MATCH_DATABASE_URL: "postgresql://app:secret@database.example.com:5432/app",
+      }),
+    ).toThrow("Synthetic match storage requires loopback PostgreSQL on port 54322");
+  });
+
+  it("enables production match storage with evidence revalidation dependencies", async () => {
     const runtime = createRuntimeApp({
       MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+      PROFILE_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
     });
 
     expect(runtime.dependencies.matchAnalysisStore).toBeDefined();
     expect(runtime.dependencies.profileReviewRepository).toBeDefined();
+    expect(runtime.dependencies.matchResultEvidenceRepository).toBeDefined();
     expect(runtime.dependencies.matchAnalyzer).toBeUndefined();
     expect(runtime.dependencies.matchAssistant).toBeUndefined();
     await expect(runtime.close()).resolves.toBeUndefined();
+  });
+
+  it("rejects production match storage without evidence revalidation", () => {
+    expect(() =>
+      createRuntimeApp({
+        MATCH_DATABASE_URL: "postgresql://app:secret@postgres:5432/bewerbungswebsite",
+      }),
+    ).toThrow("MATCH_DATABASE_URL requires PROFILE_DATABASE_URL");
   });
 
   it("enables production match analysis only with explicit store, profile database and provider config", async () => {

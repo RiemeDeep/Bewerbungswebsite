@@ -42,6 +42,10 @@ Synthetische Runtime-Flags sind nicht gesetzt. `MATCH_DATABASE_URL` aktiviert nu
 produktionsgeeigneten Match-Store. Ein gleichzeitiger synthetischer Match-Modus wird vom Startschema
 abgelehnt.
 
+Vor einer internen Aktivierung des vollstaendigen Match-Flusses gilt zusaetzlich das fail-closed
+Preflight aus `docs/runbooks/match-staging-release-gate.md`. Ein erfolgreiches Preflight ersetzt weder
+die dort aufgefuehrten Browser- und Sicherheitsgates noch Backup und Restore-Test.
+
 ## Deployment
 
 Die Compose-Datei liegt unter `deploy/orchestrator/compose.yml`. Das Image wird aus dem
@@ -296,9 +300,11 @@ docker compose \
 
 ## Interne Match-Runtime-Grenze
 
-Die Match-Runtime ist lokal vorbereitet, aber auf dem VPS noch nicht aktiviert. Vor einer spaeteren
-internen Aktivierung gelten dieselben Secret-, Backup-/Restore-, Health-, `401`-, Kill-Switch- und
-Rollback-Regeln wie fuer andere DB-/Provider-bezogene Staging-Schritte.
+Die Match-Runtime ist seit dem 2026-08-27 ausschliesslich im internen VPS-Staging aktiviert. Der
+Web-Container bleibt an `127.0.0.1:3100` gebunden; eine oeffentliche Aktivierung ist nicht erfolgt.
+Backup/Restore, Migration `040`, Preflight, Health, `401`, echter Providerdurchstich, Kill-Switch,
+Rollback und Roll-forward wurden erfolgreich nachgewiesen. Firecrawl ist dabei nur fuer oeffentliche
+Test-URLs im internen Staging akzeptiert; der oeffentliche URL-Abruf bleibt gesperrt.
 
 Orchestrator-Konfiguration in der root-only `.env.orchestrator`:
 

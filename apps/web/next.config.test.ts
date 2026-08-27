@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import nextConfig, { contentSecurityPolicy, securityHeaders } from "./next.config";
+import nextConfig, {
+  contentSecurityPolicy,
+  privateRuntimeHeaders,
+  securityHeaders,
+} from "./next.config";
 
 describe("next security headers", () => {
   it("applies security headers to every route", async () => {
@@ -10,6 +14,18 @@ describe("next security headers", () => {
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+      {
+        source: "/match/preview/:path*",
+        headers: privateRuntimeHeaders,
+      },
+      {
+        source: "/test/match/:path*",
+        headers: privateRuntimeHeaders,
+      },
+      {
+        source: "/api/test/:path*",
+        headers: privateRuntimeHeaders,
       },
     ]);
   });

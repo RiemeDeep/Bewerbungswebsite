@@ -76,6 +76,9 @@ async function createService() {
       async deleteByAnalysisId() {
         return false;
       },
+      async hardDeleteByAccessToken() {
+        return false;
+      },
     },
     service: createDeterministicMockMatchAssistantService({
       store: {
@@ -90,6 +93,9 @@ async function createService() {
           return 0;
         },
         async deleteByAnalysisId() {
+          return false;
+        },
+        async hardDeleteByAccessToken() {
           return false;
         },
       },

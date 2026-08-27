@@ -18,6 +18,8 @@
     "profile:publish:write": "tsx src/public-profile-publish-cli.ts write",
     "profile-assistant:evaluate": "tsx src/profile-assistant-evaluation-cli.ts",
     "profile-assistant:staging:preflight": "tsx src/profile-assistant-staging-preflight-cli.ts",
+    "match:staging:preflight": "tsx src/match-staging-preflight-cli.ts",
+    "match:runtime:canary": "vitest run src/match-runtime-canary.test.ts",
     "start": "node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

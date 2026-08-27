@@ -53,7 +53,7 @@ insert into public.match_analyses (
 values (
   '00000000-0000-4000-8000-00000000a001',
   repeat('a', 64),
-  '{"synthetic":true}'::jsonb,
+  '{"synthetic":true,"sourceSections":[]}'::jsonb,
   '{"synthetic":true}'::jsonb,
   '2026-07-28T12:00:00.000Z',
   '2026-07-31T12:00:00.000Z'
@@ -72,8 +72,8 @@ begin
   values (
     '00000000-0000-4000-8000-00000000a002',
     'cleartext-token-must-not-be-stored',
-    '{"synthetic":true}'::jsonb,
-    '{"synthetic":true}'::jsonb,
+    '{"synthetic":true,"sourceSections":[]}'::jsonb,
+    '{"synthetic":true,"sourceSections":[]}'::jsonb,
     '2026-07-28T12:00:00.000Z',
     '2026-07-31T12:00:00.000Z'
   );
@@ -104,6 +104,56 @@ begin
   );
 
   raise exception 'expires_at before created_at must be rejected';
+exception
+  when check_violation then
+    null;
+end $$;
+
+do $$
+begin
+  insert into public.match_analyses (
+    id,
+    access_token_hash,
+    job_context,
+    match_analysis,
+    created_at,
+    expires_at
+  )
+  values (
+    '00000000-0000-4000-8000-00000000a004',
+    repeat('c', 64),
+    '{"synthetic":true,"sourceSections":[{"label":"raw","excerpt":"must not persist"}]}'::jsonb,
+    '{"synthetic":true}'::jsonb,
+    '2026-07-28T12:00:00.000Z',
+    '2026-07-31T12:00:00.000Z'
+  );
+
+  raise exception 'persisted job context source excerpts must be rejected';
+exception
+  when check_violation then
+    null;
+end $$;
+
+do $$
+begin
+  insert into public.match_analyses (
+    id,
+    access_token_hash,
+    job_context,
+    match_analysis,
+    created_at,
+    expires_at
+  )
+  values (
+    '00000000-0000-4000-8000-00000000a005',
+    repeat('d', 64),
+    '{"synthetic":true,"sourceSections":{"unexpected":"object"}}'::jsonb,
+    '{"synthetic":true}'::jsonb,
+    '2026-07-28T12:00:00.000Z',
+    '2026-07-31T12:00:00.000Z'
+  );
+
+  raise exception 'non-array sourceSections must be rejected safely';
 exception
   when check_violation then
     null;

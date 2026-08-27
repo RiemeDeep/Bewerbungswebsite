@@ -133,5 +133,22 @@ describe("match analysis Supabase artifacts", () => {
     expect(sqlTest).toContain("column_name in ('access_token', 'access_path')");
     expect(sqlTest).toContain("invalid token hashes must be rejected");
     expect(sqlTest).toContain("expires_at before created_at must be rejected");
+    expect(sqlTest).toContain("persisted job context source excerpts must be rejected");
+  });
+
+  it("enforces excerpt-free persisted job contexts in the self-hosted migration path", () => {
+    const migration = readWorkspaceFile(
+      "deploy/postgres/migrations/040_match_analysis_job_context_retention.sql",
+    );
+    const manifest = readWorkspaceFile("deploy/postgres/migrations/self-hosted-manifest.txt");
+    const initialRunner = readWorkspaceFile(
+      "deploy/postgres/migrations/apply-initial-migrations.sh",
+    );
+
+    expect(migration).toContain("match_analyses_job_context_without_source_sections");
+    expect(migration).toContain("jsonb_array_length(job_context -> 'sourceSections') = 0");
+    expect(migration).toContain("validate constraint");
+    expect(manifest).toContain("040_match_analysis_job_context_retention");
+    expect(initialRunner).toContain("040_match_analysis_job_context_retention.sql");
   });
 });

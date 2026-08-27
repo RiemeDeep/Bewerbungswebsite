@@ -25,6 +25,7 @@ import {
 } from "./assistant-runtime-guard.js";
 import type { JobContextPreviewService } from "./job-context-preview.js";
 import type { MatchAnalysisStore } from "./match-analysis-store.js";
+import type { MatchAssistantEvidenceRepository } from "./match-assistant-evidence-repository.js";
 import {
   MatchAnalysisError,
   MatchAnalysisProviderError,
@@ -49,6 +50,7 @@ export type AppDependencies = {
   jobContextPreview?: JobContextPreviewService;
   matchAnalyzer?: MatchAnalyzer;
   matchAnalysisStore?: MatchAnalysisStore;
+  matchResultEvidenceRepository?: MatchAssistantEvidenceRepository;
   matchAssistant?: MatchAssistantService;
   matchRuntimeAccess?: {
     secret: string;
@@ -514,12 +516,46 @@ export function createApp(dependencies: AppDependencies = {}): Express {
           return;
         }
 
+        const evidenceRepository = dependencies.matchResultEvidenceRepository;
+        if (dependencies.matchRuntimeAccess && !evidenceRepository) {
+          await matchAnalysisStore.hardDeleteByAccessToken(accessToken);
+          response.status(404).json(
+            createErrorResponse({
+              code: "MATCH_ANALYSIS_NOT_FOUND",
+              message: "Die Match-Analyse ist nicht vorhanden oder abgelaufen.",
+              requestId,
+              retryable: false,
+            }),
+          );
+          return;
+        }
+        const currentEvidence = evidenceRepository
+          ? await evidenceRepository.loadCurrentlyAllowedEvidence(
+              storedAnalysis.matchAnalysis.evidence.map((evidence) => evidence.evidenceId),
+            )
+          : storedAnalysis.matchAnalysis.evidence;
+        if (currentEvidence.length !== storedAnalysis.matchAnalysis.evidence.length) {
+          await matchAnalysisStore.hardDeleteByAccessToken(accessToken);
+          response.status(404).json(
+            createErrorResponse({
+              code: "MATCH_ANALYSIS_NOT_FOUND",
+              message: "Die Match-Analyse ist nicht vorhanden oder abgelaufen.",
+              requestId,
+              retryable: false,
+            }),
+          );
+          return;
+        }
+
         response
           .set("cache-control", "private, no-store, max-age=0")
           .set("x-robots-tag", storedAnalysis.robotsDirective)
           .set("referrer-policy", "no-referrer")
           .status(200)
-          .json(storedAnalysis);
+          .json({
+            ...storedAnalysis,
+            matchAnalysis: { ...storedAnalysis.matchAnalysis, evidence: currentEvidence },
+          });
       } catch {
         response.status(404).json(
           createErrorResponse({
@@ -530,6 +566,33 @@ export function createApp(dependencies: AppDependencies = {}): Express {
           }),
         );
       }
+    });
+
+    app.delete("/api/v1/match/analyses/:accessToken", async (request, response) => {
+      const requestId = randomUUID();
+      setPrivateRuntimeHeaders(response, requestId);
+      const accessToken = String(request.params.accessToken ?? "");
+
+      if (!/^[A-Za-z0-9_-]{43,128}$/u.test(accessToken)) {
+        response.status(204).send();
+        return;
+      }
+
+      try {
+        await matchAnalysisStore.hardDeleteByAccessToken(accessToken);
+      } catch {
+        response.status(503).json(
+          createErrorResponse({
+            code: "ASSISTANT_INTERNAL_ERROR",
+            message: "Die Match-Analyse konnte nicht gelöscht werden.",
+            requestId,
+            retryable: true,
+          }),
+        );
+        return;
+      }
+
+      response.status(204).send();
     });
 
     app.post("/api/internal/match/analyses/expire-due", async (request, response) => {

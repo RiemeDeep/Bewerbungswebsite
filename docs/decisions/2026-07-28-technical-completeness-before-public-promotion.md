@@ -1,7 +1,8 @@
 # ADR: Technische Vollstaendigkeit vor oeffentlicher Bewerbung
 
 Datum: 2026-07-28
-Status: angenommen
+Status: angenommen; Supabase-Plattformteil durch
+`2026-08-27-self-hosted-postgresql-instead-of-supabase.md` ersetzt
 
 ## Kontext
 
@@ -23,10 +24,11 @@ Website.
 
 Verbindliche Richtung:
 
-- Supabase bleibt die Source of Truth fuer Profilentitaeten, Claims, Evidence, Dokumentmetadaten,
-  Retrieval-Chunks und kurzlebige Analyseobjekte.
-- Der naechste Persistenznachweis erfolgt produktionsnah zuerst lokal gegen Supabase, nicht als neuer
-  dauerhafter In-Memory-Ersatz.
+- Die Datenbank bleibt die Source of Truth fuer Profilentitaeten, Claims, Evidence,
+  Dokumentmetadaten, Retrieval-Chunks und kurzlebige Analyseobjekte. Die spaetere Entscheidung
+  `2026-08-27-self-hosted-postgresql-instead-of-supabase.md` legt dafuer Self-Hosted PostgreSQL fest.
+- Der Persistenznachweis erfolgt produktionsnah gegen PostgreSQL, nicht als neuer dauerhafter
+  In-Memory-Ersatz. Die damalige lokale Supabase-Testhuelle bleibt ein historischer Umsetzungsschritt.
 - Browser-Eingaben bleiben unvertrauenswuerdig. Der Browser darf JobContext und MatchAnalysis nicht
   dauerhaft als Autoritaet fuer spaetere Fragen mitsenden.
 - Der Orchestrator laedt fuer spaetere Match-Fragen JobContext, MatchAnalysis und erlaubte Evidence

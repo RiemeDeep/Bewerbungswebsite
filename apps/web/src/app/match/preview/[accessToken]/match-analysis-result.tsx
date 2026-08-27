@@ -147,7 +147,10 @@ export function MatchAnalysisResult({ stored }: { stored: AccessibleMatchAnalysi
         </dl>
         <p>
           Diese Ansicht ist nur über den nicht erratbaren Link erreichbar. Sie wird nicht indexiert
-          oder gecacht und ist nach dem angegebenen Ablaufzeitpunkt nicht mehr abrufbar.
+          oder gecacht und ist nach dem angegebenen Ablaufzeitpunkt nicht mehr abrufbar. Gespeichert
+          werden nur der bestätigte strukturierte Stellenkontext ohne eingefügten Rohtext oder
+          Quellenauszüge und die daraus erzeugte Analyse. Der reguläre Cleanup entfernt abgelaufene
+          Datensätze spätestens 30 Tage nach dem Ablaufzeitpunkt aus der aktiven Datenbank.
         </p>
       </section>
 

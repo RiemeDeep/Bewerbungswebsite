@@ -80,6 +80,15 @@ export const jobContextSchema = z
   })
   .strict();
 
+export const persistedJobContextSchema = jobContextSchema.extend({
+  sourceSections: z.array(z.never()).max(0),
+});
+
+export function createPersistedJobContext(input: JobContext): JobContext {
+  const jobContext = jobContextSchema.parse(input);
+  return persistedJobContextSchema.parse({ ...jobContext, sourceSections: [] });
+}
+
 export const jobContextRetentionPolicySchema = z
   .object({
     ttlHours: z.number().int().min(1).max(168).default(72),
@@ -139,5 +148,6 @@ export type JobContextInput = z.infer<typeof jobContextInputSchema>;
 export type CrawlDocument = z.infer<typeof crawlDocumentSchema>;
 export type CrawlResult = z.infer<typeof crawlResultSchema>;
 export type JobContext = z.infer<typeof jobContextSchema>;
+export type PersistedJobContext = z.infer<typeof persistedJobContextSchema>;
 export type JobContextRetentionPolicy = z.infer<typeof jobContextRetentionPolicySchema>;
 export type JobContextStorageRecord = z.infer<typeof jobContextStorageRecordSchema>;

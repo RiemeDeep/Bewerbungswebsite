@@ -1,19 +1,27 @@
 // @vitest-environment jsdom
 
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { loadStoredMatchAnalysisMock, notFoundMock } = vi.hoisted(() => ({
-  loadStoredMatchAnalysisMock: vi.fn(),
-  notFoundMock: vi.fn(),
-}));
+const { deleteStoredMatchAnalysisMock, loadStoredMatchAnalysisMock, notFoundMock, redirectMock } =
+  vi.hoisted(() => ({
+    deleteStoredMatchAnalysisMock: vi.fn(),
+    loadStoredMatchAnalysisMock: vi.fn(),
+    notFoundMock: vi.fn(),
+    redirectMock: vi.fn(),
+  }));
 
 vi.mock("../../../../lib/stored-match-analysis", () => ({
+  deleteStoredMatchAnalysis: deleteStoredMatchAnalysisMock,
   loadStoredMatchAnalysis: loadStoredMatchAnalysisMock,
 }));
 
 vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
+  redirect: redirectMock,
 }));
 
 import StoredMatchAnalysisPage from "./page";
@@ -168,6 +176,13 @@ const storedAnalysis = {
   robotsDirective: "noindex,nofollow",
 };
 
+const securityCorpus = JSON.parse(
+  await readFile(
+    resolve(process.cwd(), "../../tests/fixtures/m7-match-security-corpus.v1.json"),
+    "utf8",
+  ),
+) as { xssPayloads: Array<{ id: string; value: string }> };
+
 function restoreFlag() {
   if (previousFlag === undefined) {
     delete process.env.ENABLE_MATCH_PREVIEW_TEST;
@@ -186,7 +201,9 @@ function restoreAssistantFlag() {
 
 beforeEach(() => {
   loadStoredMatchAnalysisMock.mockReset();
+  deleteStoredMatchAnalysisMock.mockReset();
   notFoundMock.mockReset();
+  redirectMock.mockReset();
   notFoundMock.mockImplementation(() => {
     throw new Error("NEXT_NOT_FOUND");
   });
@@ -259,6 +276,11 @@ describe("StoredMatchAnalysisPage", () => {
     expect(container.textContent).not.toContain("req-technische-projektarbeit");
     expect(screen.queryByLabelText("Ihre Frage")).toBeNull();
     expect(screen.queryByRole("button", { name: /Match-Assistent/u })).toBeNull();
+    expect(screen.getByText("Analyse löschen")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Analyse endgültig löschen" })).toBeTruthy();
+    expect(screen.getByText(/nicht rückgängig/u)).toBeTruthy();
+    expect(screen.getByText(/höchstens 14 Tagen/u)).toBeTruthy();
+    expect(screen.getByText(/spätestens 30 Tage/u)).toBeTruthy();
     expect(loadStoredMatchAnalysisMock).toHaveBeenCalledWith(accessToken);
   });
 
@@ -272,4 +294,27 @@ describe("StoredMatchAnalysisPage", () => {
     expect(screen.getByLabelText("Ihre Frage")).toBeTruthy();
     expect(screen.getByText(/serverseitig gespeicherten Stellenkontext/u)).toBeTruthy();
   });
+
+  it.each(securityCorpus.xssPayloads)(
+    "renders corpus payload $id only as inert text",
+    async ({ value }) => {
+      process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
+      delete process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING;
+      const adversarialAnalysis = structuredClone(storedAnalysis);
+      adversarialAnalysis.matchAnalysis.summary.headline = value;
+      adversarialAnalysis.matchAnalysis.summary.rationale = value;
+      adversarialAnalysis.matchAnalysis.evidence[0]!.publicExcerpt = value;
+      adversarialAnalysis.matchAnalysis.warnings = [value];
+      loadStoredMatchAnalysisMock.mockResolvedValue(adversarialAnalysis);
+
+      const { container } = render(
+        await StoredMatchAnalysisPage({ params: Promise.resolve({ accessToken }) }),
+      );
+
+      expect(container.textContent).toContain(value);
+      expect(container.querySelector("script, img, svg")).toBeNull();
+      expect(container.querySelector("[onerror], [onload]")).toBeNull();
+      expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
+    },
+  );
 });

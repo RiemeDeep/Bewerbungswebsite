@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { jobContextSchema } from "./job-context.js";
+import { jobContextSchema, persistedJobContextSchema } from "./job-context.js";
 import { matchAnalysisSchema } from "./match-analysis.js";
 
 const accessToken = z.string().regex(/^[A-Za-z0-9_-]{43,128}$/u);
@@ -52,7 +52,7 @@ export const storedMatchAnalysisAccessSchema = z
 export const matchAnalysisStorageRecordSchema = z
   .object({
     access: storedMatchAnalysisAccessSchema,
-    jobContext: jobContextSchema,
+    jobContext: persistedJobContextSchema,
     matchAnalysis: matchAnalysisSchema,
     consentScope: z.literal("single_match_result"),
   })

@@ -1607,6 +1607,47 @@ h3 {
   border-radius: var(--radius-lg);
 }
 
+.match-lifecycle-panel {
+  display: grid;
+  gap: 14px;
+  padding: clamp(24px, 4vw, 38px);
+  background: #fff8e8;
+  border: 1px solid rgb(154 104 21 / 30%);
+  border-radius: var(--radius-lg);
+}
+
+.match-lifecycle-panel h2,
+.match-lifecycle-panel p {
+  margin: 0;
+}
+
+.match-lifecycle-panel p,
+.match-lifecycle-panel small {
+  max-width: 74ch;
+  color: var(--color-text-muted);
+}
+
+.match-lifecycle-panel button {
+  padding: 11px 18px;
+  color: #ffffff;
+  background: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  border-radius: 999px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.match-deletion-confirmation {
+  width: min(var(--content-width), calc(100% - 32px));
+  margin: 24px auto 0;
+  padding: 14px 18px;
+  color: #174f38;
+  background: #eaf8ef;
+  border: 1px solid rgb(23 79 56 / 24%);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+}
+
 .match-assistant-panel h2 {
   margin: 0;
   font-size: clamp(1.5rem, 3vw, 2.2rem);

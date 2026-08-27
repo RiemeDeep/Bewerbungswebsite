@@ -91,8 +91,14 @@ export function createPostgresMatchAssistantEvidenceRepository(
 
 export function createPostgresPoolMatchAssistantEvidenceRepository(
   connectionString: string,
+  options: { statementTimeoutMs?: number } = {},
 ): MatchAssistantEvidenceRepository & { close(): Promise<void> } {
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    connectionTimeoutMillis: options.statementTimeoutMs,
+    statement_timeout: options.statementTimeoutMs,
+    query_timeout: options.statementTimeoutMs,
+  });
   const repository = createPostgresMatchAssistantEvidenceRepository(pool);
 
   return {

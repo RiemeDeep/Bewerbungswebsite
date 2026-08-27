@@ -8,6 +8,7 @@ const previousEnvironment = {
   assistantEnabled: process.env.ENABLE_INTERNAL_PROFILE_ASSISTANT_STAGING,
   matchPreviewEnabled: process.env.ENABLE_MATCH_PREVIEW_TEST,
   matchAssistantEnabled: process.env.ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING,
+  syntheticMatchEnabled: process.env.NEXT_PUBLIC_ENABLE_MATCH_PREVIEW_TEST,
   username: process.env.INTERNAL_PROFILE_PREVIEW_USERNAME,
   password: process.env.INTERNAL_PROFILE_PREVIEW_PASSWORD,
 };
@@ -30,6 +31,10 @@ afterEach(() => {
   restoreEnvironmentValue(
     "ENABLE_INTERNAL_MATCH_ASSISTANT_STAGING",
     previousEnvironment.matchAssistantEnabled,
+  );
+  restoreEnvironmentValue(
+    "NEXT_PUBLIC_ENABLE_MATCH_PREVIEW_TEST",
+    previousEnvironment.syntheticMatchEnabled,
   );
   restoreEnvironmentValue("INTERNAL_PROFILE_PREVIEW_USERNAME", previousEnvironment.username);
   restoreEnvironmentValue("INTERNAL_PROFILE_PREVIEW_PASSWORD", previousEnvironment.password);
@@ -56,6 +61,10 @@ describe("private preview proxy", () => {
       "/internal/profilassistent/:path*",
       "/api/internal/profile-assistant/:path*",
       "/api/internal/match-assistant/:path*",
+      "/test/match/:path*",
+      "/api/test/job-context-preview/:path*",
+      "/api/test/match-analysis/:path*",
+      "/api/test/match-assistant/:path*",
     ]);
     expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
@@ -110,6 +119,28 @@ describe("private preview proxy", () => {
         ),
       ).status,
     ).toBe(200);
+  });
+
+  it("keeps all synthetic match browser and API routes behind flags and basic auth", () => {
+    process.env.ENABLE_MATCH_PREVIEW_TEST = "1";
+    process.env.NEXT_PUBLIC_ENABLE_MATCH_PREVIEW_TEST = "1";
+    process.env.INTERNAL_PROFILE_PREVIEW_USERNAME = "review";
+    process.env.INTERNAL_PROFILE_PREVIEW_PASSWORD = "strong-password";
+
+    for (const path of [
+      "/test/match",
+      "/api/test/job-context-preview",
+      "/api/test/match-analysis",
+      "/api/test/match-assistant",
+    ]) {
+      expect(proxy(createRequest(undefined, path)).status).toBe(401);
+      expect(
+        proxy(createRequest(basicAuthorization("review", "strong-password"), path)).status,
+      ).toBe(200);
+    }
+
+    delete process.env.NEXT_PUBLIC_ENABLE_MATCH_PREVIEW_TEST;
+    expect(proxy(createRequest(undefined, "/test/match")).status).toBe(404);
   });
 
   it("fails closed when preview credentials are missing", () => {

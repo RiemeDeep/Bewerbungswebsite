@@ -15,7 +15,7 @@ Vorhanden sind unter anderem:
 
 - responsive statische Seiten fuer Start, Profil, Werdegang, Projekte, Kontakt und Recht;
 - eine freigegebene oeffentliche Arbeitsfassung von Profil, Werdegang und Projektkernen;
-- ein PostgreSQL/Supabase-Modell fuer Claims, Evidence, Provenienz, RLS und kurzlebige Analysen;
+- ein Self-Hosted-PostgreSQL-Modell fuer Claims, Evidence, Provenienz, RLS und kurzlebige Analysen;
 - kontrollierter Profilimport, erster echter Pilotfall und geschuetzte interne Profilvorschau;
 - technische Test-/Preview-Pfade fuer Profilassistent, Stellenextraktion und Match-Analyse;
 - Match-Persistenz mit Token-Hash, TTL, internem Cleanup sowie Backup-/Restore-Bausteinen;
@@ -103,7 +103,7 @@ apps/web/              Next.js App Router, UI und BFF-Schicht
 apps/orchestrator/     Express-Orchestrator fuer Retrieval, Modell- und Analyse-Routing
 packages/contracts/    Gemeinsame, laufzeitvalidierte Zod-Vertraege
 packages/prompts/      Versionierte Prompt-Templates und Providergrenzen
-supabase/              Versionierte Migrationen, Seeds und Datenbanktests
+supabase/              Historisch benannte PostgreSQL-Migrationen, Seeds und lokale Datenbanktests
 n8n/                   Workflow-Exporte ohne Credentials, aktuell Retention-Cleanup
 docs/                  Architektur, Entscheidungen, Plaene und Handovers
 tests/fixtures/         Nicht produktive, rechtlich zulaessige Test-Fixtures
@@ -115,8 +115,8 @@ tests/fixtures/         Nicht produktive, rechtlich zulaessige Test-Fixtures
   ueber eine schlanke BFF-Schicht.
 - Der Orchestrator trifft serverseitige Routing- und Retrieval-Entscheidungen und prueft
   Modellantworten deterministisch.
-- Supabase wird die Source of Truth fuer Claims, Belege, Dokumente und temporaere
-  Analyseobjekte.
+- Self-Hosted PostgreSQL auf dem Hostinger-VPS ist die Source of Truth fuer Claims, Belege,
+  Dokumentmetadaten und temporaere Analyseobjekte. Supabase ist keine Produktionsabhaengigkeit.
 - n8n ist nur fuer deterministische, wiederholbare oder asynchrone Nebenprozesse vorgesehen.
 - Externe Inhalte gelten immer als nicht vertrauenswuerdige Daten.
 - Die Website wird erst aktiv beworben, wenn der vollstaendige technische Funktionsnachweis vorliegt.

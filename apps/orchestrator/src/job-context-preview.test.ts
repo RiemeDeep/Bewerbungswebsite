@@ -144,4 +144,46 @@ describe("createJobContextPreviewService", () => {
       }),
     ).rejects.toThrow("blocked network address");
   });
+
+  it("fails closed when the final source hostname rebinds after initial validation", async () => {
+    let resolutionCount = 0;
+    const service = createJobContextPreviewService({
+      crawlProvider: {
+        async crawl() {
+          return {
+            documents: [
+              {
+                source: {
+                  url: "https://jobs.example.test/role",
+                  retrievedAt: "2026-08-27T12:00:00.000Z",
+                  title: "Synthetische Weiterleitung",
+                },
+                markdown: "# Synthetische Stelle",
+              },
+            ],
+            warnings: [],
+          };
+        },
+      },
+      extractor: createDeterministicMockJobContextExtractor(),
+      dnsResolver: async () => {
+        resolutionCount += 1;
+        return resolutionCount === 1
+          ? [{ address: "93.184.216.34", family: 4 }]
+          : [{ address: "127.0.0.1", family: 4 }];
+      },
+    });
+
+    await expect(
+      service.preview({
+        jobUrl: "https://jobs.example.test/role",
+        companyUrl: null,
+        pastedText: null,
+        suppliedJobTitle: null,
+        suppliedCompanyName: null,
+        confirmsNoThirdPartyPrivateData: true,
+      }),
+    ).rejects.toThrow("blocked network address");
+    expect(resolutionCount).toBe(2);
+  });
 });

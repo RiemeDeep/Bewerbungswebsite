@@ -64,7 +64,7 @@ BEGIN
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bewerbungswebsite_app') THEN
-    CREATE ROLE bewerbungswebsite_app LOGIN;
+    CREATE ROLE bewerbungswebsite_app LOGIN NOINHERIT NOSUPERUSER NOBYPASSRLS;
   END IF;
 END $$;
 SQL
@@ -81,6 +81,17 @@ docker exec -i "${container}" psql -U postgres -d "${database}" -v ON_ERROR_STOP
 SELECT 'pgvector_version', extversion FROM pg_extension WHERE extname = 'vector';
 SELECT 'match_analyses_rows', count(*) FROM public.match_analyses;
 SELECT 'match_analyses_rls', relrowsecurity FROM pg_class WHERE oid = 'public.match_analyses'::regclass;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_roles
+    WHERE rolname = 'bewerbungswebsite_app'
+      AND (NOT rolcanlogin OR rolinherit OR rolsuper OR rolbypassrls)
+  ) THEN
+    RAISE EXCEPTION 'bewerbungswebsite_app does not match the restricted runtime role boundary';
+  END IF;
+END $$;
 SET ROLE bewerbungswebsite_app;
 SELECT 'app_role_visible_rows', count(*) FROM public.match_analyses;
 RESET ROLE;

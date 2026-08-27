@@ -1,7 +1,11 @@
 # Implementierungsplan
 
-Stand: 2026-08-07. `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md` bleibt Source of Truth fuer
+Stand: 2026-08-27. `OPENCODE_INITIALISIERUNG_BEWERBUNGSWEBSITE.md` bleibt Source of Truth fuer
 Produktanforderungen und Leitplanken. PostgreSQL ist Source of Truth fuer freigegebene Profilfakten.
+Die Bewerbungswebsite verwendet Self-Hosted PostgreSQL auf dem Hostinger-VPS und keine Supabase-
+Produktionsruntime. Historische Supabase-Verweise in abgeschlossenen Umsetzungsschritten bezeichnen
+die weiterhin lokal genutzte Testhuelle oder historisch benannte SQL-Artefakte. Verbindliche
+Entscheidung: `docs/decisions/2026-08-27-self-hosted-postgresql-instead-of-supabase.md`.
 
 Aktuelle priorisierte Roadmap:
 `docs/plans/public-mvp-release-roadmap.md`.
@@ -14,6 +18,10 @@ Aktuelle priorisierte Roadmap:
 - Gesamt bis zum interaktiven oeffentlichen MVP: ca. 65 %.
 - Die Prozentwerte sind Planungsschaetzungen, keine automatisierten Messwerte.
 - Der aktuelle Webstand bleibt Staging/Abnahme und global `noindex,nofollow`.
+- Das Match-Staging ist seit dem 2026-08-27 intern auf dem VPS aktiv und technisch fuer den echten
+  Provider-, Persistenz-, Ergebnis-, Assistenten-, Loesch-, Kill-Switch- und Rollbackpfad abgenommen.
+  Der Web-Container ist nur an `127.0.0.1:3100` gebunden und die Match-Strecke bleibt durch Basic Auth
+  geschuetzt; eine oeffentliche Aktivierung erfolgte nicht.
 - Die private Werdegangs-Checkliste wurde am 2026-08-06 fuer die oeffentliche Vorbereitung
   freigegeben. Die bereinigte oeffentliche Arbeitsfassung ist statisch umgesetzt.
 - Das Self-Hosted PostgreSQL auf dem Hostinger-VPS bleibt die fachliche Source of Truth. Der
@@ -483,10 +491,12 @@ getrennte, standardmaessig deaktivierte Staging-Schalter sowie Basic- und Bearer
 der gezielte Playwright-Privacy-Lauf bestand mit 3/3 Tests und der aktivierte Basic-Auth-Pfad mit 1/1 Test.
 Es erfolgten keine Provideraufrufe, keine VPS-Aktivierung und kein PostgreSQL-Schreibzugriff.
 
-Naechste kleine Umsetzungseinheit ist Match-Paket M6: Persistenz, sichtbare Aufbewahrung und Loeschung des
-Stellenkontexts mit Cleanup, Backup und Withdrawal-Verhalten konsistent nachweisen. Eine oeffentliche
-Aktivierung erfolgt weiterhin nicht. Die
-Profilassistent-Faelle `direct-football-license` und
+Match-Paket M6 ist abgeschlossen und Migration `040` nach frischem Backup und isoliertem Restore-Test auf
+dem VPS angewendet. Das interne M7-Staging bestand Preflight, echten Firecrawl-/OpenAI-Durchstich,
+Persistenz, geschuetzten Ergebnisabruf, Match-Assistent, physische Loeschung, Kill-Switch, Image-Rollback
+und Roll-forward. Offen bleiben vor einem oeffentlichen URL-Abruf der belastbare Redirect-Hop-/Private-
+Netz-Nachweis fuer Firecrawl sowie vor M7-Abschluss die manuelle Match-Accessibility-/Mobile-Abnahme und
+eine belastbare Token-/Geldkostenmessung. Die Profilassistent-Faelle `direct-football-license` und
 `negative-prompt-injection` bleiben wegen Modellvarianz als separates dreifaches Wiederholungsgate offen;
 hieraus darf ohne stabilen Befund keine Produktlogik abgeleitet werden. Kein neues Feature wird oeffentlich
 aktiviert, bevor die jeweiligen Staging-, Datenschutz-, Monitoring- und Go-live-Gates erreicht sind.
@@ -824,7 +834,8 @@ nutzbar. Der aktive n8n-Einsatz ist auf den deterministischen Retention-Cleanup 
 - Vor jeder neuen Phase: offene Entscheidungen und ADR-Bedarf pruefen.
 - Nach jeder Phase: `pnpm check`, Sicherheitsauswirkungen und Handover dokumentieren.
 - Vor produktiven Profilinhalten: Claim und Evidence redaktionell freigeben.
-- Vor Supabase-Aenderungen: Tabellen und vorhandene Migrationen erneut analysieren.
+- Vor PostgreSQL-Aenderungen: Tabellen und vorhandene Migrationen erneut analysieren; vor schreibenden
+  VPS-Zugriffen zusaetzlich Backup und isolierten Restore-Test ausfuehren.
 - Vor n8n-Aenderungen: Workflow-Technik und Fehlerbehandlung festlegen.
 - Vor jeder teilbaren Analyse: Token-Hash, TTL, `noindex,nofollow`, keine anonyme Listenfunktion und
   serverseitiges Laden der Analyse nachweisen.

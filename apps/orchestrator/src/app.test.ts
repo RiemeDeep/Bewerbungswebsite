@@ -3,7 +3,11 @@ import { readFile } from "node:fs/promises";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
-import type { AccessibleMatchAnalysis, ProfileReviewClaim } from "@bewerbungswebsite/contracts";
+import {
+  createPersistedJobContext,
+  type AccessibleMatchAnalysis,
+  type ProfileReviewClaim,
+} from "@bewerbungswebsite/contracts";
 
 import { createApp, type MatchRuntimeEvent } from "./app.js";
 import { createAssistantRuntimeGuard } from "./assistant-runtime-guard.js";
@@ -81,7 +85,7 @@ function createTestMatchAnalysisStore(): MatchAnalysisStore {
     async create(input) {
       storedAnalysis = {
         analysisId: "99999999-9999-4999-8999-999999999999",
-        jobContext: input.jobContext,
+        jobContext: createPersistedJobContext(input.jobContext),
         matchAnalysis: input.matchAnalysis,
         createdAt: "2026-07-28T12:00:00.000Z",
         expiresAt: "2026-07-31T12:00:00.000Z",
@@ -111,6 +115,11 @@ function createTestMatchAnalysisStore(): MatchAnalysisStore {
     async deleteByAnalysisId() {
       storedAnalysis = null;
       return true;
+    },
+    async hardDeleteByAccessToken(accessToken) {
+      const deleted = accessToken === matchAccessToken && storedAnalysis !== null;
+      if (deleted) storedAnalysis = null;
+      return deleted;
     },
   };
 }
@@ -600,6 +609,25 @@ describe("protected internal match runtime", () => {
     expect(limited.headers["retry-after"]).toEqual(expect.any(String));
   });
 
+  it("fails closed when protected stored results cannot revalidate evidence", async () => {
+    const store = createTestMatchAnalysisStore();
+    const app = createApp({
+      matchAnalyzer: createSyntheticMatchAnalyzer(),
+      matchAnalysisStore: store,
+      matchRuntimeAccess: createTestMatchRuntimeAccess(),
+    });
+    const creation = await request(app)
+      .post("/api/internal/match/analyses")
+      .set("authorization", `Bearer ${matchRuntimeSecret}`)
+      .send(validJobContext)
+      .expect(201);
+
+    await request(app)
+      .get(`/api/v1/match/analyses/${creation.body.access.accessToken}`)
+      .expect(404);
+    await expect(store.getByAccessToken(creation.body.access.accessToken)).resolves.toBeNull();
+  });
+
   it("aborts timed-out work and emits only content-free runtime events", async () => {
     const events: unknown[] = [];
     let observedAbort = false;
@@ -843,7 +871,7 @@ describe("POST /api/v1/match/assistant/messages", () => {
   it("answers a question against a confirmed synthetic match analysis", async () => {
     const store = createTestMatchAnalysisStore();
     const matchAnalysis = await createSyntheticMatchAnalyzer().analyze({
-      jobContext: validJobContext,
+      jobContext: { ...validJobContext, sourceSections: [] },
     });
     const access = await store.create({ jobContext: validJobContext, matchAnalysis });
     const response = await request(
@@ -910,6 +938,7 @@ describe("stored match analysis routes", () => {
       .send(validJobContext)
       .expect(404);
     await request(createApp()).get(`/api/v1/match/analyses/${matchAccessToken}`).expect(404);
+    await request(createApp()).delete(`/api/v1/match/analyses/${matchAccessToken}`).expect(404);
     await request(createApp())
       .post("/api/internal/match/analyses/expire-due")
       .set("authorization", `Bearer ${internalSecret}`)
@@ -964,6 +993,64 @@ describe("stored match analysis routes", () => {
         error: { code: "MATCH_ANALYSIS_NOT_FOUND", retryable: false },
       });
     }
+  });
+
+  it("physically deletes an analysis by its access token without revealing token validity", async () => {
+    const store = createTestMatchAnalysisStore();
+    const app = createApp({
+      matchAnalyzer: createSyntheticMatchAnalyzer(),
+      matchAnalysisStore: store,
+    });
+
+    await request(app).post("/api/v1/match/analyses").send(validJobContext).expect(201);
+    const deletionResponse = await request(app)
+      .delete(`/api/v1/match/analyses/${matchAccessToken}`)
+      .expect(204);
+
+    expect(deletionResponse.headers["cache-control"]).toBe("private, no-store, max-age=0");
+    expect(deletionResponse.headers["referrer-policy"]).toBe("no-referrer");
+    expect(deletionResponse.headers["x-robots-tag"]).toBe("noindex,nofollow");
+    await request(app).get(`/api/v1/match/analyses/${matchAccessToken}`).expect(404);
+    await request(app).delete(`/api/v1/match/analyses/${matchAccessToken}`).expect(204);
+    await request(app).delete("/api/v1/match/analyses/short").expect(204);
+  });
+
+  it("reports a retryable failure when token deletion cannot reach storage", async () => {
+    const store = createTestMatchAnalysisStore();
+    store.hardDeleteByAccessToken = async () => {
+      throw new Error("database unavailable");
+    };
+    const app = createApp({
+      matchAnalyzer: createSyntheticMatchAnalyzer(),
+      matchAnalysisStore: store,
+    });
+
+    const response = await request(app)
+      .delete(`/api/v1/match/analyses/${matchAccessToken}`)
+      .expect(503);
+
+    expect(response.body.error).toMatchObject({
+      code: "ASSISTANT_INTERNAL_ERROR",
+      retryable: true,
+    });
+    expect(response.headers["cache-control"]).toBe("private, no-store, max-age=0");
+  });
+
+  it("fails closed and deletes the snapshot when stored evidence was withdrawn", async () => {
+    const store = createTestMatchAnalysisStore();
+    const app = createApp({
+      matchAnalyzer: createSyntheticMatchAnalyzer(),
+      matchAnalysisStore: store,
+      matchResultEvidenceRepository: {
+        async loadCurrentlyAllowedEvidence() {
+          return [];
+        },
+      },
+    });
+
+    await request(app).post("/api/v1/match/analyses").send(validJobContext).expect(201);
+    await request(app).get(`/api/v1/match/analyses/${matchAccessToken}`).expect(404);
+    await expect(store.getByAccessToken(matchAccessToken)).resolves.toBeNull();
   });
 });
 
